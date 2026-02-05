@@ -1,0 +1,195 @@
+/**
+ * Application Constants
+ * Centralized constants for the application
+ */
+
+/**
+ * API Configuration
+ */
+export const API_CONFIG = {
+  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1',
+  TIMEOUT: 30000, // 30 seconds
+} as const;
+
+/**
+ * API Endpoints
+ */
+export const API_ENDPOINTS = {
+  // Auth
+  AUTH: {
+    REGISTER: '/auth/register',
+    LOGIN: '/auth/login',
+    LOGOUT: '/auth/logout',
+    REFRESH_TOKEN: '/auth/refresh-token',
+    ME: '/auth/me',
+    VERIFY_EMAIL: '/auth/verify-email',
+  },
+  // Users
+  USERS: {
+    BASE: '/users',
+    BY_ID: (id: string) => `/users/${id}`,
+    UPDATE_PROFILE: '/users/profile',
+  },
+  // Products
+  PRODUCTS: {
+    BASE: '/products',
+    BY_ID: (id: string) => `/products/${id}`,
+    BY_CATEGORY: (categoryId: string) => `/products?category=${categoryId}`,
+  },
+  // Categories
+  CATEGORIES: {
+    BASE: '/categories',
+    BY_ID: (id: string) => `/categories/${id}`,
+  },
+  // Orders
+  ORDERS: {
+    BASE: '/orders',
+    BY_ID: (id: string) => `/orders/${id}`,
+    UPDATE_STATUS: (id: string) => `/orders/${id}/status`,
+  },
+} as const;
+
+/**
+ * Local Storage Keys
+ */
+export const STORAGE_KEYS = {
+  ACCESS_TOKEN: 'shielder_access_token',
+  REFRESH_TOKEN: 'shielder_refresh_token',
+  USER: 'shielder_user',
+  LOCALE: 'shielder_locale',
+  CART: 'shielder_cart',
+} as const;
+
+/**
+ * User Roles
+ */
+export const USER_ROLES = {
+  ADMIN: 'admin',
+  CUSTOMER: 'customer',
+  DEALER: 'dealer',
+  SALES: 'sales',
+} as const;
+
+/**
+ * User Status
+ */
+export const USER_STATUS = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  SUSPENDED: 'suspended',
+  PENDING_VERIFICATION: 'pending_verification',
+} as const;
+
+/**
+ * Product Status
+ */
+export const PRODUCT_STATUS = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  OUT_OF_STOCK: 'out_of_stock',
+} as const;
+
+/**
+ * Order Status
+ */
+export const ORDER_STATUS = {
+  PENDING: 'pending',
+  CONFIRMED: 'confirmed',
+  PROCESSING: 'processing',
+  SHIPPED: 'shipped',
+  DELIVERED: 'delivered',
+  CANCELLED: 'cancelled',
+} as const;
+
+/**
+ * Order Type
+ */
+export const ORDER_TYPE = {
+  QUOTE: 'quote',
+  ORDER: 'order',
+} as const;
+
+/**
+ * Supported Locales
+ */
+export const LOCALES = {
+  EN: 'en',
+  AR: 'ar',
+} as const;
+
+/**
+ * Default Locale
+ */
+export const DEFAULT_LOCALE = LOCALES.EN;
+
+/**
+ * Pagination
+ */
+export const PAGINATION = {
+  DEFAULT_PAGE: 1,
+  DEFAULT_LIMIT: 20,
+  MAX_LIMIT: 100,
+} as const;
+
+/**
+ * Validation Rules
+ */
+export const VALIDATION_RULES = {
+  EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  PASSWORD_REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/,
+  PASSWORD_MIN_LENGTH: 8,
+  PHONE_REGEX: /^[\d\s\-\+\(\)]+$/,
+} as const;
+
+/**
+ * Error Messages
+ */
+export const ERROR_MESSAGES = {
+  NETWORK_ERROR: 'Network error. Please check your connection.',
+  UNAUTHORIZED: 'You are not authorized to access this resource.',
+  FORBIDDEN: 'You do not have permission to perform this action.',
+  NOT_FOUND: 'The requested resource was not found.',
+  SERVER_ERROR: 'An unexpected error occurred. Please try again later.',
+  VALIDATION_ERROR: 'Please check your input and try again.',
+  SESSION_EXPIRED: 'Your session has expired. Please login again.',
+} as const;
+
+/**
+ * Success Messages
+ */
+export const SUCCESS_MESSAGES = {
+  LOGIN_SUCCESS: 'Login successful!',
+  REGISTER_SUCCESS: 'Registration successful! Please verify your email.',
+  LOGOUT_SUCCESS: 'Logout successful!',
+  UPDATE_SUCCESS: 'Updated successfully!',
+  CREATE_SUCCESS: 'Created successfully!',
+  DELETE_SUCCESS: 'Deleted successfully!',
+} as const;
+
+/**
+ * Routes
+ */
+export const ROUTES = {
+  HOME: '/',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  DASHBOARD: '/dashboard',
+  
+  // Public
+  PRODUCTS: '/products',
+  PRODUCT_DETAIL: (id: string) => `/products/${id}`,
+  CONTACT: '/contact',
+  ABOUT: '/about',
+  
+  // Customer
+  CUSTOMER_DASHBOARD: '/customer/dashboard',
+  CUSTOMER_ORDERS: '/customer/orders',
+  CUSTOMER_PROFILE: '/customer/profile',
+  
+  // Admin
+  ADMIN_DASHBOARD: '/admin/dashboard',
+  ADMIN_PRODUCTS: '/admin/products',
+  ADMIN_ORDERS: '/admin/orders',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_REPORTS: '/admin/reports',
+} as const;

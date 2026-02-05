@@ -1,0 +1,84 @@
+/**
+ * Application Configuration
+ * Central configuration for application-wide settings
+ */
+
+import { env } from './env';
+
+export const appConfig = {
+  // Application Info
+  app: {
+    name: 'Shielder Digital Platform',
+    version: '1.0.0',
+    description: 'Enterprise digital backbone for industrial filters',
+  },
+
+  // API Configuration
+  api: {
+    version: env.apiVersion,
+    prefix: '/api',
+    port: env.port,
+  },
+
+  // CORS Configuration
+  cors: {
+    origin: env.cors.allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] as string[],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'] as string[],
+  },
+
+  // Rate Limiting
+  rateLimit: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+  },
+
+  // Pagination
+  pagination: {
+    defaultPage: 1,
+    defaultLimit: 20,
+    maxLimit: 100,
+  },
+
+  // Supported Languages
+  languages: {
+    supported: ['en', 'ar'],
+    default: 'en',
+  },
+
+  // User Roles
+  roles: {
+    ADMIN: 'admin',
+    CUSTOMER: 'customer',
+    DEALER: 'dealer', // For future implementation
+    SALES: 'sales',
+  },
+
+  // Order Status
+  orderStatus: {
+    PENDING: 'pending',
+    CONFIRMED: 'confirmed',
+    PROCESSING: 'processing',
+    SHIPPED: 'shipped',
+    DELIVERED: 'delivered',
+    CANCELLED: 'cancelled',
+  },
+
+  // Product Status
+  productStatus: {
+    ACTIVE: 'active',
+    INACTIVE: 'inactive',
+    OUT_OF_STOCK: 'out_of_stock',
+  },
+
+  // User Status
+  userStatus: {
+    ACTIVE: 'active',
+    INACTIVE: 'inactive',
+    SUSPENDED: 'suspended',
+    PENDING_VERIFICATION: 'pending_verification',
+  },
+} as const;
+
+export default appConfig;

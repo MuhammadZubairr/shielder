@@ -1,0 +1,353 @@
+/**
+ * Modern Design System 2024-2025
+ * Enterprise-grade Inventory Management System
+ * 
+ * This file establishes the foundational design tokens for the entire application.
+ * All UI components should reference these CSS variables for consistency.
+ */
+
+:root {
+  /* ========================================
+     COLOR PALETTE
+     ======================================== */
+  
+  /* Primary Colors - Professional Blue/Teal */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-200: #bfdbfe;
+  --primary-300: #93c5fd;
+  --primary-400: #60a5fa;
+  --primary-500: #3b82f6;  /* Main primary */
+  --primary-600: #2563eb;
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+  --primary-900: #1e3a8a;
+
+  /* Secondary Colors - Neutral Gray/Slate */
+  --secondary-50: #f8fafc;
+  --secondary-100: #f1f5f9;
+  --secondary-200: #e2e8f0;
+  --secondary-300: #cbd5e1;
+  --secondary-400: #94a3b8;
+  --secondary-500: #64748b;
+  --secondary-600: #475569;  /* Main secondary */
+  --secondary-700: #334155;
+  --secondary-800: #1e293b;
+  --secondary-900: #0f172a;
+
+  /* Success Colors */
+  --success-50: #f0fdf4;
+  --success-100: #dcfce7;
+  --success-500: #22c55e;
+  --success-600: #16a34a;
+  --success-700: #15803d;
+
+  /* Warning Colors */
+  --warning-50: #fffbeb;
+  --warning-100: #fef3c7;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+  --warning-700: #b45309;
+
+  /* Error/Danger Colors */
+  --error-50: #fef2f2;
+  --error-100: #fee2e2;
+  --error-500: #ef4444;
+  --error-600: #dc2626;
+  --error-700: #b91c1c;
+
+  /* Info Colors */
+  --info-50: #f0f9ff;
+  --info-100: #e0f2fe;
+  --info-500: #0ea5e9;
+  --info-600: #0284c7;
+  --info-700: #0369a1;
+
+  /* Neutral/Background Colors */
+  --white: #ffffff;
+  --black: #000000;
+  --gray-50: #fafafa;
+  --gray-100: #f5f5f5;
+  --gray-200: #e5e5e5;
+  --gray-300: #d4d4d4;
+  --gray-400: #a3a3a3;
+  --gray-500: #737373;
+  --gray-600: #525252;
+  --gray-700: #404040;
+  --gray-800: #262626;
+  --gray-900: #171717;
+
+  /* Semantic Color Assignments */
+  --color-primary: var(--primary-600);
+  --color-primary-hover: var(--primary-700);
+  --color-primary-light: var(--primary-50);
+  --color-primary-dark: var(--primary-800);
+
+  --color-secondary: var(--secondary-600);
+  --color-secondary-hover: var(--secondary-700);
+
+  --color-success: var(--success-600);
+  --color-success-hover: var(--success-700);
+  --color-success-light: var(--success-50);
+
+  --color-warning: var(--warning-600);
+  --color-warning-hover: var(--warning-700);
+  --color-warning-light: var(--warning-50);
+
+  --color-danger: var(--error-600);
+  --color-danger-hover: var(--error-700);
+  --color-danger-light: var(--error-50);
+
+  --color-info: var(--info-600);
+  --color-info-hover: var(--info-700);
+  --color-info-light: var(--info-50);
+
+  /* ========================================
+     BACKGROUND COLORS
+     ======================================== */
+  --bg-primary: var(--white);
+  --bg-secondary: var(--gray-50);
+  --bg-tertiary: var(--gray-100);
+  --bg-dark: var(--secondary-900);
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+
+  /* ========================================
+     TEXT COLORS
+     ======================================== */
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-tertiary: var(--gray-500);
+  --text-disabled: var(--gray-400);
+  --text-inverse: var(--white);
+  --text-link: var(--primary-600);
+  --text-link-hover: var(--primary-700);
+
+  /* ========================================
+     BORDER COLORS
+     ======================================== */
+  --border-color: var(--gray-200);
+  --border-color-hover: var(--gray-300);
+  --border-color-focus: var(--primary-500);
+  --border-color-error: var(--error-500);
+
+  /* ========================================
+     TYPOGRAPHY
+     ======================================== */
+  
+  /* Font Families */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.875rem;     /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.25rem;      /* 20px */
+  --text-2xl: 1.5rem;      /* 24px */
+  --text-3xl: 1.875rem;    /* 30px */
+  --text-4xl: 2.25rem;     /* 36px */
+  --text-5xl: 3rem;        /* 48px */
+
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Line Heights */
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+  --leading-loose: 2;
+
+  /* ========================================
+     SPACING SYSTEM (4px base)
+     ======================================== */
+  --space-0: 0;
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
+  --space-24: 6rem;     /* 96px */
+
+  /* ========================================
+     BORDER RADIUS
+     ======================================== */
+  --radius-none: 0;
+  --radius-sm: 0.25rem;    /* 4px */
+  --radius-base: 0.375rem; /* 6px */
+  --radius-md: 0.5rem;     /* 8px */
+  --radius-lg: 0.75rem;    /* 12px */
+  --radius-xl: 1rem;       /* 16px */
+  --radius-2xl: 1.5rem;    /* 24px */
+  --radius-full: 9999px;
+
+  /* ========================================
+     SHADOWS
+     ======================================== */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-base: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-2xl: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+
+  /* ========================================
+     Z-INDEX LAYERS
+     ======================================== */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+
+  /* ========================================
+     TRANSITIONS
+     ======================================== */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slower: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Common transition properties */
+  --transition-all: all var(--transition-base);
+  --transition-colors: background-color var(--transition-base), border-color var(--transition-base), color var(--transition-base);
+  --transition-transform: transform var(--transition-base);
+  --transition-opacity: opacity var(--transition-base);
+
+  /* ========================================
+     COMPONENT-SPECIFIC VARIABLES
+     ======================================== */
+  
+  /* Sidebar */
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 70px;
+  --sidebar-bg: var(--secondary-900);
+  --sidebar-text: var(--gray-300);
+  --sidebar-text-active: var(--white);
+  --sidebar-item-hover: rgba(255, 255, 255, 0.1);
+  --sidebar-item-active: var(--primary-600);
+
+  /* Navbar */
+  --navbar-height: 64px;
+  --navbar-bg: var(--white);
+  --navbar-border: var(--border-color);
+
+  /* Cards */
+  --card-bg: var(--white);
+  --card-border: var(--border-color);
+  --card-shadow: var(--shadow-sm);
+  --card-hover-shadow: var(--shadow-md);
+
+  /* Tables */
+  --table-border: var(--border-color);
+  --table-row-hover: var(--gray-50);
+  --table-row-striped: var(--gray-50);
+  --table-header-bg: var(--gray-100);
+
+  /* Forms */
+  --input-height: 2.5rem;     /* 40px */
+  --input-height-sm: 2rem;    /* 32px */
+  --input-height-lg: 3rem;    /* 48px */
+  --input-bg: var(--white);
+  --input-border: var(--border-color);
+  --input-border-focus: var(--primary-500);
+  --input-text: var(--text-primary);
+  --input-placeholder: var(--text-tertiary);
+  --input-disabled-bg: var(--gray-100);
+  --input-disabled-text: var(--text-disabled);
+
+  /* Buttons */
+  --btn-height: 2.5rem;       /* 40px */
+  --btn-height-sm: 2rem;      /* 32px */
+  --btn-height-lg: 3rem;      /* 48px */
+  --btn-padding-x: 1rem;
+  --btn-padding-x-sm: 0.75rem;
+  --btn-padding-x-lg: 1.5rem;
+
+  /* Modals */
+  --modal-backdrop: rgba(0, 0, 0, 0.6);
+  --modal-bg: var(--white);
+  --modal-border-radius: var(--radius-lg);
+
+  /* Toasts/Alerts */
+  --toast-bg: var(--white);
+  --toast-shadow: var(--shadow-lg);
+  --toast-border-radius: var(--radius-md);
+}
+
+/* ========================================
+   DARK MODE SUPPORT (Optional - for future)
+   ======================================== */
+@media (prefers-color-scheme: dark) {
+  :root[data-theme="dark"] {
+    --bg-primary: var(--gray-900);
+    --bg-secondary: var(--gray-800);
+    --bg-tertiary: var(--gray-700);
+    
+    --text-primary: var(--gray-100);
+    --text-secondary: var(--gray-300);
+    --text-tertiary: var(--gray-400);
+    
+    --border-color: var(--gray-700);
+    --card-bg: var(--gray-800);
+    --navbar-bg: var(--gray-900);
+    
+    --table-row-hover: var(--gray-800);
+    --table-row-striped: var(--gray-800);
+    --table-header-bg: var(--gray-700);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+/* Focus visible for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+}
+
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

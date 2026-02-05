@@ -1,0 +1,504 @@
+// Products Management JavaScript
+// API_BASE_URL is provided by navbar.js
+
+// Note: getToken() and checkAuth() are provided by navbar.js
+
+// API Headers with token
+const getHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${getToken()}`
+});
+
+// DOM Elements
+let productsTableBody;
+let addProductForm;
+let editProductModal;
+let editProductForm;
+let searchInput;
+let currentEditId = null;
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', async () => {
+  const isAuthenticated = await checkAuth();
+  if (!isAuthenticated) return;
+
+  // Get DOM elements
+  productsTableBody = document.getElementById('productsTableBody');
+  addProductForm = document.getElementById('addProductForm');
+  editProductForm = document.getElementById('editProductForm');
+  searchInput = document.getElementById('searchInput');
+
+  // Load initial data
+  loadProducts();
+  loadCategories();
+  loadSuppliers();
+  loadWarehouses(); // Load warehouses for product assignment
+
+  // Event listeners
+  if (addProductForm) {
+    addProductForm.addEventListener('submit', handleAddProduct);
+  }
+  if (editProductForm) {
+    editProductForm.addEventListener('submit', handleEditProduct);
+  }
+  if (searchInput) {
+    searchInput.addEventListener('input', debounce(loadProducts, 500));
+  }
+
+  // Logout functionality
+  document.querySelectorAll('.logout-btn').forEach(btn => {
+    btn.addEventListener('click', handleLogout);
+  });
+});
+
+// Debounce function for search
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Load all products
+async function loadProducts() {
+  try {
+    console.log('Loading products...');
+    console.log('Token:', getToken() ? 'exists' : 'missing');
+    
+    const params = new URLSearchParams();
+    
+    if (searchInput && searchInput.value) {
+      params.append('search', searchInput.value);
+    }
+
+    const url = `${API_BASE_URL}/products?${params.toString()}`;
+    console.log('Fetching from:', url);
+
+    const response = await fetch(url, {
+      headers: getHeaders()
+    });
+
+    console.log('Response status:', response.status);
+
+    const data = await response.json();
+    
+    // Check for session expiry (auto logout on server restart)
+    if (window.handleApiError && window.handleApiError(response, data)) {
+      return; // User logged out, no need to continue
+    }
+
+    if (!response.ok) {
+      console.error('API Error:', data);
+      throw new Error(data.message || 'Failed to fetch products');
+    }
+    console.log('API Response:', data);
+    console.log('Products received:', data.data?.products?.length || 0);
+    
+    displayProducts(data.data.products);
+  } catch (error) {
+    console.error('Error loading products:', error);
+    if (productsTableBody) {
+      productsTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">Error: ${error.message}</td></tr>`;
+    }
+    showAlert('Failed to load products: ' + error.message, 'danger');
+  }
+}
+
+// Display products in table
+function displayProducts(products) {
+  console.log('displayProducts called with:', products);
+  
+  if (!productsTableBody) {
+    console.error('productsTableBody element not found!');
+    return;
+  }
+
+  if (!products || products.length === 0) {
+    console.log('No products to display');
+    productsTableBody.innerHTML = '<tr><td colspan="8" class="text-center">No products found</td></tr>';
+    return;
+  }
+
+  console.log(`Displaying ${products.length} products`);
+  
+  productsTableBody.innerHTML = products.map(product => `
+    <tr>
+      <td>${product.sku}</td>
+      <td>${product.name}</td>
+      <td>${product.category}</td>
+      <td>${product.quantity}</td>
+      <td>$${product.unitPrice ? product.unitPrice.toFixed(2) : '0.00'}</td>
+      <td>
+        <span class="badge ${product.status === 'available' ? 'bg-success' : 'bg-secondary'}">
+          ${product.status}
+        </span>
+        ${product.quantity <= (product.minStockLevel || 5 ) ? '<span class="badge bg-warning ms-1">Low Stock</span>' : ''}
+      </td>
+      <td>${product.supplier?.name || 'N/A'}</td>
+      <td class="text-nowrap">
+        <button class="btn btn-sm btn-outline-primary me-2" onclick="showEditModal('${product._id}')">
+          <i class="bi bi-pencil-square"></i> Edit
+        </button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct('${product._id}')">
+          <i class="bi bi-trash"></i> Delete
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// Load categories for filter (optional - can be removed if not using filter)
+async function loadCategories() {
+  // Category filter removed from UI
+  // This function kept for future use if filter is added
+  return;
+}
+
+// Load suppliers for dropdown
+async function loadSuppliers() {
+  try {
+    console.log('📦 [Products] Loading suppliers...');
+    const response = await fetch(`${API_BASE_URL}/suppliers/active`, {
+      headers: getHeaders()
+    });
+
+    console.log('📦 [Products] Suppliers response status:', response.status);
+    const data = await response.json();
+    console.log('📦 [Products] Suppliers response data:', data);
+    
+    // Check for session expiry (auto logout on server restart)
+    if (window.handleApiError && window.handleApiError(response, data)) {
+      return; // User logged out, no need to continue
+    }
+
+    if (!response.ok) {
+      console.error('❌ [Products] Failed to load suppliers:', data);
+      return;
+    }
+
+    // The API returns suppliers in data.data (array directly)
+    const suppliers = Array.isArray(data.data) ? data.data : [];
+    console.log(`📦 [Products] Found ${suppliers.length} suppliers`);
+    if (suppliers.length > 0) {
+      console.log('📦 [Products] Suppliers:', suppliers.map(s => s.name).join(', '));
+    } else {
+      console.warn('⚠️ [Products] No active suppliers found. Please add suppliers and mark them as Active.');
+    }
+    
+    const supplierSelects = document.querySelectorAll('#productSupplier, #editSupplierSelect');
+    console.log('📦 [Products] Found', supplierSelects.length, 'supplier select elements');
+    
+    supplierSelects.forEach(select => {
+      if (select) {
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">Select Supplier (Optional)</option>';
+        
+        if (suppliers.length > 0) {
+          select.innerHTML += suppliers.map(sup => 
+            `<option value="${sup._id}">${sup.name}</option>`
+          ).join('');
+          console.log(`✅ [Products] Added ${suppliers.length} suppliers to dropdown`);
+        }
+        
+        // Restore previous value if it still exists
+        if (currentValue) {
+          select.value = currentValue;
+        }
+      }
+    });
+  } catch (error) {
+    console.error('❌ [Products] Error loading suppliers:', error);
+  }
+}
+
+// Load warehouses for dropdown
+async function loadWarehouses() {
+  try {
+    console.log('🏢 [Products] Loading warehouses...');
+    const response = await fetch(`${API_BASE_URL}/warehouses`, {
+      headers: getHeaders()
+    });
+
+    console.log('🏢 [Products] Warehouses response status:', response.status);
+    const data = await response.json();
+    console.log('🏢 [Products] Warehouses response data:', data);
+    
+    // Check for session expiry
+    if (window.handleApiError && window.handleApiError(response, data)) {
+      return;
+    }
+
+    if (!response.ok) {
+      console.error('❌ [Products] Failed to load warehouses:', data);
+      return;
+    }
+
+    // The API returns warehouses in data.data.warehouses
+    const warehouses = data.data?.warehouses || [];
+    console.log(`🏢 [Products] Found ${warehouses.length} warehouses`);
+    
+    const warehouseSelect = document.getElementById('productWarehouse');
+    
+    if (warehouseSelect) {
+      warehouseSelect.innerHTML = '<option value="">No warehouse (optional)</option>';
+      
+      if (warehouses.length > 0) {
+        warehouseSelect.innerHTML += warehouses.map(wh => 
+          `<option value="${wh._id}">${wh.code} - ${wh.name}</option>`
+        ).join('');
+        console.log(`✅ [Products] Added ${warehouses.length} warehouses to dropdown`);
+      }
+      
+      // Add event listener to show/hide warehouse quantity field
+      warehouseSelect.addEventListener('change', function() {
+        const warehouseQtySection = document.getElementById('warehouseQuantitySection');
+        if (this.value) {
+          warehouseQtySection.style.display = 'block';
+        } else {
+          warehouseQtySection.style.display = 'none';
+          document.getElementById('warehouseQuantity').value = '0';
+        }
+      });
+    }
+  } catch (error) {
+    console.error('❌ [Products] Error loading warehouses:', error);
+  }
+}
+
+// Handle add product
+async function handleAddProduct(e) {
+  e.preventDefault();
+
+  const formData = new FormData(addProductForm);
+  const supplierValue = formData.get('supplier');
+  const warehouseValue = formData.get('warehouse');
+  const warehouseQuantityValue = formData.get('warehouseQuantity');
+  const priceValue = formData.get('price');
+  const quantityValue = formData.get('quantity');
+  const minStockValue = formData.get('minStock');
+  
+  const productData = {
+    sku: formData.get('sku')?.trim().toUpperCase(),  // Auto-convert to uppercase
+    name: formData.get('name')?.trim(),
+    description: formData.get('description')?.trim() || '',
+    category: formData.get('category'),
+    unitPrice: priceValue ? parseFloat(priceValue) : 0,
+    quantity: quantityValue ? parseInt(quantityValue) : 0,
+    minStockLevel: minStockValue ? parseInt(minStockValue) : 10,
+    status: 'available'
+  };
+  
+  // Only add supplier if one is selected
+  if (supplierValue && supplierValue.trim() !== '') {
+    productData.supplier = supplierValue.trim();
+  }
+
+  // Add warehouse assignment if selected
+  if (warehouseValue && warehouseValue.trim() !== '') {
+    const warehouseQty = warehouseQuantityValue ? parseInt(warehouseQuantityValue) : 0;
+    productData.warehouseStock = [{
+      warehouse: warehouseValue.trim(),
+      quantity: warehouseQty,
+      minStockLevel: minStockValue ? parseInt(minStockValue) : 10
+    }];
+  }
+
+  try {
+    console.log('Sending product data:', productData);
+    
+    const response = await fetch(`${API_BASE_URL}/products`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(productData)
+    });
+
+    const data = await response.json();
+    console.log('Server response:', data);
+
+    if (!response.ok) {
+      // Show detailed validation errors if available
+      let errorMessage = data.message || 'Failed to add product';
+      
+      // Handle validation errors array
+      if (data.errors && Array.isArray(data.errors)) {
+        errorMessage = data.errors.map(err => {
+          if (typeof err === 'string') return err;
+          if (err.message) return err.message;
+          if (err.msg) return err.msg;
+          return JSON.stringify(err);
+        }).join(', ');
+      }
+      
+      console.error('Validation failed:', errorMessage);
+      console.error('Full error response:', data);
+      throw new Error(errorMessage);
+    }
+
+    showAlert('Product added successfully!', 'success');
+    addProductForm.reset();
+    
+    // Close modal
+    const modalElement = document.getElementById('addProductModal');
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    if (modal) modal.hide();
+    
+    // Reload products to show new product
+    loadProducts();
+  } catch (error) {
+    console.error('Error adding product:', error);
+    console.error('Product data sent:', productData);
+    
+    // Better error message handling
+    let displayMessage = 'Failed to add product';
+    if (error.message && error.message !== '[object Object]') {
+      displayMessage = error.message;
+    } else if (typeof error === 'string') {
+      displayMessage = error;
+    }
+    
+    showAlert(displayMessage, 'danger');
+  }
+}
+
+// Show edit modal
+async function showEditModal(productId) {
+  currentEditId = productId;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+      headers: getHeaders()
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch product details');
+    }
+
+    const data = await response.json();
+    console.log('API Response:', data); // Debug log
+    
+    // Handle different response structures
+    const product = data.data?.product || data.data || data;
+    
+    if (!product || !product.sku) {
+      console.error('Invalid product data:', product);
+      throw new Error('Invalid product data received');
+    }
+
+    // Populate form
+    document.getElementById('editSku').value = product.sku;
+    document.getElementById('editName').value = product.name;
+    document.getElementById('editDescription').value = product.description || '';
+    document.getElementById('editCategory').value = product.category;
+    document.getElementById('editPrice').value = product.unitPrice;  // Changed from price
+    document.getElementById('editQuantity').value = product.quantity;
+    document.getElementById('editReorderLevel').value = product.minStockLevel;  // Changed from reorderLevel
+    document.getElementById('editSupplierSelect').value = product.supplier?._id || '';
+    document.getElementById('editStatus').value = product.status;
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
+    modal.show();
+  } catch (error) {
+    console.error('Error loading product:', error);
+    showAlert(error.message, 'danger');
+  }
+}
+
+// Handle edit product
+async function handleEditProduct(e) {
+  e.preventDefault();
+
+  if (!currentEditId) return;
+
+  const formData = new FormData(editProductForm);
+  const productData = {
+    sku: formData.get('sku'),
+    name: formData.get('name'),
+    description: formData.get('description'),
+    category: formData.get('category'),
+    unitPrice: parseFloat(formData.get('price')),  // Changed: price -> unitPrice
+    quantity: parseInt(formData.get('quantity')),
+    minStockLevel: parseInt(formData.get('reorderLevel')),  // Changed: reorderLevel -> minStockLevel
+    supplier: formData.get('supplier') || undefined,
+    status: formData.get('status')
+  };
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/products/${currentEditId}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(productData)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to update product');
+    }
+
+    showAlert('Product updated successfully', 'success');
+    
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editProductModal'));
+    if (modal) modal.hide();
+    
+    currentEditId = null;
+    loadProducts();
+  } catch (error) {
+    console.error('Error updating product:', error);
+    showAlert(error.message, 'danger');
+  }
+}
+
+// Delete product
+async function deleteProduct(productId) {
+  if (!confirm('Are you sure you want to delete this product?')) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to delete product');
+    }
+
+    showAlert('Product deleted successfully', 'success');
+    loadProducts();
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    showAlert(error.message, 'danger');
+  }
+}
+
+// Show alert message
+function showAlert(message, type = 'info') {
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+  alertDiv.style.zIndex = '9999';
+  alertDiv.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  document.body.appendChild(alertDiv);
+
+  setTimeout(() => {
+    alertDiv.remove();
+  }, 5000);
+}
+
+// Note: handleLogout() is provided by navbar.js
+
+// Expose functions to global scope for inline onclick handlers
+window.showEditModal = showEditModal;
+window.deleteProduct = deleteProduct;

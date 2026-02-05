@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard — Inventory Management System</title>
+    <!-- Bootstrap 5 CSS (CDN) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/theme.css">
+    <link rel="stylesheet" href="../assets/css/style-pro.css">
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+
+    <!-- Top navbar: system name (logout moved to sidebar) -->
+    <nav class="navbar navbar-light bg-white border-bottom">
+      <div class="container-fluid d-flex justify-content-center">
+        <span class="navbar-brand text-center mb-0 h5">Inventory Management System</span>
+      </div>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+  <!-- Left sidebar navigation: shows welcome at top, nav links, and logout at bottom -->
+  <aside class="col-3 col-md-2 d-none d-sm-flex flex-column border-end" style="min-height:92vh;">
+          <!-- Welcome area -->
+          <div class="p-3 border-bottom">
+            <p class="h2 mb-0 text-center fw-bold">Welcome</p>
+          </div>
+
+          <!-- Navigation links -->
+          <nav aria-label="Sidebar navigation" class="flex-grow-1 pt-3">
+            <ul class="nav flex-column px-2">
+              <li class="nav-item"><a class="nav-link active text-nowrap" aria-current="page" href="/pages/dashboard.html">Dashboard</a></li>
+              <li class="nav-item"><a class="nav-link text-nowrap" href="/pages/products.html">Products</a></li>
+              <li class="nav-item"><a class="nav-link text-nowrap" href="/pages/suppliers.html">Suppliers</a></li>
+              <li class="nav-item"><a class="nav-link text-nowrap" href="/pages/stock-in.html">Stock In</a></li>
+              <li class="nav-item"><a class="nav-link text-nowrap" href="/pages/stock-out.html">Stock Out</a></li>
+              <li class="nav-item"><a class="nav-link text-nowrap" href="/pages/reports.html">Reports</a></li>
+            </ul>
+          </nav>
+
+          <!-- Sidebar footer with logout button -->
+          <div class="mt-auto p-3 border-top">
+            <button class="btn btn-outline-danger btn-sm w-100 logout-btn">Logout</button>
+          </div>
+        </aside>
+
+        <!-- Main content area -->
+        <main class="col-12 col-sm-9 col-md-10 py-4">
+          <div class="container-fluid">
+            <!-- Page heading -->
+            <header class="mb-4">
+              <h2 class="h5 mb-1">Dashboard</h2>
+              <p class="text-muted small mb-0">Overview of inventory status and recent metrics (placeholder data).</p>
+            </header>
+
+            <!-- Summary cards row -->
+            <section aria-label="Summary cards">
+              <div class="row g-3">
+                <!-- Total Products card -->
+                <div class="col-12 col-md-4">
+                  <div class="card">
+                    <div class="card-body">
+                      <h3 class="h6">Total Products</h3>
+                      <p class="display-6 mb-0">128</p>
+                      <p class="text-muted small mb-0">Number of unique product SKUs in the system</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Total Suppliers card -->
+                <div class="col-12 col-md-4">
+                  <div class="card">
+                    <div class="card-body">
+                      <h3 class="h6">Total Suppliers</h3>
+                      <p class="display-6 mb-0">18</p>
+                      <p class="text-muted small mb-0">Registered suppliers</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Low Stock Items card -->
+                <div class="col-12 col-md-4">
+                  <div class="card border-warning">
+                    <div class="card-body">
+                      <h3 class="h6">Low Stock Items</h3>
+                      <p class="display-6 mb-0 text-warning">7</p>
+                      <p class="text-muted small mb-0">Items below reorder threshold</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Placeholder for additional main content (e.g., recent activity) -->
+            <section class="mt-4">
+              <div class="card">
+                <div class="card-body">
+                  <h3 class="h6">Recent activity</h3>
+                  <p class="text-muted small mb-0">This area can show recent transactions, alerts, or charts. (Placeholder)</p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <footer class="mt-4 text-center small text-muted">
+      Built for a university project — simple, accessible design.
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Admin authentication and protection -->
+    <script src="../assets/js/admin-auth.js"></script>
+  </body>
+</html>
