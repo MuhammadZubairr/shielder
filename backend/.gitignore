@@ -49,5 +49,8 @@ prisma/migrations/
 .cache/
 .temp/
 
+# Archive (old project files)
+_archive/
+
 #cursuorrules
 *.cursuorrules

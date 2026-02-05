@@ -1,8 +1,4 @@
 {
-<<<<<<< HEAD
-  "dependencies": {
-    "multer": "^2.0.2"
-=======
   "name": "shielder-backend",
   "version": "1.0.0",
   "description": "Shielder Digital Platform - Enterprise Backend API",
@@ -42,7 +38,8 @@
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "nodemailer": "^8.0.0"
+    "nodemailer": "^8.0.0",
+    "multer": "^2.0.2"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -66,6 +63,5 @@
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
->>>>>>> 8a6668f (feat: implement signup and login with hashed passwords and multi-device session management)
   }
 }
