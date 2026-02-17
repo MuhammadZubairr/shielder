@@ -1,8 +1,11 @@
 # Dependencies
 node_modules/
+.pnp
+.pnp.js
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 package-lock.json
 
 # Environment variables
@@ -11,12 +14,16 @@ package-lock.json
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+.env.test
+.env*.local
 
 # Build outputs
 dist/
 build/
 .next/
 out/
+*.tsbuildinfo
 
 # IDE
 .vscode/
@@ -24,23 +31,42 @@ out/
 *.swp
 *.swo
 *~
+.cursorrules
+.cursor/
+*.cursuorrules
 
 # OS
 .DS_Store
 Thumbs.db
+*.pem
 
 # Logs
 logs/
 *.log
 
-# Temporary files
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files & Uploads
 tmp/
 temp/
+.temp/
 *.tmp
+uploads/
 
-# Database
+# Database & Prisma
 *.sqlite
 *.db
-
-# Prisma
+backend/prisma/migrations/
 prisma/migrations/.migrate_lock
+
+# Vercel
+.vercel
+
+# Next.js / Frontend Specific
+next-env.d.ts
+
+# Misc
+.cache/
+_archive/
