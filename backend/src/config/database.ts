@@ -29,12 +29,23 @@ if (env.isDevelopment) {
  */
 export const connectDatabase = async (): Promise<void> => {
   try {
+    console.log('📡 Attempting to connect to database...');
     await prisma.$connect();
     console.log('✅ Database connected successfully');
   } catch (error) {
+    const isLocalhost = env.databaseUrl.includes('127.0.0.1') || env.databaseUrl.includes('localhost');
+    
     console.error('❌ Database connection failed!');
+    console.error('Current DATABASE_URL:', isLocalhost ? 'Localhost (incorrect for Railway)' : 'Remote (check credentials)');
     console.error('Error Details:', error instanceof Error ? error.message : error);
-    console.error('Note: Ensure DATABASE_URL is correctly set in your environment variables.');
+    
+    if (process.env.NODE_ENV === 'production' && isLocalhost) {
+      console.error('\n🔧 ACTION REQUIRED:');
+      console.error('Your app is running in PRODUCTION but trying to connect to LOCALHOST.');
+      console.error('Please go to Railway -> your backend service -> Variables');
+      console.error('And update DATABASE_URL with your Railway PostgreSQL connection string.');
+    }
+    
     process.exit(1);
   }
 };

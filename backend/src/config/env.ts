@@ -15,6 +15,8 @@ if (process.env.NODE_ENV !== 'production') {
  * Validates that required environment variables are set
  */
 const validateEnv = (): void => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   const required = [
     'NODE_ENV',
     'PORT',
@@ -29,6 +31,17 @@ const validateEnv = (): void => {
     throw new Error(
       `Missing required environment variables: ${missing.join(', ')}`
     );
+  }
+
+  // Production-specific checks
+  if (isProduction) {
+    const dbUrl = process.env.DATABASE_URL || '';
+    if (dbUrl.includes('127.0.0.1') || dbUrl.includes('localhost')) {
+      throw new Error(
+        'CRITICAL CONFIG ERROR: DATABASE_URL is pointing to localhost (127.0.0.1) in production. ' +
+        'Please update your DATABASE_URL in the Railway Environment Variables tab to use your Railway PostgreSQL connection string.'
+      );
+    }
   }
 };
 
