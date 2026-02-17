@@ -14,6 +14,7 @@ import {
   NotFoundError,
   ConflictError,
 } from '@/common/errors/api.error';
+import { AuditService } from '@/common/services/audit.service';
 import { logger } from '@/common/logger/logger';
 import type {
   RegisterRequest,
@@ -90,17 +91,26 @@ export class AuthService {
 
       logger.info(`New user registered: ${user.email}`);
 
-      // NEW: Trigger notification for new supplier
+      // NEW: Audit Log for User Registration
+      await AuditService.log({
+        userId: user.id,
+        action: 'USER_REGISTERED',
+        entityType: 'USER',
+        entityId: user.id,
+      }).catch(err => logger.error('Audit Log failed for registration:', err));
+
+      // NEW: Trigger notification for new supplier (Audit requirement)
       if (user.role === 'SUPPLIER') {
         try {
-          const { NotificationService } = require('../notification/notification.service');
-          const { NotificationType, UserRole } = require('@prisma/client');
-          
-          await NotificationService.createNotification({
-            type: NotificationType.NEW_SUPPLIER,
-            title: 'New Supplier Registration',
+          const NotificationService = (await import('../notification/notification.service')).default;
+          await NotificationService.notify({
+            type: 'NEW_USER_CREATED',
+            title: 'New Supplier registered',
             message: `A new supplier "${user.profile?.fullName || user.email}" has registered and is pending approval.`,
-            roleTarget: UserRole.SUPER_ADMIN,
+            module: 'USER',
+            triggeredById: user.id,
+            relatedId: user.id,
+            global: true
           });
         } catch (err) {
             logger.error('Failed to create notification for new supplier:', err);
@@ -154,6 +164,7 @@ export class AuthService {
     tokens: { accessToken: string; refreshToken: string };
   }> {
     try {
+      logger.info(`Login attempt for: ${data.email.toLowerCase()}`);
       // Find user by email
       const user = await prisma.user.findUnique({
         where: { email: data.email.toLowerCase() },
@@ -161,6 +172,7 @@ export class AuthService {
       });
 
       if (!user) {
+        logger.warn(`Login failed: User not found - ${data.email.toLowerCase()}`);
         throw new UnauthorizedError('Invalid credentials');
       }
 
@@ -176,6 +188,7 @@ export class AuthService {
 
       // Check if user is active
       if (!user.isActive) {
+        logger.warn(`Login failed: Account inactive - ${user.email}`);
         throw new UnauthorizedError('Account has been deactivated');
       }
 
@@ -183,6 +196,7 @@ export class AuthService {
       const isPasswordValid = await bcrypt.compare(data.password, user.passwordHash);
 
       if (!isPasswordValid) {
+        logger.warn(`Login failed: Invalid password - ${user.email}`);
         // Increment failed attempts
         await this.handleFailedLogin(user.id, user.failedLoginAttempts);
         throw new UnauthorizedError('Invalid credentials');
@@ -195,8 +209,18 @@ export class AuthService {
           failedLoginAttempts: 0,
           lockedUntil: null,
           lastLoginAt: new Date(),
+          lastLoginIp: deviceInfo?.ipAddress,
         },
       });
+
+      // NEW: Audit Log for User Login
+      await AuditService.log({
+        userId: user.id,
+        action: 'USER_LOGIN',
+        entityType: 'USER',
+        entityId: user.id,
+        ipAddress: deviceInfo?.ipAddress,
+      }).catch(err => logger.error('Audit Log failed for login:', err));
 
       // Generate tokens with device info
       const tokens = await TokenService.generateTokenPair(

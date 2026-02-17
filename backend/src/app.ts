@@ -16,6 +16,7 @@ import { logger } from './common/logger/logger';
 // Import routes
 import authRoutes from './modules/auth/auth.routes';
 import adminRoutes from './modules/admin/admin.routes';
+import adminManagementRoutes from './modules/super-admin/admin-management.routes';
 import superAdminRoutes from './modules/super-admin/super-admin.routes';
 import inventoryRoutes from './modules/inventory/inventory.routes';
 import stockAlertRoutes from './modules/inventory/stock-alert/stock-alert.routes';
@@ -23,9 +24,20 @@ import notificationRoutes from './modules/notification/notification.routes';
 import analyticsRoutes from './modules/analytics/analytics.routes';
 import profileRoutes from './modules/profile/profile.routes';
 import cartRoutes from './modules/cart/cart.routes';
+import orderRoutes from './modules/order/order.routes';
+import paymentRoutes from './modules/payment/payment.routes';
+import reportsRoutes from './modules/reports/reports.routes';
+import settingsRoutes from './modules/settings/settings.routes';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { swaggerConfig } from './config/swagger';
+
+/**
+ * Global BigInt serialization fix
+ */
+(BigInt.prototype as any).toJSON = function () {
+  return Number(this);
+};
 
 /**
  * Create Express application
@@ -50,6 +62,9 @@ export const createApp = (): Application => {
   // Compression middleware
   app.use(compression());
 
+  // Static files
+  app.use('/uploads', express.static('uploads'));
+
   // Logging middleware (only in development)
   if (env.isDevelopment) {
     app.use(morgan('dev'));
@@ -70,11 +85,16 @@ export const createApp = (): Application => {
   app.use(`${appConfig.api.prefix}/profile`, profileRoutes);
   app.use(`${appConfig.api.prefix}/cart`, cartRoutes);
   app.use(`${appConfig.api.prefix}/admin`, adminRoutes);
+  app.use(`${appConfig.api.prefix}/admins`, adminManagementRoutes);
   app.use(`${appConfig.api.prefix}/super-admin`, superAdminRoutes);
   app.use(`${appConfig.api.prefix}/inventory`, inventoryRoutes);
   app.use(`${appConfig.api.prefix}/products`, stockAlertRoutes);
   app.use(`${appConfig.api.prefix}/notifications`, notificationRoutes);
   app.use(`${appConfig.api.prefix}/analytics`, analyticsRoutes);
+  app.use(`${appConfig.api.prefix}/orders`, orderRoutes);
+  app.use(`${appConfig.api.prefix}/payments`, paymentRoutes);
+  app.use(`${appConfig.api.prefix}/reports`, reportsRoutes);
+  app.use(`${appConfig.api.prefix}/settings`, settingsRoutes);
 
   // 404 handler
   app.use(notFoundHandler);

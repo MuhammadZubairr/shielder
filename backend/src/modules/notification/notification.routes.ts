@@ -13,38 +13,62 @@ import { UserRole } from '@/common/constants/roles';
 
 const router = Router();
 
-// All routes are protected and require Admin/Super Admin
+// All notification routes require authentication
 router.use(authenticate);
-router.use(requireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN));
 
 /**
- * GET /api/notifications
+ * @route   GET /api/notifications/preferences
+ * @desc    Get user notification preferences
  */
-router.get('/', validate(notificationValidation.queryParams, 'query'), notificationController.getNotifications);
+router.get('/preferences', notificationController.getPreferences);
 
 /**
- * GET /api/notifications/unread-count
+ * @route   PUT /api/notifications/preferences
+ * @desc    Update user notification preferences
+ */
+router.put('/preferences', notificationController.updatePreferences);
+router.patch('/preferences', notificationController.updatePreferences);
+
+/**
+ * @route   GET /api/notifications
+ * @desc    Get all notifications (paginated)
+ */
+router.get('/', notificationController.getNotifications);
+
+/**
+ * @route   GET /api/notifications/latest
+ * @desc    Get latest 5 notifications
+ */
+router.get('/latest', notificationController.getLatest);
+
+/**
+ * @route   GET /api/notifications/unread-count
+ * @desc    Get count of unread notifications
  */
 router.get('/unread-count', notificationController.getUnreadCount);
 
 /**
- * PATCH /api/notifications/read-all
+ * @route   GET /api/notifications/stats
+ * @desc    Get holistic stats for Super Admin
+ */
+router.get('/stats', requireRoles(UserRole.SUPER_ADMIN), notificationController.getNotificationStats);
+
+/**
+ * @route   PATCH /api/notifications/read-all
+ * @desc    Mark all notifications as read
  */
 router.patch('/read-all', notificationController.markAllAsRead);
 
 /**
- * PATCH /api/notifications/:id/read
+ * @route   PATCH /api/notifications/:id/read
+ * @desc    Mark specific notification as read
  */
-router.patch('/:id/read', validate(notificationValidation.idParam, 'params'), notificationController.markAsRead);
+router.patch('/:id/read', notificationController.markAsRead);
 
 /**
- * DELETE /api/notifications/clear-read
+ * @route   DELETE /api/notifications/:id
+ * @desc    Soft delete a notification
  */
-router.delete('/clear-read', notificationController.clearRead);
-
-/**
- * DELETE /api/notifications/:id
- */
-router.delete('/:id', validate(notificationValidation.idParam, 'params'), notificationController.deleteNotification);
+router.delete('/:id', notificationController.deleteNotification);
 
 export default router;

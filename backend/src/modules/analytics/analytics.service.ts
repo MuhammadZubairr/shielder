@@ -3,9 +3,7 @@
  * High-performance aggregation logic for Super Admin dashboard
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/config/database';
 
 class AnalyticsService {
   /**
@@ -18,7 +16,7 @@ class AnalyticsService {
         DATE_TRUNC('month', created_at) AS month,
         SUM(total)::FLOAT AS revenue
       FROM orders
-      WHERE status = 'PAID'
+      WHERE payment_status = 'PAID'
       AND created_at >= NOW() - INTERVAL '12 months'
       GROUP BY month
       ORDER BY month ASC
@@ -41,7 +39,7 @@ class AnalyticsService {
       GROUP BY month
       ORDER BY month ASC
     `;
-    return result;
+    return result.map(r => ({ ...r, orderCount: Number(r.orderCount) }));
   }
 
   /**
@@ -97,7 +95,7 @@ class AnalyticsService {
       GROUP BY month
       ORDER BY month ASC
     `;
-    return result;
+    return result.map(r => ({ ...r, userCount: Number(r.userCount) }));
   }
 
   /**
@@ -113,7 +111,7 @@ class AnalyticsService {
     ] = await Promise.all([
       prisma.order.aggregate({
         where: {
-          status: 'PAID',
+          paymentStatus: 'PAID',
         },
         _sum: {
           total: true,

@@ -7,53 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  SUPER_ADMIN
-  ADMIN
-  SUPPLIER
-  USER
-}
-
-enum NotificationType {
-  LOW_STOCK
-  NEW_ORDER
-  NEW_SUPPLIER
-  PAYMENT_SUCCESS
-  SYSTEM_ALERT
-}
-
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  PENDING
-  SUSPENDED
-}
-
-enum DataType {
-  NUMBER
-  TEXT
-  BOOLEAN
-}
-
-enum AttachmentType {
-  IMAGE
-  DATASHEET
-  MANUAL
-  CERTIFICATE
-}
-
-enum ProductStatus {
-  DRAFT
-  PENDING
-  PUBLISHED
-  REJECTED
-}
-
-enum CartStatus {
-  ACTIVE
-  CHECKED_OUT
-}
-
 model User {
   id                      String         @id @default(uuid())
   email                   String         @unique
@@ -75,11 +28,18 @@ model User {
   updatedBy               String?        @map("updated_by")
   createdAt               DateTime       @default(now()) @map("created_at")
   updatedAt               DateTime       @updatedAt @map("updated_at")
+  lastLoginIp             String?        @map("last_login_ip")
   auditLogs               AuditLog[]
-  orders                  Order[]
-  refreshTokens           RefreshToken[]
-  profile                 UserProfile?
   carts                   Cart[]
+  orders                  Order[]
+  payments                Payment[]
+  expenses                Expense[]
+  products                Product[]
+  refreshTokens           RefreshToken[]
+  notifications           Notification[]
+  triggeredNotifications  Notification[]          @relation("NotificationTriggerer")
+  notificationPreferences NotificationPreference?
+  profile                 UserProfile?
 
   @@index([email])
   @@index([role])
@@ -129,13 +89,16 @@ model UserProfile {
 }
 
 model Category {
-  id            String                @id @default(uuid())
-  createdAt     DateTime              @default(now())
-  updatedAt     DateTime              @updatedAt
-  subcategories Subcategory[]
-  products      Product[]
-  translations  CategoryTranslation[]
-  brands        Brand[] // Brands associated with categories
+  id                      String                    @id @default(uuid())
+  image                   String?
+  isActive                Boolean                   @default(true) @map("is_active")
+  createdAt               DateTime                  @default(now()) @map("created_at")
+  updatedAt               DateTime                  @updatedAt @map("updated_at")
+  brands                  brands[]
+  category_spec_templates category_spec_templates[]
+  translations            CategoryTranslation[]
+  products                Product[]
+  subcategories           Subcategory[]
 
   @@map("categories")
 }
@@ -155,14 +118,17 @@ model CategoryTranslation {
 }
 
 model Subcategory {
-  id           String                   @id @default(uuid())
-  categoryId   String
-  createdAt    DateTime                 @default(now())
-  updatedAt    DateTime                 @updatedAt
-  category     Category                 @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  products     Product[]
-  translations SubcategoryTranslation[]
-  brands       Brand[] // Brands associated with subcategories
+  id                      String                    @id @default(uuid())
+  categoryId              String                    @map("category_id")
+  image                   String?
+  isActive                Boolean                   @default(true) @map("is_active")
+  createdAt               DateTime                  @default(now()) @map("created_at")
+  updatedAt               DateTime                  @updatedAt @map("updated_at")
+  brands                  brands[]
+  category_spec_templates category_spec_templates[]
+  products                Product[]
+  category                Category                  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  translations            SubcategoryTranslation[]
 
   @@map("subcategories")
 }
@@ -181,82 +147,44 @@ model SubcategoryTranslation {
   @@map("subcategory_translations")
 }
 
-model Brand {
-  id            String             @id @default(uuid())
-  name          String
-  logo          String?
-  categoryId    String?
-  subcategoryId String?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  category      Category?          @relation(fields: [categoryId], references: [id])
-  subcategory   Subcategory?       @relation(fields: [subcategoryId], references: [id])
-  products      Product[]
-  translations  BrandTranslation[]
-
-  @@map("brands")
-}
-
-model BrandTranslation {
-  id          String   @id @default(uuid())
-  brandId     String
-  locale      String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  brand       Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
-
-  @@unique([brandId, locale])
-  @@map("brand_translations")
-}
-
 model Product {
-  id                     String               @id @default(uuid())
-  categoryId             String
-  subcategoryId          String
-  brandId                String?
-  price                  Decimal              @db.Decimal(10, 2)
-  stock                  Int                  @default(0)
-  status                 ProductStatus        @default(PENDING)
-  minimumStockThreshold  Int                  @default(5) @map("minimum_stock_threshold")
-  isActive               Boolean              @default(true) @map("is_active")
-  createdAt              DateTime             @default(now())
-  updatedAt              DateTime             @updatedAt
-  category               Category             @relation(fields: [categoryId], references: [id])
-  subcategory            Subcategory          @relation(fields: [subcategoryId], references: [id])
-  brand                  Brand?               @relation(fields: [brandId], references: [id])
-  translations           ProductTranslation[]
-  specifications         ProductSpecification[]
-  attachments            ProductAttachment[]
-  orderItems             OrderItem[]
-  cartItems              CartItem[]
+  id                    String                 @id @default(uuid())
+  categoryId            String                 @map("categoryId")
+  subcategoryId         String                 @map("subcategoryId")
+  brandId               String?                @map("brandId")
+  supplierId            String?                @map("supplier_id")
+  price                 Decimal                @db.Decimal(10, 2)
+  stock                 Int                    @default(0)
+  minimumStockThreshold Int                    @default(5) @map("minimum_stock_threshold")
+  status                ProductStatus          @default(PENDING)
+  isActive              Boolean                @default(true) @map("is_active")
+  mainImage             String?                @map("main_image")
+  createdAt             DateTime               @default(now()) @map("createdAt")
+  updatedAt             DateTime               @updatedAt @map("updatedAt")
+  sku                   String?
+  cartItems             CartItem[]
+  orderItems            OrderItem[]
+  attachments           ProductAttachment[]
+  specifications        ProductSpecification[]
+  translations          ProductTranslation[]
+  product_variants      product_variants[]
+  brand                 brands?                @relation(fields: [brandId], references: [id])
+  category              Category               @relation(fields: [categoryId], references: [id])
+  subcategory           Subcategory            @relation(fields: [subcategoryId], references: [id])
+  supplier              User?                  @relation(fields: [supplierId], references: [id])
+  stockHistory          stock_history[]
 
   @@index([categoryId])
   @@index([subcategoryId])
   @@index([brandId])
+  @@index([supplierId])
   @@index([price])
   @@index([stock])
+  @@index([status])
   @@index([minimumStockThreshold])
   @@index([isActive])
   @@index([createdAt])
   @@map("products")
-}
-
-model Notification {
-  id         String           @id @default(uuid())
-  type       NotificationType
-  title      String
-  message    String
-  roleTarget UserRole?        @map("role_target")
-  userId     String?          @map("user_id")
-  isRead     Boolean          @default(false) @map("is_read")
-  createdAt  DateTime         @default(now()) @map("created_at")
-
-  @@index([roleTarget])
-  @@index([userId])
-  @@index([isRead])
-  @@index([createdAt])
-  @@map("notifications")
 }
 
 model ProductTranslation {
@@ -273,40 +201,16 @@ model ProductTranslation {
   @@map("product_translations")
 }
 
-model SpecificationDefinition {
-  id           String                     @id @default(uuid())
-  key          String                     @unique
-  unit         String?
-  dataType     DataType
-  createdAt    DateTime                   @default(now())
-  updatedAt    DateTime                   @updatedAt
-  products     ProductSpecification[]
-  translations SpecificationTranslation[]
-
-  @@map("specification_definitions")
-}
-
-model SpecificationTranslation {
-  id                        String                  @id @default(uuid())
-  specificationDefinitionId String
-  locale                    String
-  label                     String
-  createdAt                 DateTime                @default(now())
-  updatedAt                 DateTime                @updatedAt
-  definition                SpecificationDefinition @relation(fields: [specificationDefinitionId], references: [id], onDelete: Cascade)
-
-  @@unique([specificationDefinitionId, locale])
-  @@map("specification_translations")
-}
-
 model ProductSpecification {
-  id              String                  @id @default(uuid())
-  productId       String
-  specificationId String
-  value           String
-  product         Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
-  specification   SpecificationDefinition @relation(fields: [specificationId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  product_id String
+  spec_key   String
+  spec_value String
+  created_at DateTime @default(now())
+  updated_at DateTime
+  products   Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
 
+  @@unique([product_id, spec_key])
   @@map("product_specifications")
 }
 
@@ -327,28 +231,81 @@ model ProductAttachment {
 }
 
 model Order {
-  id              String      @id @default(uuid())
-  orderNumber     String      @unique
-  userId          String
-  status          String      @default("pending")
-  total           Decimal     @db.Decimal(10, 2)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  items           OrderItem[]
-  user            User        @relation(fields: [userId], references: [id])
+  id              String          @id @default(uuid())
+  total           Decimal         @db.Decimal(10, 2)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  customerName    String?         @map("customer_name")
+  notes           String?
+  orderNumber     String          @unique @map("order_number")
+  paymentMethod   String?         @map("payment_method")
+  paymentStatus   PaymentStatus   @default(UNPAID) @map("payment_status")
+  phoneNumber     String?         @map("phone_number")
+  shippingAddress String?         @map("shipping_address")
+  subtotal        Decimal         @db.Decimal(10, 2)
+  tax             Decimal         @default(0) @db.Decimal(10, 2)
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  userId          String          @map("user_id")
+  status          OrderStatus     @default(PENDING)
+  orderItems      OrderItem[]
+  payments        Payment[]
+  users           User            @relation(fields: [userId], references: [id])
+  stockHistory    stock_history[]  @relation("OrderToStockHistory")
 
+  @@index([orderNumber])
+  @@index([status])
+  @@index([userId])
   @@map("orders")
 }
 
+model Payment {
+  id            String        @id @default(uuid())
+  orderId       String        @map("order_id")
+  amount        Decimal       @db.Decimal(10, 2)
+  method        PaymentMethod
+  status        PaymentStatus @default(UNPAID)
+  transactionId String?       @unique @map("transaction_id")
+  notes         String?
+  recordedBy    String?       @map("recorded_by")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  order    Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  recorder User? @relation(fields: [recordedBy], references: [id])
+
+  @@index([orderId])
+  @@index([status])
+  @@index([transactionId])
+  @@map("payments")
+}
+
+model Expense {
+  id          String   @id @default(uuid())
+  amount      Decimal  @db.Decimal(10, 2)
+  category    String
+  description String?
+  date        DateTime @default(now())
+  recordedBy  String?  @map("recorded_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  recorder User? @relation(fields: [recordedBy], references: [id])
+
+  @@index([category])
+  @@index([date])
+  @@map("expenses")
+}
+
 model OrderItem {
-  id         String  @id @default(uuid())
-  orderId    String
-  productId  String
-  quantity   Int
-  unitPrice  Decimal @db.Decimal(10, 2)
-  totalPrice Decimal @db.Decimal(10, 2)
-  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product    Product @relation(fields: [productId], references: [id])
+  id             String            @id @default(uuid())
+  quantity       Int
+  orderId        String            @map("order_id")
+  productId      String            @map("product_id")
+  totalPrice     Decimal           @db.Decimal(10, 2) @map("total_price")
+  unitPrice      Decimal           @db.Decimal(10, 2) @map("unit_price")
+  variantId      String?           @map("variant_id")
+  order          Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product        Product           @relation(fields: [productId], references: [id])
+  variant        product_variants? @relation(fields: [variantId], references: [id])
 
   @@map("order_items")
 }
@@ -374,12 +331,79 @@ model Cart {
   status    CartStatus @default(ACTIVE)
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   items     CartItem[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
   @@map("carts")
+}
+
+model SystemSettings {
+  id              String   @id @default("CURRENT") // Singleton-like
+  
+  // General
+  systemName      String   @default("Shielder") @map("system_name")
+  companyName     String   @default("Shielder Digital") @map("company_name")
+  companyLogo     String?  @map("company_logo")
+  companyEmail    String?  @map("company_email")
+  companyPhone    String?  @map("company_phone")
+  companyAddress  String?  @map("company_address")
+  currency        String   @default("USD")
+  timezone        String   @default("UTC")
+  dateFormat      String   @default("YYYY-MM-DD") @map("date_format")
+  language        String   @default("en")
+
+  // Order
+  defaultOrderStatus          String  @default("PENDING") @map("default_order_status")
+  autoCompleteOrderAfterPayment Boolean @default(true) @map("auto_complete_order_after_payment")
+  allowPartialPayment         Boolean @default(false) @map("allow_partial_payment")
+  allowOrderCancellation      Boolean @default(true) @map("allow_order_cancellation")
+  autoCancelUnpaidOrdersHours Int?    @map("auto_cancel_unpaid_orders_hours")
+
+  // Payment
+  paymentMethodsEnabled       Json?   @map("payment_methods_enabled") // Array of strings
+  onlinePaymentEnabled        Boolean @default(true) @map("online_payment_enabled")
+  paymentTestMode             Boolean @default(true) @map("payment_test_mode")
+  paymentGatewayApiKey        String? @map("payment_gateway_api_key") // Encrypted
+  paymentGatewaySecretKey     String? @map("payment_gateway_secret_key") // Encrypted
+  paymentWebhookUrl           String? @map("payment_webhook_url")
+
+  // Notification
+  enableEmailNotifications    Boolean @default(true) @map("enable_email_notifications")
+  enableLowStockAlerts        Boolean @default(true) @map("enable_low_stock_alerts")
+  lowStockThreshold           Int     @default(5) @map("low_stock_threshold")
+  enableOrderStatusNotifications Boolean @default(true) @map("enable_order_status_notifications")
+  enablePaymentNotifications  Boolean @default(true) @map("enable_payment_notifications")
+  roleNotificationMappings    Json?   @map("role_notification_mappings")
+
+  // Security
+  passwordMinLength           Int     @default(8) @map("password_min_length")
+  maxLoginAttempts            Int     @default(5) @map("max_login_attempts")
+  accountLockDurationMinutes  Int     @default(30) @map("account_lock_duration_minutes")
+  sessionTimeoutMinutes       Int     @default(60) @map("session_timeout_minutes")
+  enableTwoFactorAuth         Boolean @default(false) @map("enable_two_factor_auth")
+  forceStrongPasswords        Boolean @default(true) @map("force_strong_passwords")
+
+  // Backup (Metadata)
+  lastBackupDate              DateTime? @map("last_backup_date")
+  autoBackupSchedule          String?   @map("auto_backup_schedule") // Cron string
+
+  updatedAt                   DateTime @updatedAt @map("updated_at")
+  updatedBy                   String?  @map("updated_by")
+
+  @@map("system_settings")
+}
+
+model SystemConfigSnapshot {
+  id          String   @id @default(uuid())
+  config      Json
+  version     Int
+  description String?
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("system_config_snapshots")
 }
 
 model CartItem {
@@ -387,7 +411,7 @@ model CartItem {
   cartId      String   @map("cart_id")
   productId   String   @map("product_id")
   quantity    Int      @default(1)
-  priceAtTime Decimal  @db.Decimal(10, 2) @map("price_at_time")
+  priceAtTime Decimal  @map("price_at_time") @db.Decimal(10, 2)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   cart        Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
@@ -395,4 +419,202 @@ model CartItem {
 
   @@unique([cartId, productId])
   @@map("cart_items")
+}
+
+model brand_translations {
+  id          String   @id
+  brandId     String
+  locale      String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+  Brand       brands   @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([brandId, locale])
+}
+
+model category_spec_templates {
+  id             String       @id
+  category_id    String
+  subcategory_id String?
+  spec_key       String
+  is_required    Boolean      @default(false)
+  created_at     DateTime     @default(now())
+  updated_at     DateTime
+  categories     Category     @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  subcategories  Subcategory? @relation(fields: [subcategory_id], references: [id], onDelete: Cascade)
+
+  @@unique([category_id, subcategory_id, spec_key])
+}
+
+model Notification {
+  id            String           @id @default(uuid())
+  type          NotificationType
+  title         String
+  message       String
+  module        String?          // e.g., 'ORDER', 'INVENTORY', 'PAYMENT', 'USER'
+  roleTarget    UserRole?        @map("role_target")
+  userId        String?          @map("user_id")
+  relatedId     String?          @map("related_id")
+  triggeredById String?          @map("triggered_by_id")
+  triggeredBy   String?          @map("triggered_by")   // "System" or User Name
+  metadata      Json?
+  isRead        Boolean          @default(false) @map("is_read")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  deletedAt     DateTime?        @map("deleted_at")
+
+  user          User?            @relation(fields: [userId], references: [id])
+  triggerer     User?            @relation("NotificationTriggerer", fields: [triggeredById], references: [id])
+
+  @@index([createdAt])
+  @@index([isRead])
+  @@index([roleTarget])
+  @@index([userId])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id           String   @id @default(uuid())
+  userId       String   @unique @map("user_id")
+  lowStock     Boolean  @default(true) @map("low_stock")
+  orderUpdates Boolean  @default(true) @map("order_updates")
+  payments     Boolean  @default(true)
+  newUser      Boolean  @default(true) @map("new_user")
+  email        Boolean  @default(true)
+  inApp        Boolean  @default(true) @map("in_app")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+model brands {
+  id                 String               @id
+  name               String
+  logo               String?
+  categoryId         String?
+  subcategoryId      String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime
+  brand_translations brand_translations[]
+  categories         Category?            @relation(fields: [categoryId], references: [id])
+  subcategories      Subcategory?         @relation(fields: [subcategoryId], references: [id])
+  products           Product[]
+}
+
+model product_variants {
+  id          String      @id
+  product_id  String
+  name        String
+  sku         String      @unique
+  price       Decimal?    @db.Decimal(10, 2)
+  stock       Int         @default(0)
+  created_at  DateTime    @default(now())
+  updated_at  DateTime
+  order_items OrderItem[]
+  products    Product     @relation(fields: [product_id], references: [id], onDelete: Cascade)
+}
+
+model stock_history {
+  id           String          @id
+  product_id   String
+  order_id     String?
+  quantity     Int
+  type         StockChangeType
+  note         String?
+  created_at   DateTime        @default(now())
+  performed_by String?
+  product_name String
+  order        Order?          @relation("OrderToStockHistory", fields: [order_id], references: [id])
+  product      Product         @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([order_id])
+  @@index([product_id])
+  @@index([type])
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  SUPPLIER
+  USER
+  STAFF
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  SUSPENDED
+}
+
+enum DataType {
+  NUMBER
+  TEXT
+  BOOLEAN
+}
+
+enum AttachmentType {
+  IMAGE
+  DATASHEET
+  MANUAL
+  CERTIFICATE
+}
+
+enum CartStatus {
+  ACTIVE
+  CHECKED_OUT
+}
+
+enum NotificationType {
+  LOW_STOCK
+  ORDER_CREATED
+  ORDER_COMPLETED
+  PAYMENT_SUCCESSFUL
+  PAYMENT_FAILED
+  NEW_USER_CREATED
+  REFUND_ISSUED
+  SYSTEM_ALERT
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CREDIT_CARD
+  DEBIT_CARD
+  ONLINE_GATEWAY
+  WALLET
+}
+
+enum PaymentStatus {
+  PAID
+  UNPAID
+  PENDING
+  FAILED
+  REFUNDED
+  PARTIALLY_PAID
+  PARTIALLY_REFUNDED
+}
+
+enum ProductStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
+enum StockChangeType {
+  ORDER_COMPLETED
+  ORDER_CANCELLED
+  MANUAL_ADJUSTMENT
+  RESTOCK
 }

@@ -40,6 +40,11 @@ export const requireSuperAdmin = requireRoles(UserRole.SUPER_ADMIN);
 export const requireAdmin = requireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN);
 
 /**
+ * Require Staff, Admin or Super Admin
+ */
+export const requireStaff = requireRoles(UserRole.STAFF, UserRole.ADMIN, UserRole.SUPER_ADMIN);
+
+/**
  * Check if user can manage target user
  */
 export const canManageUser = (

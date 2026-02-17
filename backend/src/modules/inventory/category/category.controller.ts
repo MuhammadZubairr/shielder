@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { categoryService } from './category.service';
+import { getPaginationParams } from '@/common/utils/pagination';
 
 export class CategoryController {
   /**
@@ -9,28 +10,15 @@ export class CategoryController {
    *     summary: Create a new category
    *     tags: [Inventory - Categories]
    *     security: [{ bearerAuth: [] }]
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             properties:
-   *               translations:
-   *                 type: array
-   *                 items:
-   *                   type: object
-   *                   properties:
-   *                     locale: { type: string }
-   *                     name: { type: string }
-   *                     description: { type: string }
-   *     responses:
-   *       201:
-   *         description: Category created
    */
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const category = await categoryService.create(req.body);
+      const data = {
+        ...req.body,
+        image: req.file ? `/uploads/categories/${req.file.filename}` : undefined,
+        isActive: req.body.isActive === 'true' || req.body.isActive === true,
+      };
+      const category = await categoryService.create(data);
       res.status(201).json({ success: true, data: category });
     } catch (error) {
       next(error);
@@ -41,21 +29,50 @@ export class CategoryController {
    * @swagger
    * /api/inventory/categories:
    *   get:
-   *     summary: List all categories
+   *     summary: List all categories with filters and pagination
    *     tags: [Inventory - Categories]
-   *     parameters:
-   *       - in: query
-   *         name: locale
-   *         schema: { type: string }
-   *     responses:
-   *       200:
-   *         description: List of categories
    */
   async list(req: Request, res: Response, next: NextFunction) {
     try {
-      const locale = req.query.locale as string;
-      const categories = await categoryService.list(locale);
-      res.json({ success: true, data: categories });
+      const pagination = getPaginationParams(req);
+      const filters = {
+        search: req.query.search as string,
+        isActive: req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined,
+      };
+      const result = await categoryService.list(filters, pagination, req.headers['accept-language'] as string);
+      res.json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/inventory/categories/summary:
+   *   get:
+   *     summary: Get categories summary
+   *     tags: [Inventory - Categories]
+   */
+  async getSummary(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const summary = await categoryService.getSummary();
+      res.json({ success: true, data: summary });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/inventory/categories/{id}:
+   *   get:
+   *     summary: Get category by ID
+   *     tags: [Inventory - Categories]
+   */
+  async getById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const category = await categoryService.getById(String(req.params.id), req.headers['accept-language'] as string);
+      res.json({ success: true, data: category });
     } catch (error) {
       next(error);
     }
@@ -68,32 +85,15 @@ export class CategoryController {
    *     summary: Update category
    *     tags: [Inventory - Categories]
    *     security: [{ bearerAuth: [] }]
-   *     parameters:
-   *       - in: path
-   *         name: id
-   *         required: true
-   *         schema: { type: string, format: uuid }
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             properties:
-   *               translations:
-   *                 type: array
-   *                 items:
-   *                   type: object
-   *                   properties:
-   *                     locale: { type: string }
-   *                     name: { type: string }
-   *     responses:
-   *       200:
-   *         description: Category updated
    */
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const category = await categoryService.update(String(req.params.id), req.body);
+      const data = {
+        ...req.body,
+        image: req.file ? `/uploads/categories/${req.file.filename}` : undefined,
+        isActive: req.body.isActive !== undefined ? (req.body.isActive === 'true' || req.body.isActive === true) : undefined,
+      };
+      const category = await categoryService.update(String(req.params.id), data);
       res.json({ success: true, data: category });
     } catch (error) {
       next(error);
@@ -107,14 +107,6 @@ export class CategoryController {
    *     summary: Delete category
    *     tags: [Inventory - Categories]
    *     security: [{ bearerAuth: [] }]
-   *     parameters:
-   *       - in: path
-   *         name: id
-   *         required: true
-   *         schema: { type: string, format: uuid }
-   *     responses:
-   *       200:
-   *         description: Category deleted
    */
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
@@ -127,3 +119,4 @@ export class CategoryController {
 }
 
 export const categoryController = new CategoryController();
+

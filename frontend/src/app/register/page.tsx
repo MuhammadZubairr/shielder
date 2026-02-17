@@ -24,7 +24,7 @@ export default function RegisterPage() {
     phoneNumber: '',
     address: '',
     companyName: '',
-    preferredLanguage: locale as any,
+    preferredLanguage: locale,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof RegisterRequest | 'confirmPassword', string>>>({});
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -72,7 +72,7 @@ export default function RegisterPage() {
     if (!validate()) return;
 
     try {
-      await register({ ...formData, preferredLanguage: locale as any });
+      await register({ ...formData, preferredLanguage: locale });
     } catch (error) {
       console.error('Registration error:', error);
     }

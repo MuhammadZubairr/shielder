@@ -11,6 +11,7 @@ module.exports = {
         shielder: {
           primary: '#045870',
           secondary: '#0205A6',
+          accent: '#0205A6', // Added accent color
           dark: '#0A1E36',
           critical: '#FF4C4C',
           warning: '#FFC107',

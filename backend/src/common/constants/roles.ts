@@ -6,7 +6,9 @@
 export enum UserRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
   ADMIN = 'ADMIN',
+  STAFF = 'STAFF',
   USER = 'USER',
+  SUPPLIER = 'SUPPLIER',
 }
 
 export enum UserStatus {
@@ -21,8 +23,10 @@ export enum UserStatus {
  * Higher number = higher privilege
  */
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
-  [UserRole.SUPER_ADMIN]: 3,
-  [UserRole.ADMIN]: 2,
+  [UserRole.SUPER_ADMIN]: 4,
+  [UserRole.ADMIN]: 3,
+  [UserRole.STAFF]: 2,
+  [UserRole.SUPPLIER]: 1.5,
   [UserRole.USER]: 1,
 };
 

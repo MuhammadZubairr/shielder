@@ -1,0 +1,45 @@
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { ApiError } from '../errors/api.error';
+
+// Ensure upload directory exists
+const uploadDir = 'uploads';
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+const storage = multer.diskStorage({
+  destination: (_req, file, cb) => {
+    let folder = uploadDir;
+    if (file.fieldname === 'image') {
+      folder = path.join(uploadDir, 'categories');
+    }
+    
+    if (!fs.existsSync(folder)) {
+      fs.mkdirSync(folder, { recursive: true });
+    }
+    cb(null, folder);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const fileFilter = (_req: any, file: Express.Multer.File, cb: any) => {
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new ApiError('Invalid file type. Only JPEG, PNG and WEBP are allowed.', 400), false);
+  }
+};
+
+export const upload = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB
+  },
+});

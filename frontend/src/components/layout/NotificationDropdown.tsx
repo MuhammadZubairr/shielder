@@ -1,0 +1,174 @@
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { Bell, Check, Loader2, Trash2, ExternalLink } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import notificationService, { Notification } from '@/services/notification.service';
+import Link from 'next/link';
+
+export const NotificationDropdown = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const { data } = await notificationService.getUnreadCount();
+      setUnreadCount(data.count);
+    } catch (err) {
+      console.error('Failed to fetch unread count');
+    }
+  };
+
+  const fetchNotifications = async () => {
+    setLoading(true);
+    try {
+      const { data } = await notificationService.getNotifications({ limit: 5 });
+      setNotifications(data.notifications);
+    } catch (err) {
+      console.error('Failed to fetch notifications');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+    // Refresh unread count every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchNotifications();
+    }
+  }, [isOpen]);
+
+  // Handle click outside to close
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, readAt: new Date().toISOString() } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Failed to mark as read');
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, readAt: new Date().toISOString() })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error('Failed to mark all as read');
+    }
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`relative p-2 rounded-full transition-colors ${isOpen ? 'bg-gray-100 text-shielder-primary' : 'text-gray-600 hover:bg-gray-100'}`}
+      >
+        <Bell size={22} />
+        {unreadCount > 0 && (
+          <span className="absolute top-1 right-1 bg-shielder-critical text-white text-[10px] font-bold px-1 min-w-[18px] rounded-full flex items-center justify-center border-2 border-white">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden transform origin-top-right transition-all">
+          <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+            <h3 className="font-bold text-gray-800">Notifications</h3>
+            {unreadCount > 0 && (
+              <button 
+                onClick={handleMarkAllRead}
+                className="text-xs font-semibold text-shielder-primary hover:underline flex items-center"
+              >
+                <Check size={14} className="mr-1" /> Mark all read
+              </button>
+            )}
+          </div>
+
+          <div className="max-h-96 overflow-y-auto">
+            {loading && notifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-10 space-y-3">
+                <Loader2 className="animate-spin text-shielder-primary" size={24} />
+                <span className="text-sm text-gray-500">Loading alerts...</span>
+              </div>
+            ) : notifications.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-10 text-center space-y-2">
+                <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
+                  <Bell size={24} />
+                </div>
+                <p className="text-sm font-medium text-gray-500">No new notifications</p>
+                <p className="text-xs text-gray-400">Everything is up to date.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {notifications.map((notification) => (
+                  <div 
+                    key={notification.id}
+                    className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer relative group ${!notification.isRead ? 'bg-blue-50/30' : ''}`}
+                    onClick={() => {
+                      if (!notification.isRead) handleMarkAsRead(notification.id, {} as any);
+                    }}
+                  >
+                    <div className="flex items-start justify-between space-x-3">
+                      <div className={`mt-1 p-1.5 rounded-lg ${
+                        notification.type === 'LOW_STOCK' ? 'bg-red-100 text-red-600' :
+                        notification.type.startsWith('ORDER') ? 'bg-blue-100 text-blue-600' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        <Bell size={16} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm ${notification.isRead ? 'text-gray-600' : 'text-gray-900 font-bold'}`}>
+                          {notification.title}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                          {notification.message}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-1.5 flex items-center">
+                          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                        </p>
+                      </div>
+                      {!notification.isRead && (
+                        <div className="w-2 h-2 rounded-full bg-shielder-primary mt-2"></div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Link 
+            href="/superadmin/notifications" 
+            onClick={() => setIsOpen(false)}
+            className="block p-3 text-center text-sm font-bold text-gray-600 hover:bg-gray-50 border-t border-gray-50 transition-colors bg-gray-50/20"
+          >
+            See all notifications
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+};

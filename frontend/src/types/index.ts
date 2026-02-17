@@ -23,6 +23,7 @@ export interface UserProfile {
   fullName: string | null;
   phoneNumber: string | null;
   address: string | null;
+  profileImage: string | null;
   companyName: string | null;
   taxId: string | null;
   preferredLanguage: Locale;
@@ -50,7 +51,7 @@ export interface RegisterRequest {
   address: string;
   companyName?: string;
   role?: 'ADMIN' | 'USER';
-  preferredLanguage?: string;
+  preferredLanguage?: Locale;
 }
 
 export interface AuthResponse {
@@ -88,6 +89,16 @@ export interface ApiError {
     message: string;
   }>;
   stack?: string;
+}
+
+export interface ApiErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+      errors?: Array<{ message: string }>;
+    };
+    status?: number;
+  };
 }
 
 /**
@@ -199,8 +210,8 @@ export interface PaginationParams {
 }
 
 export interface PaginatedResponse<T> {
-  items: T[];
-  meta: {
+  data: T[];
+  pagination: {
     page: number;
     limit: number;
     total: number;

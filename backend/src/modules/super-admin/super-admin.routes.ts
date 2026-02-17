@@ -6,39 +6,32 @@ import { Router } from 'express';
 import { superAdminController } from './super-admin.controller';
 import { authenticate } from '../auth/auth.middleware';
 import { requireSuperAdmin } from '../../common/middleware/rbac.middleware';
-import { validate } from '../../common/middleware/validation.middleware';
-import { superAdminValidation } from './super-admin.validation';
 
 const router = Router();
 
 // All routes require Super Admin
 router.use(authenticate, requireSuperAdmin);
 
-// Statistics
-router.get('/statistics', superAdminController.getStatistics.bind(superAdminController));
+// User Management Statistics
+router.get('/users/stats', superAdminController.getUserStats.bind(superAdminController));
 
-// Get all users (all roles)
-router.get('/users/all', validate(superAdminValidation.queryParams, 'query'), superAdminController.getAllUsers.bind(superAdminController));
+// Get all users (with filters)
+router.get('/users/all', superAdminController.getAllUsers.bind(superAdminController));
 
-// Get users only
-router.get('/users', validate(superAdminValidation.queryParams, 'query'), superAdminController.getUsers.bind(superAdminController));
+// Create a new user (of any permitted role)
+router.post('/users/create', superAdminController.createUser.bind(superAdminController));
 
-// Get admins only
-router.get('/admins', validate(superAdminValidation.queryParams, 'query'), superAdminController.getAdmins.bind(superAdminController));
+// Update user details, role, or status
+router.put('/users/:id', superAdminController.updateUser.bind(superAdminController));
 
-// Get single user
-router.get('/users/:id', superAdminController.getUserById.bind(superAdminController));
-
-// Create admin
-router.post('/admins', validate(superAdminValidation.createAdmin), superAdminController.createAdmin.bind(superAdminController));
-
-// Update user role
-router.patch('/users/:id/role', validate(superAdminValidation.updateRole), superAdminController.updateUserRole.bind(superAdminController));
-
-// Update status
-router.patch('/users/:id/status', validate(superAdminValidation.updateStatus), superAdminController.updateUserStatus.bind(superAdminController));
-
-// Delete user
+// Delete user (Soft Delete)
 router.delete('/users/:id', superAdminController.deleteUser.bind(superAdminController));
+
+// Statistics & Dashboards
+router.get('/statistics', superAdminController.getStatistics.bind(superAdminController));
+router.get('/dashboard/summary', superAdminController.getDashboardSummary.bind(superAdminController));
+router.get('/analytics/monthly', superAdminController.getMonthlyAnalytics.bind(superAdminController));
+router.get('/activity', superAdminController.getRecentActivity.bind(superAdminController));
+
 
 export default router;

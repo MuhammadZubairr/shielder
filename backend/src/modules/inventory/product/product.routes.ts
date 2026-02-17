@@ -4,16 +4,23 @@ import { productValidation } from './product.validation';
 import { validate } from '@/common/middleware/validation.middleware';
 import { authenticate } from '@/modules/auth/auth.middleware';
 import { requireAdmin } from '@/common/middleware/rbac.middleware';
+import multer from 'multer';
 
 const router = Router();
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Public routes
 router.get('/', validate(productValidation.list, 'query'), productController.list);
+router.get('/summary', authenticate, requireAdmin, productController.getSummary);
+router.get('/management', authenticate, requireAdmin, productController.listForManagement);
 router.get('/:id', productController.getById);
 router.get('/:id/attachments', productController.listAttachments);
 
 // Protected routes (Admin only)
 router.use(authenticate, requireAdmin);
+
+router.post('/bulk-upload', upload.single('file'), productController.bulkUpload);
+router.get('/template', productController.downloadTemplate);
 
 router.get('/pending', productController.getPending);
 router.patch('/:id/approve', productController.approve);

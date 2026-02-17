@@ -5,8 +5,16 @@ import { Check, X, Box, User, ExternalLink, ShieldCheck } from 'lucide-react';
 import adminService from '@/services/admin.service';
 import toast from 'react-hot-toast';
 
+interface PendingProduct {
+  id: string;
+  name: string;
+  supplier: string;
+  price: string;
+  createdAt: string;
+}
+
 export default function ApprovalsPage() {
-  const [pendingProducts, setPendingProducts] = useState([]);
+  const [pendingProducts, setPendingProducts] = useState<PendingProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,7 +28,7 @@ export default function ApprovalsPage() {
           { id: 'p1', name: 'Tower Crane L-Type', supplier: 'Dubai Machinery Corp', price: '450,000', createdAt: '2026-02-12' },
           { id: 'p2', name: 'Mobile Generator 500kVA', supplier: 'Power Sources Ltd', price: '85,000', createdAt: '2026-02-11' },
           { id: 'p3', name: 'Heavy Duty Jack (Set of 4)', supplier: 'Tools & Parts SA', price: '12,000', createdAt: '2026-02-13' },
-        ] as any);
+        ]);
       } finally {
         setLoading(false);
       }
@@ -37,7 +45,7 @@ export default function ApprovalsPage() {
         await adminService.rejectProduct(id);
         toast.error('Product verification rejected');
       }
-      setPendingProducts(pendingProducts.filter((p: any) => p.id !== id));
+      setPendingProducts(pendingProducts.filter((p) => p.id !== id));
     } catch (err) {
       toast.error(`Failed to ${action} product`);
     }
@@ -58,7 +66,7 @@ export default function ApprovalsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
           [1, 2, 3].map(i => <div key={i} className="bg-white h-64 rounded-2xl animate-pulse"></div>)
-        ) : pendingProducts.map((product: any) => (
+        ) : pendingProducts.map((product) => (
           <div key={product.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col group hover:shadow-xl transition-all duration-500">
             {/* Header */}
             <div className="p-6 pb-4 flex-1">

@@ -149,7 +149,7 @@ export default function LoginPage() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="hassanumar@gmail.com"
+                    placeholder="example@gmail.com"
                     autoComplete="email"
                     className={`w-full py-4 ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} bg-white border-2 rounded-full outline-none transition-all ${
                       errors.email ? 'border-red-500' : 'border-gray-200 focus:border-shielder-accent'
@@ -185,9 +185,12 @@ export default function LoginPage() {
                 {errors.password && (
                   <p className="text-xs text-red-500 mt-1 ml-4">{errors.password}</p>
                 )}
-                <div className="flex justify-end pr-2">
-                  <Link href="#" className="text-sm text-gray-500 hover:text-shielder-dark transition-colors">
-                    {t.forgotPassword}?
+                <div className={`flex ${isRTL ? 'justify-start pl-2' : 'justify-end pr-2'}`}>
+                  <Link 
+                    href="#" 
+                    className="text-sm font-semibold text-shielder-accent hover:text-shielder-dark transition-colors hover:underline"
+                  >
+                    {t.forgotPassword}
                   </Link>
                 </div>
               </div>

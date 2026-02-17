@@ -3,64 +3,94 @@
  * Handles business logic for low stock management
  */
 
-import { PrismaClient } from '@prisma/client';
 import { BadRequestError, NotFoundError } from '@/common/errors/api.error';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/config/database';
+import NotificationService from '@/modules/notification/notification.service';
+import { NotificationType, UserRole } from '@prisma/client';
 
 class StockAlertService {
+  /**
+   * Check and notify if stock is low
+   */
+  static async checkAndNotify(productId: string) {
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        translations: { where: { locale: 'en' }, take: 1 }
+      }
+    });
+
+    if (product && product.isActive && product.stock <= product.minimumStockThreshold) {
+      const productName = product.translations[0]?.name || 'Unknown Product';
+      
+      await NotificationService.notify({
+        type: NotificationType.LOW_STOCK,
+        title: 'Low Stock Alert',
+        message: `Product "${productName}" is below its minimum threshold. Current stock: ${product.stock}`,
+        module: 'INVENTORY',
+        roleTarget: UserRole.SUPER_ADMIN,
+        relatedId: productId,
+        metadata: { sku: product.sku, stock: product.stock }
+      });
+    }
+  }
   /**
    * Get low stock products with pagination
    */
   static async getLowStockProducts(page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
+    try {
+      const skip = (page - 1) * limit;
 
-    // We use raw query here because Prisma currently doesn't support column-to-column comparison natively in 'where' clause
-    const products: any[] = await prisma.$queryRaw`
-      SELECT p.*, c.id as "categoryId", b.id as "brandId"
-      FROM products p
-      LEFT JOIN categories c ON p."categoryId" = c.id
-      LEFT JOIN brands b ON p."brandId" = b.id
-      WHERE p.is_active = true AND p.stock <= p.minimum_stock_threshold
-      ORDER BY p.stock ASC
-      LIMIT ${limit} OFFSET ${skip}
-    `;
+      // We use raw query here because Prisma currently doesn't support column-to-column comparison natively in 'where' clause
+      const products: any[] = await prisma.$queryRaw`
+        SELECT p.*, c.id as "categoryId", b.id as "brandId"
+        FROM products p
+        LEFT JOIN categories c ON p."categoryId" = c.id
+        LEFT JOIN brands b ON p."brandId" = b.id
+        WHERE p.is_active = true AND p.stock <= p.minimum_stock_threshold
+        ORDER BY p.stock ASC
+        LIMIT ${limit} OFFSET ${skip}
+      `;
 
-    const totalCountResult: any[] = await prisma.$queryRaw`
-      SELECT COUNT(*) as count
-      FROM products
-      WHERE is_active = true AND stock <= minimum_stock_threshold
-    `;
+      const totalCountResult: any[] = await prisma.$queryRaw`
+        SELECT COUNT(*) as count
+        FROM products
+        WHERE is_active = true AND stock <= minimum_stock_threshold
+      `;
 
-    const total = Number(totalCountResult[0]?.count || 0);
-    const totalPages = Math.ceil(total / limit);
+      const total = Number(totalCountResult[0]?.count || 0);
+      const totalPages = Math.ceil(total / limit);
 
-    // Fetch related data for the products (translations, etc.) using Prisma for ease of use
-    const productIds = products.map(p => p.id);
-    const fullyLoadedProducts = await prisma.product.findMany({
-      where: {
-        id: { in: productIds }
-      },
-      include: {
-        category: true,
-        brand: true,
-        translations: {
-          take: 1,
+      // Fetch related data for the products (translations, etc.) using Prisma for ease of use
+      const productIds = products.map(p => p.id);
+      const fullyLoadedProducts = await prisma.product.findMany({
+        where: {
+          id: { in: productIds }
         },
-      },
-      orderBy: {
-        stock: 'asc',
-      }
-    });
+        include: {
+          category: true,
+          brand: true,
+          translations: {
+            take: 1,
+          },
+        },
+        orderBy: {
+          stock: 'asc',
+        }
+      });
 
-    return {
-      products: fullyLoadedProducts,
-      pagination: {
-        total,
-        page,
-        totalPages,
-      },
-    };
+      return {
+        products: fullyLoadedProducts,
+        pagination: {
+          total,
+          page,
+          totalPages,
+        },
+      };
+    } catch (error: any) {
+      console.error('ERROR in getLowStockProducts:', error);
+      throw error;
+    }
   }
 
   /**
@@ -94,10 +124,15 @@ class StockAlertService {
       throw new NotFoundError('Product not found');
     }
 
-    return prisma.product.update({
+    const updated = await prisma.product.update({
       where: { id: productId },
       data: { stock } as any,
     });
+
+    // Check if we need to alert
+    await this.checkAndNotify(productId);
+
+    return updated;
   }
 
   /**

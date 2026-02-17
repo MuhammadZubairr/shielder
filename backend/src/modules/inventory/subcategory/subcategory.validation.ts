@@ -1,18 +1,16 @@
 import Joi from 'joi';
 
-const subcategoryTranslationSchema = Joi.object({
-  locale: Joi.string().required().length(2),
-  name: Joi.string().required().trim().max(100),
-  description: Joi.string().optional().trim().max(1000),
-});
-
 export const subcategoryValidation = {
   create: Joi.object({
+    name: Joi.string().required().trim().max(100),
+    description: Joi.string().required().trim().max(1000),
     categoryId: Joi.string().uuid().required(),
-    translations: Joi.array().items(subcategoryTranslationSchema).min(1).required(),
+    isActive: Joi.alternatives().try(Joi.boolean(), Joi.string().valid('true', 'false')).optional(),
   }),
   update: Joi.object({
+    name: Joi.string().optional().trim().max(100),
+    description: Joi.string().optional().trim().max(1000),
     categoryId: Joi.string().uuid().optional(),
-    translations: Joi.array().items(subcategoryTranslationSchema).min(1).optional(),
+    isActive: Joi.alternatives().try(Joi.boolean(), Joi.string().valid('true', 'false')).optional(),
   }),
 };

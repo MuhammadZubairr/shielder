@@ -4,51 +4,36 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { superAdminService } from './super-admin.service';
-import { getPaginationParams, getSearchFilters } from '../../common/utils/pagination';
+import { getPaginationParams } from '../../common/utils/pagination';
 
 export class SuperAdminController {
   /**
-   * @swagger
-   * /api/super-admin/users/all:
-   *   get:
-   *     summary: Get all system users (Super Admin only)
-   *     tags: [Super Admin Panel]
-   *     security: [{ bearerAuth: [] }]
-   *     responses:
-   *       200:
-   *         description: List of all users
+   * Get User Management Stats (Total/Active/Inactive/New)
    */
-  async getAllUsers(req: Request, res: Response, next: NextFunction) {
+  async getUserStats(_req: Request, res: Response, next: NextFunction) {
     try {
-      const pagination = getPaginationParams(req);
-      const filters = getSearchFilters(req);
-
-      const result = await superAdminService.getAllUsers(filters, pagination);
-
-      res.json({ success: true, message: 'All users retrieved', ...result });
+      const stats = await superAdminService.getUserStats();
+      res.json({ success: true, data: stats });
     } catch (error) {
       next(error);
     }
   }
 
   /**
-   * @swagger
-   * /api/super-admin/users:
-   *   get:
-   *     summary: Get users with role USER
-   *     tags: [Super Admin Panel]
-   *     security: [{ bearerAuth: [] }]
-   *     responses:
-   *       200:
-   *         description: List of users
+   * Get all users with full filters and pagination
    */
-  async getUsers(req: Request, res: Response, next: NextFunction) {
+  async getAllUsers(req: Request, res: Response, next: NextFunction) {
     try {
       const pagination = getPaginationParams(req);
-      const filters = getSearchFilters(req);
+      const filters = {
+        search: req.query.search,
+        role: req.query.role,
+        status: req.query.status,
+        dateFrom: req.query.dateFrom,
+        dateTo: req.query.dateTo,
+      };
 
-      const result = await superAdminService.getUsers(filters, pagination);
-
+      const result = await superAdminService.getAllUsers(filters, pagination);
       res.json({ success: true, message: 'Users retrieved', ...result });
     } catch (error) {
       next(error);
@@ -56,23 +41,13 @@ export class SuperAdminController {
   }
 
   /**
-   * @swagger
-   * /api/super-admin/admins:
-   *   get:
-   *     summary: Get all admins (Super Admin only)
-   *     tags: [Super Admin Panel]
-   *     security: [{ bearerAuth: [] }]
-   *     responses:
-   *       200:
-   *         description: List of admins
+   * Legacy Support: Get admins only
    */
   async getAdmins(req: Request, res: Response, next: NextFunction) {
     try {
       const pagination = getPaginationParams(req);
-      const filters = getSearchFilters(req);
-
-      const result = await superAdminService.getAdmins(filters, pagination);
-
+      const filters = { role: 'ADMIN' };
+      const result = await superAdminService.getAllUsers(filters, pagination);
       res.json({ success: true, message: 'Admins retrieved', ...result });
     } catch (error) {
       next(error);
@@ -80,170 +55,77 @@ export class SuperAdminController {
   }
 
   /**
-   * @swagger
-   * /api/super-admin/users/{id}:
-   *   get:
-   *     summary: Get user by ID (Super Admin only)
-   *     tags: [Super Admin Panel]
-   *     security: [{ bearerAuth: [] }]
-   *     parameters:
-   *       - in: path
-   *         name: id
-   *         required: true
-   *         schema: { type: string }
-   *     responses:
-   *       200:
-   *         description: User details
+   * Legacy Support: Get Admin Summary
    */
-  async getUserById(req: Request, res: Response, next: NextFunction) {
+  async getAdminsSummary(_req: Request, res: Response, next: NextFunction) {
     try {
-      const user = await superAdminService.getUserById(String(req.params.id));
-      res.json({ success: true, data: user });
+      const summary = await superAdminService.getAdminSummary();
+      res.json({ success: true, data: summary });
     } catch (error) {
       next(error);
     }
   }
 
   /**
-   * @swagger
-   * /api/super-admin/admins:
-   *   post:
-   *     summary: Create a new Admin
-   *     tags: [Super Admin Panel]
-   *     security: [{ bearerAuth: [] }]
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             required: [email, password]
-   *             properties:
-   *               email: { type: string, format: email }
-   *               password: { type: string }
-   *               fullName: { type: string }
-   *     responses:
-   *       201:
-   *         description: Admin created
+   * Create a new User (Admin, Staff, or Customer)
    */
-  async createAdmin(req: Request, res: Response, next: NextFunction) {
+  async createUser(req: Request, res: Response, next: NextFunction) {
     try {
       const createdBy = req.user?.id!;
-      const admin = await superAdminService.createAdmin(req.body, createdBy);
+      const user = await superAdminService.createUser(req.body, createdBy);
 
-      res.status(201).json({ success: true, message: 'Admin created', data: admin });
+      res.status(201).json({ 
+        success: true, 
+        message: 'User account created successfully.', 
+        data: user 
+      });
     } catch (error) {
       next(error);
     }
   }
 
   /**
-   * @swagger
-   * /api/super-admin/users/{id}/role:
-   *   patch:
-   *     summary: Update user role (Super Admin only)
-   *     tags: [Super Admin Panel]
-   *     security: [{ bearerAuth: [] }]
-   *     parameters:
-   *       - in: path
-   *         name: id
-   *         required: true
-   *         schema: { type: string }
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             required: [role]
-   *             properties:
-   *               role: { type: string, enum: [USER, ADMIN, SUPER_ADMIN] }
-   *     responses:
-   *       200:
-   *         description: Role updated
+   * Update User details, role, or status
    */
-  async updateUserRole(req: Request, res: Response, next: NextFunction) {
+  async updateUser(req: Request, res: Response, next: NextFunction) {
     try {
       const updatedBy = req.user?.id!;
-      const user = await superAdminService.updateUserRole(
+      const user = await superAdminService.updateUser(
         String(req.params.id),
-        req.body.role,
+        req.body,
         updatedBy
       );
 
-      res.json({ success: true, message: 'Role updated', data: user });
+      res.json({ 
+        success: true, 
+        message: 'User account updated successfully.', 
+        data: user 
+      });
     } catch (error) {
       next(error);
     }
   }
 
   /**
-   * @swagger
-   * /api/super-admin/users/{id}/status:
-   *   patch:
-   *     summary: Update user active status (Super Admin only)
-   *     tags: [Super Admin Panel]
-   *     security: [{ bearerAuth: [] }]
-   *     parameters:
-   *       - in: path
-   *         name: id
-   *         required: true
-   *         schema: { type: string }
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             required: [isActive]
-   *             properties:
-   *               isActive: { type: boolean }
-   *     responses:
-   *       200:
-   *         description: Status updated
-   */
-  async updateUserStatus(req: Request, res: Response, next: NextFunction) {
-    try {
-      const updatedBy = req.user?.id!;
-      const user = await superAdminService.updateUserStatus(
-        String(req.params.id),
-        req.body.isActive,
-        updatedBy
-      );
-
-      res.json({ success: true, message: 'Status updated', data: user });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * @swagger
-   * /api/super-admin/users/{id}:
-   *   delete:
-   *     summary: Delete user (Super Admin only)
-   *     tags: [Super Admin Panel]
-   *     security: [{ bearerAuth: [] }]
-   *     parameters:
-   *       - in: path
-   *         name: id
-   *         required: true
-   *         schema: { type: string }
-   *     responses:
-   *       200:
-   *         description: User deleted
+   * Delete User (Soft Delete)
    */
   async deleteUser(req: Request, res: Response, next: NextFunction) {
     try {
       const deletedBy = req.user?.id!;
-      const result = await superAdminService.deleteUser(String(req.params.id), deletedBy);
+      const result = await superAdminService.deleteUser(
+        String(req.params.id),
+        deletedBy
+      );
 
-      res.json({ success: true, ...result });
+      res.json(result);
     } catch (error) {
       next(error);
     }
   }
 
+  /**
+   * Get overall Dashboard Statistics
+   */
   async getStatistics(_req: Request, res: Response, next: NextFunction) {
     try {
       const stats = await superAdminService.getStatistics();
@@ -252,6 +134,43 @@ export class SuperAdminController {
       next(error);
     }
   }
+
+  /**
+   * Get Dashboard Summary (Counts & Revenue)
+   */
+  async getDashboardSummary(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const summary = await superAdminService.getDashboardSummary();
+      res.json({ success: true, data: summary });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get Analytics data for charts
+   */
+  async getMonthlyAnalytics(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const stats = await superAdminService.getMonthlyAnalytics();
+      res.json({ success: true, data: stats });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Get recent system-wide actions/audit logs
+   */
+  async getRecentActivity(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const activity = await superAdminService.getRecentActivity();
+      res.json({ success: true, data: activity });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const superAdminController = new SuperAdminController();
+

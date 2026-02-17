@@ -96,8 +96,7 @@ export function buildWhereClause(filters: SearchFilter) {
       {
         profile: {
           OR: [
-            { firstName: { contains: filters.search, mode: 'insensitive' } },
-            { lastName: { contains: filters.search, mode: 'insensitive' } },
+            { fullName: { contains: filters.search, mode: 'insensitive' } },
           ],
         },
       },

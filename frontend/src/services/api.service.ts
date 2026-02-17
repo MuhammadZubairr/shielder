@@ -55,8 +55,13 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // If error is 401 and we haven't retried yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Skip refresh logic for specific auth endpoints and login
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                          originalRequest.url?.includes('/auth/signup') ||
+                          originalRequest.url?.includes('/auth/refresh');
+
+    // If error is 401 and we haven't retried yet and it's not an auth login/signup
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {

@@ -36,6 +36,25 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `/inventory/products/${id}`,
     BY_CATEGORY: (categoryId: string) => `/inventory/products?categoryId=${categoryId}`,
     LOW_STOCK: '/products/low-stock',
+    BULK_UPLOAD: '/inventory/products/bulk-upload',
+    TEMPLATE: '/inventory/products/template',
+  },
+  // Super Admin
+  SUPER_ADMIN: {
+    SUMMARY: '/super-admin/dashboard/summary',
+    ANALYTICS_MONTHLY: '/super-admin/analytics/monthly',
+    ACTIVITY: '/super-admin/activity',
+    USERS: '/super-admin/users/all',
+    USER_STATS: '/super-admin/users/stats',
+    USER_CREATE: '/super-admin/users/create',
+    USER_BY_ID: (id: string) => `/super-admin/users/${id}`,
+  },
+  // Admin Management
+  ADMINS: {
+    BASE: '/admins',
+    SUMMARY: '/admins/summary',
+    BY_ID: (id: string) => `/admins/${id}`,
+    STATUS: (id: string) => `/admins/${id}/status`,
   },
   // Categories
   CATEGORIES: {
@@ -70,9 +89,11 @@ export const STORAGE_KEYS = {
  * User Roles
  */
 export const USER_ROLES = {
-  ADMIN: 'admin',
-  CUSTOMER: 'customer',
-  DEALER: 'dealer',
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  ADMIN: 'ADMIN',
+  STAFF: 'STAFF',
+  CUSTOMER: 'USER',
+  DEALER: 'SUPPLIER',
   SALES: 'sales',
 } as const;
 
@@ -198,4 +219,9 @@ export const ROUTES = {
   ADMIN_ORDERS: '/admin/orders',
   ADMIN_USERS: '/admin/users',
   ADMIN_REPORTS: '/admin/analytics',
+
+  // Super Admin
+  SUPER_ADMIN_DASHBOARD: '/superadmin/dashboard',
+  SUPER_ADMIN_USERS: '/superadmin/users',
+  SUPER_ADMIN_PRODUCTS: '/superadmin/products',
 } as const;

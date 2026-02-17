@@ -1,17 +1,31 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { Download, Calendar, ArrowUpRight, ArrowDownRight, TrendingUp } from 'lucide-react';
-import adminService from '@/services/admin.service';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from 'recharts';
+import { Download, Calendar, TrendingUp } from 'lucide-react';
 
 const COLORS = ['#045870', '#0205A6', '#10B981', '#F59E0B', '#EF4444'];
 
+interface RevenueData {
+  name: string;
+  revenue: number;
+  orders: number;
+}
+
+interface CategoryData {
+  name: string;
+  value: number;
+}
+
+interface UserGrowthData {
+  name: string;
+  count: number;
+}
+
 export default function AnalyticsPage() {
-  const [revenueData, setRevenueData] = useState<any[]>([]);
-  const [categoryData, setCategoryData] = useState<any[]>([]);
-  const [userGrowth, setUserGrowth] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [revenueData, setRevenueData] = useState<RevenueData[]>([]);
+  const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
+  const [userGrowth, setUserGrowth] = useState<UserGrowthData[]>([]);
 
   useEffect(() => {
     // Mocking data for analytics specifically
@@ -20,14 +34,14 @@ export default function AnalyticsPage() {
       { name: 'Week 2', revenue: 52000, orders: 145 },
       { name: 'Week 3', revenue: 48000, orders: 132 },
       { name: 'Week 4', revenue: 61000, orders: 156 },
-    ] as any);
+    ]);
 
     setCategoryData([
       { name: 'Excavators', value: 400 },
       { name: 'Bulldozers', value: 300 },
       { name: 'Cranes', value: 200 },
       { name: 'Loaders', value: 150 },
-    ] as any);
+    ]);
 
     setUserGrowth([
       { name: 'Jan', count: 120 },
@@ -36,9 +50,7 @@ export default function AnalyticsPage() {
       { name: 'Apr', count: 480 },
       { name: 'May', count: 650 },
       { name: 'Jun', count: 890 },
-    ] as any);
-
-    setLoading(false);
+    ]);
   }, []);
 
   return (
@@ -119,7 +131,7 @@ export default function AnalyticsPage() {
             </div>
           </div>
           <div className="mt-6 space-y-3">
-            {categoryData.map((entry: any, index: number) => (
+            {categoryData.map((entry, index) => (
               <div key={entry.name} className="flex items-center justify-between">
                 <div className="flex items-center text-sm font-medium text-gray-600">
                   <div className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>

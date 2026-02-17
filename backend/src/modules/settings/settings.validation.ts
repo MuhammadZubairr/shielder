@@ -1,0 +1,64 @@
+/**
+ * System Settings Validation
+ */
+
+import Joi from 'joi';
+
+export const settingsValidation = {
+  updateGeneral: Joi.object({
+    systemName: Joi.string().required(),
+    companyName: Joi.string().required(),
+    companyLogo: Joi.string().allow(null, ''),
+    companyEmail: Joi.string().email().required(),
+    companyPhone: Joi.string().required(),
+    companyAddress: Joi.string().required(),
+    currency: Joi.string().required(),
+    timezone: Joi.string().required(),
+    dateFormat: Joi.string().required(),
+    language: Joi.string().optional(),
+  }),
+
+  updateOrder: Joi.object({
+    defaultOrderStatus: Joi.string().required(),
+    autoCompleteOrderAfterPayment: Joi.boolean().required(),
+    allowPartialPayment: Joi.boolean().required(),
+    allowOrderCancellation: Joi.boolean().required(),
+    autoCancelUnpaidOrdersHours: Joi.number().integer().min(1).allow(null),
+  }),
+
+  updatePayment: Joi.object({
+    paymentMethodsEnabled: Joi.array().items(Joi.string()).required(),
+    onlinePaymentEnabled: Joi.boolean().required(),
+    paymentTestMode: Joi.boolean().required(),
+    paymentGatewayApiKey: Joi.string().allow(null, ''),
+    paymentGatewaySecretKey: Joi.string().allow(null, ''),
+    paymentWebhookUrl: Joi.string().uri().allow(null, ''),
+  }),
+
+  updateNotification: Joi.object({
+    enableEmailNotifications: Joi.boolean().required(),
+    enableLowStockAlerts: Joi.boolean().required(),
+    lowStockThreshold: Joi.number().integer().min(0).required(),
+    enableOrderStatusNotifications: Joi.boolean().required(),
+    enablePaymentNotifications: Joi.boolean().required(),
+    roleNotificationMappings: Joi.object().optional(),
+  }),
+
+  updateSecurity: Joi.object({
+    passwordMinLength: Joi.number().integer().min(8).max(32).required(),
+    maxLoginAttempts: Joi.number().integer().min(3).max(20).required(),
+    accountLockDurationMinutes: Joi.number().integer().min(1).required(),
+    sessionTimeoutMinutes: Joi.number().integer().min(5).required(),
+    enableTwoFactorAuth: Joi.boolean().required(),
+    forceStrongPasswords: Joi.boolean().required(),
+  }),
+
+  verifyPassword: Joi.object({
+    password: Joi.string().required(),
+  }),
+
+  restoreBackup: Joi.object({
+    password: Joi.string().required(),
+    backupId: Joi.string().uuid().optional(),
+  }),
+};

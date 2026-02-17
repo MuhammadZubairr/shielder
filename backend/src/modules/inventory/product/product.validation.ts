@@ -6,9 +6,9 @@ const productTranslationSchema = Joi.object({
   description: Joi.string().optional().trim().max(5000),
 });
 
-const specificationValueSchema = Joi.object({
-  specificationId: Joi.string().uuid().required(),
-  value: Joi.string().required(),
+const productSpecificationSchema = Joi.object({
+  specKey: Joi.string().required().trim(),
+  specValue: Joi.string().required().trim(),
 });
 
 const attachmentSchema = Joi.object({
@@ -22,22 +22,33 @@ const attachmentSchema = Joi.object({
 
 export const productValidation = {
   create: Joi.object({
+    sku: Joi.string().optional().trim().max(50),
     categoryId: Joi.string().uuid().required(),
     subcategoryId: Joi.string().uuid().required(),
     brandId: Joi.string().uuid().optional(),
+    supplierId: Joi.string().uuid().optional(),
     price: Joi.number().precision(2).positive().required(),
     stock: Joi.number().integer().min(0).default(0),
+    minimumStockThreshold: Joi.number().integer().min(0).optional(),
+    mainImage: Joi.string().optional(),
     isActive: Joi.boolean().default(true),
     translations: Joi.array().items(productTranslationSchema).min(1).required(),
+    specifications: Joi.array().items(productSpecificationSchema).optional(),
   }),
   update: Joi.object({
+    sku: Joi.string().optional().trim().max(50),
     categoryId: Joi.string().uuid().optional(),
     subcategoryId: Joi.string().uuid().optional(),
     brandId: Joi.string().uuid().optional(),
+    supplierId: Joi.string().uuid().optional(),
     price: Joi.number().precision(2).positive().optional(),
     stock: Joi.number().integer().min(0).optional(),
+    minimumStockThreshold: Joi.number().integer().min(0).optional(),
+    status: Joi.string().valid('DRAFT', 'PENDING', 'PUBLISHED', 'REJECTED').optional(),
+    mainImage: Joi.string().optional(),
     isActive: Joi.boolean().optional(),
     translations: Joi.array().items(productTranslationSchema).min(1).optional(),
+    specifications: Joi.array().items(productSpecificationSchema).optional(),
   }),
   list: Joi.object({
     categoryId: Joi.string().uuid().optional(),
@@ -51,8 +62,8 @@ export const productValidation = {
     limit: Joi.number().integer().min(1).max(100).optional(),
     locale: Joi.string().length(2).optional(),
   }).unknown(true), // allow spec_... keys
-  assignSpecifications: Joi.object({
-    specifications: Joi.array().items(specificationValueSchema).min(1).required(),
-  }),
   addAttachment: attachmentSchema,
+  assignSpecifications: Joi.object({
+    specifications: Joi.array().items(productSpecificationSchema).min(1).required(),
+  }),
 };

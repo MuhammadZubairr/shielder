@@ -31,30 +31,189 @@ class AdminService {
   }
 
   /**
+   * Super Admin Dashboard Specific
+   */
+  async getDashboardSummary() {
+    return apiClient.get(API_ENDPOINTS.SUPER_ADMIN.SUMMARY);
+  }
+
+  async getMonthlyAnalytics() {
+    return apiClient.get(API_ENDPOINTS.SUPER_ADMIN.ANALYTICS_MONTHLY);
+  }
+
+  async getActivity() {
+    return apiClient.get(API_ENDPOINTS.SUPER_ADMIN.ACTIVITY);
+  }
+
+  /**
+   * User Management (Universal)
+   */
+  async getAllUsers(params: { search?: string; role?: string; status?: string; page?: number; limit?: number }) {
+    const response = await apiClient.get(API_ENDPOINTS.SUPER_ADMIN.USERS, { params });
+    return response.data;
+  }
+
+  async getUserManagementStats() {
+    const response = await apiClient.get(API_ENDPOINTS.SUPER_ADMIN.USER_STATS);
+    return response.data;
+  }
+
+  async createUserAccount(data: any) {
+    const response = await apiClient.post(API_ENDPOINTS.SUPER_ADMIN.USER_CREATE, data);
+    return response.data;
+  }
+
+  async updateUserAccount(id: string, data: any) {
+    const response = await apiClient.put(API_ENDPOINTS.SUPER_ADMIN.USER_BY_ID(id), data);
+    return response.data;
+  }
+
+  async deleteUserAccount(id: string) {
+    const response = await apiClient.delete(API_ENDPOINTS.SUPER_ADMIN.USER_BY_ID(id));
+    return response.data;
+  }
+
+  /**
+   * Admin Management (Legacy - still used in some places)
+   */
+  async getAdmins(params: { search?: string; role?: string; status?: string; page?: number; limit?: number }) {
+    const response = await apiClient.get(API_ENDPOINTS.ADMINS.BASE, { params });
+    return response.data;
+  }
+
+  async getAdminSummary() {
+    const response = await apiClient.get(API_ENDPOINTS.ADMINS.SUMMARY);
+    return response.data;
+  }
+
+  async createAdmin(data: any) {
+    const response = await apiClient.post(API_ENDPOINTS.ADMINS.BASE, data);
+    return response.data;
+  }
+
+  async updateAdmin(id: string, data: any) {
+    const response = await apiClient.put(API_ENDPOINTS.ADMINS.BY_ID(id), data);
+    return response.data;
+  }
+
+  async updateAdminStatus(id: string, isActive: boolean) {
+    const response = await apiClient.patch(API_ENDPOINTS.ADMINS.STATUS(id), { isActive });
+    return response.data;
+  }
+
+  async deleteAdmin(id: string) {
+    const response = await apiClient.delete(API_ENDPOINTS.ADMINS.BY_ID(id));
+    return response.data;
+  }
+
+  /**
    * Inventory & Products
    */
   async getProducts(params?: any) {
-    return apiClient.get('/inventory/products', { params });
+    return apiClient.get(API_ENDPOINTS.PRODUCTS.BASE, { params });
   }
 
   async getLowStockProducts() {
-    return apiClient.get('/products/low-stock');
+    return apiClient.get(API_ENDPOINTS.PRODUCTS.LOW_STOCK);
   }
 
   async getLowStockCount() {
-    return apiClient.get('/products/low-stock/count');
+    return apiClient.get(`${API_ENDPOINTS.PRODUCTS.LOW_STOCK}/count`);
+  }
+
+  async bulkUpload(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.post(API_ENDPOINTS.PRODUCTS.BULK_UPLOAD, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000, // Longer timeout for bulk operations
+    });
+  }
+
+  async downloadProductTemplate() {
+    return apiClient.get(API_ENDPOINTS.PRODUCTS.TEMPLATE, {
+      responseType: 'blob',
+    });
   }
 
   async getPendingProducts() {
     return apiClient.get('/inventory/products/pending');
   }
 
-  async approveProduct(id: string) {
-    return apiClient.patch(`/inventory/products/${id}/approve`);
+  /**
+   * Categories Management
+   */
+  async getCategories(params?: any) {
+    return apiClient.get('/inventory/categories', { params });
   }
 
-  async rejectProduct(id: string) {
-    return apiClient.patch(`/inventory/products/${id}/reject`);
+  async getCategorySummary() {
+    return apiClient.get('/inventory/categories/summary');
+  }
+
+  async createCategory(formData: FormData) {
+    return apiClient.post('/inventory/categories', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  }
+
+  async updateCategory(id: string, formData: FormData) {
+    return apiClient.put(`/inventory/categories/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  }
+
+  async deleteCategory(id: string) {
+    return apiClient.delete(`/inventory/categories/${id}`);
+  }
+
+
+  /**
+   * Subcategory Management
+   */
+  async getSubcategories(params?: any) {
+    return apiClient.get('/inventory/subcategories', { params });
+  }
+
+  async getSubcategorySummary() {
+    return apiClient.get('/inventory/subcategories/summary');
+  }
+
+  async createSubcategory(formData: FormData) {
+    return apiClient.post('/inventory/subcategories', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  }
+
+  async updateSubcategory(id: string, formData: FormData) {
+    return apiClient.put(`/inventory/subcategories/${id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  }
+
+  async deleteSubcategory(id: string) {
+    return apiClient.delete(`/inventory/subcategories/${id}`);
+  }
+
+  /**
+   * Product Management
+   */
+  async getProductsForManagement(params?: any) {
+    return apiClient.get('/inventory/products/management', { params });
+  }
+
+  async getProductSummary() {
+    return apiClient.get('/inventory/products/summary');
+  }
+
+  async getProductById(id: string) {
+    return apiClient.get(`/inventory/products/${id}`);
+  }
+
+  async createProduct(data: any) {
+    return apiClient.post('/inventory/products', data);
   }
 
   async updateProduct(id: string, data: any) {
@@ -65,42 +224,31 @@ class AdminService {
     return apiClient.delete(`/inventory/products/${id}`);
   }
 
-  /**
-   * Categories Management
+  async approveProduct(id: string) {
+    return apiClient.patch(`/inventory/products/${id}/approve`);
+  }
+
+  async rejectProduct(id: string) {
+    return apiClient.patch(`/inventory/products/${id}/reject`);
+  }
+
+  /**   * Specification Templates
    */
-  async getCategories() {
-    return apiClient.get('/inventory/categories');
+  async getSpecTemplates(categoryId: string, subcategoryId?: string) {
+    return apiClient.get(`/inventory/spec-templates/category/${categoryId}`, {
+      params: { subcategoryId }
+    });
   }
 
-  async createCategory(data: any) {
-    return apiClient.post('/inventory/categories', data);
+  async createSpecTemplate(data: any) {
+    return apiClient.post('/inventory/spec-templates', data);
   }
 
-  async updateCategory(id: string, data: any) {
-    return apiClient.put(`/inventory/categories/${id}`, data);
+  async deleteSpecTemplate(id: string) {
+    return apiClient.delete(`/inventory/spec-templates/${id}`);
   }
 
-  async deleteCategory(id: string) {
-    return apiClient.delete(`/inventory/categories/${id}`);
-  }
-
-  /**
-   * Subcategory Management
-   */
-  async createSubcategory(data: any) {
-    return apiClient.post('/inventory/subcategories', data);
-  }
-
-  async updateSubcategory(id: string, data: any) {
-    return apiClient.put(`/inventory/subcategories/${id}`, data);
-  }
-
-  async deleteSubcategory(id: string) {
-    return apiClient.delete(`/inventory/subcategories/${id}`);
-  }
-
-  /**
-   * User Management
+  /**   * User Management
    */
   async getUsers(params?: any) {
     return apiClient.get('/super-admin/users/all', { params });
@@ -127,6 +275,44 @@ class AdminService {
 
   async markAllAsRead() {
     return apiClient.patch('/notifications/read-all');
+  }
+
+  /**
+   * Reports Module
+   */
+  async getReportsOverview(params: { from: string; to: string }) {
+    return apiClient.get('/reports/overview', { params });
+  }
+
+  async getSalesReport(params: { from: string; to: string; categoryId?: string }) {
+    return apiClient.get('/reports/sales', { params });
+  }
+
+  async getOrderReport(params: { from: string; to: string }) {
+    return apiClient.get('/reports/orders', { params });
+  }
+
+  async getInventoryReport() {
+    return apiClient.get('/reports/inventory');
+  }
+
+  async getPaymentReport(params: { from: string; to: string }) {
+    return apiClient.get('/reports/payments', { params });
+  }
+
+  async getProfitLossReport(params: { from: string; to: string }) {
+    return apiClient.get('/reports/profit-loss', { params });
+  }
+
+  async downloadSalesReport(params: any) {
+    return apiClient.get('/reports/sales/export', { 
+      params, 
+      responseType: 'blob' 
+    });
+  }
+
+  async logReportExport(data: { reportType: string; format: string }) {
+    return apiClient.post('/reports/export/log', data);
   }
 }
 

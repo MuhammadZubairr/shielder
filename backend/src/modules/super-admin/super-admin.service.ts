@@ -3,328 +3,354 @@
  * Handles all super admin operations - manages all users including admins
  */
 
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
 import { UserRole, UserStatus } from '../../common/constants/roles';
 import { ApiError } from '../../common/errors/api.error';
+import { prisma } from '../../config/database';
 import {
-  SearchFilter,
   PaginationParams,
-  buildWhereClause,
   createPaginatedResponse,
 } from '../../common/utils/pagination';
-
-const prisma = new PrismaClient();
+import bcrypt from 'bcryptjs';
+import { AuditService } from '../../common/services/audit.service';
 
 export class SuperAdminService {
   /**
-   * Get all users (including admins and super admins)
+   * Get User Management Stats
    */
-  async getAllUsers(filters: SearchFilter, pagination: PaginationParams) {
-    const where = buildWhereClause(filters);
+  async getUserStats() {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const total = await prisma.user.count({ where });
-
-    const users = await prisma.user.findMany({
-      where,
-      skip: pagination.skip,
-      take: pagination.limit,
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        status: true,
-        isActive: true,
-        emailVerified: true,
-        lastLoginAt: true,
-        createdAt: true,
-        updatedAt: true,
-        createdBy: true,
-        updatedBy: true,
-        profile: {
-          select: {
-            fullName: true,
-            phoneNumber: true,
-            companyName: true,
-          },
+    const [total, active, inactive, newThisMonth] = await Promise.all([
+      prisma.user.count({ where: { deletedAt: null } }),
+      prisma.user.count({ where: { deletedAt: null, isActive: true } }),
+      prisma.user.count({ where: { deletedAt: null, isActive: false } }),
+      prisma.user.count({
+        where: {
+          deletedAt: null,
+          createdAt: { gte: startOfMonth },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-
-    return createPaginatedResponse(users, total, pagination.page, pagination.limit);
-  }
-
-  /**
-   * Get users only (exclude admins)
-   */
-  async getUsers(filters: SearchFilter, pagination: PaginationParams) {
-    const where = { ...buildWhereClause(filters), role: UserRole.USER };
-
-    const total = await prisma.user.count({ where });
-
-    const users = await prisma.user.findMany({
-      where,
-      skip: pagination.skip,
-      take: pagination.limit,
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        status: true,
-        isActive: true,
-        emailVerified: true,
-        lastLoginAt: true,
-        createdAt: true,
-        updatedAt: true,
-        profile: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return createPaginatedResponse(users, total, pagination.page, pagination.limit);
-  }
-
-  /**
-   * Get admins only
-   */
-  async getAdmins(filters: SearchFilter, pagination: PaginationParams) {
-    const where = { ...buildWhereClause(filters), role: UserRole.ADMIN };
-
-    const total = await prisma.user.count({ where });
-
-    const admins = await prisma.user.findMany({
-      where,
-      skip: pagination.skip,
-      take: pagination.limit,
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        status: true,
-        isActive: true,
-        emailVerified: true,
-        lastLoginAt: true,
-        createdAt: true,
-        updatedAt: true,
-        createdBy: true,
-        updatedBy: true,
-        profile: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return createPaginatedResponse(admins, total, pagination.page, pagination.limit);
-  }
-
-  /**
-   * Get user by ID (any role)
-   */
-  async getUserById(userId: string) {
-    const user = await prisma.user.findFirst({
-      where: {
-        id: userId,
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        status: true,
-        isActive: true,
-        emailVerified: true,
-        lastLoginAt: true,
-        lastPasswordChange: true,
-        createdAt: true,
-        updatedAt: true,
-        createdBy: true,
-        updatedBy: true,
-        profile: true,
-      },
-    });
-
-    if (!user) {
-      throw new ApiError('User not found', 404);
-    }
-
-    return user;
-  }
-
-  /**
-   * Create admin account
-   */
-  async createAdmin(
-    data: {
-      email: string;
-      password: string;
-      fullName?: string;
-      phoneNumber?: string;
-    },
-    createdBy: string
-  ) {
-    // Check if email exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: data.email },
-    });
-
-    if (existingUser) {
-      throw new ApiError('Email already exists', 400);
-    }
-
-    // Hash password
-    const passwordHash = await bcrypt.hash(data.password, 12);
-
-    // Create admin
-    const admin = await prisma.user.create({
-      data: {
-        email: data.email,
-        passwordHash,
-        role: UserRole.ADMIN,
-        status: UserStatus.ACTIVE,
-        isActive: true,
-        emailVerified: true,
-        createdBy,
-        profile: data.fullName || data.phoneNumber ? {
-          create: {
-            fullName: data.fullName,
-            phoneNumber: data.phoneNumber,
-          },
-        } : undefined,
-      },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        status: true,
-        isActive: true,
-        createdAt: true,
-        profile: true,
-      },
-    });
-
-    return admin;
-  }
-
-  /**
-   * Update user role (Super Admin only)
-   */
-  async updateUserRole(
-    userId: string,
-    newRole: UserRole,
-    updatedBy: string
-  ) {
-    // Prevent changing own role
-    if (userId === updatedBy) {
-      throw new ApiError('Cannot change your own role', 400);
-    }
-
-    // Check if user exists
-    await this.getUserById(userId);
-
-    // Update role
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        role: newRole,
-        updatedBy,
-      },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        status: true,
-        updatedAt: true,
-      },
-    });
-
-    return user;
-  }
-
-  /**
-   * Update user/admin status
-   */
-  async updateUserStatus(
-    userId: string,
-    isActive: boolean,
-    updatedBy: string
-  ) {
-    // Prevent disabling own account
-    if (userId === updatedBy) {
-      throw new ApiError('Cannot change your own status', 400);
-    }
-
-    await this.getUserById(userId);
-
-    const user = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        isActive,
-        status: isActive ? UserStatus.ACTIVE : UserStatus.INACTIVE,
-        updatedBy,
-      },
-      select: {
-        id: true,
-        email: true,
-        isActive: true,
-        status: true,
-        updatedAt: true,
-      },
-    });
-
-    return user;
-  }
-
-  /**
-   * Delete user/admin
-   */
-  async deleteUser(userId: string, deletedBy: string) {
-    // Prevent deleting own account
-    if (userId === deletedBy) {
-      throw new ApiError('Cannot delete your own account', 400);
-    }
-
-    await this.getUserById(userId);
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        deletedAt: new Date(),
-        isActive: false,
-        updatedBy: deletedBy,
-      },
-    });
-
-    return { message: 'User deleted successfully' };
-  }
-
-  /**
-   * Get system statistics
-   */
-  async getStatistics() {
-    const [totalUsers, totalAdmins, activeUsers, inactiveUsers] = await Promise.all([
-      prisma.user.count({
-        where: { role: UserRole.USER, deletedAt: null },
-      }),
-      prisma.user.count({
-        where: { role: UserRole.ADMIN, deletedAt: null },
-      }),
-      prisma.user.count({
-        where: { isActive: true, deletedAt: null },
-      }),
-      prisma.user.count({
-        where: { isActive: false, deletedAt: null },
       }),
     ]);
 
     return {
-      totalUsers,
-      totalAdmins,
-      activeUsers,
-      inactiveUsers,
-      totalAccounts: totalUsers + totalAdmins,
+      totalUsers: total,
+      activeUsers: active,
+      inactiveUsers: inactive,
+      newlyRegistered: newThisMonth,
     };
+  }
+
+  /**
+   * Get all users with filters and pagination
+   */
+  async getAllUsers(filters: any, pagination: PaginationParams) {
+    const { search, role, status, dateFrom, dateTo } = filters;
+    
+    const where: any = {
+      deletedAt: null,
+    };
+
+    if (search) {
+      where.OR = [
+        { email: { contains: search, mode: 'insensitive' } },
+        { profile: { fullName: { contains: search, mode: 'insensitive' } } },
+        { profile: { phoneNumber: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+
+    if (role) where.role = role;
+    if (status) {
+      if (status === 'ACTIVE') where.isActive = true;
+      if (status === 'INACTIVE') where.isActive = false;
+    }
+
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) where.createdAt.gte = new Date(dateFrom);
+      if (dateTo) where.createdAt.lte = new Date(dateTo);
+    }
+
+    const total = await prisma.user.count({ where });
+
+    const users = await prisma.user.findMany({
+      where,
+      skip: pagination.skip,
+      take: pagination.limit,
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        status: true,
+        isActive: true,
+        lastLoginAt: true,
+        createdAt: true,
+        profile: {
+          select: {
+            fullName: true,
+            phoneNumber: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return createPaginatedResponse(users, total, pagination.page, pagination.limit);
+  }
+
+  /**
+   * Create a new user (Admin, Staff, or Customer)
+   */
+  async createUser(data: any, createdBy: string) {
+    // 1. Check if email exists
+    const existing = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existing) {
+      throw new ApiError('Registration failed. This email is already registered in our system.', 400);
+    }
+
+    // 2. Prevent creating Super Admin
+    if (data.role === UserRole.SUPER_ADMIN) {
+      throw new ApiError('System protection rule: You cannot create another Super Admin account.', 403);
+    }
+
+    // 3. Hash password
+    const passwordHash = await bcrypt.hash(data.password, 12);
+
+    // 4. Create user
+    const user = await prisma.user.create({
+      data: {
+        email: data.email,
+        passwordHash,
+        role: data.role || UserRole.USER,
+        status: data.status === 'INACTIVE' ? UserStatus.SUSPENDED : UserStatus.ACTIVE,
+        isActive: data.status !== 'INACTIVE',
+        createdBy,
+        profile: {
+          create: {
+            fullName: data.fullName,
+            phoneNumber: data.phoneNumber,
+          },
+        },
+      },
+      include: { profile: true },
+    });
+
+    // 5. Audit Log
+    await AuditService.log({
+      userId: createdBy,
+      action: 'USER_CREATED',
+      entityType: 'USER',
+      entityId: user.id,
+      changes: { email: user.email, role: user.role },
+    });
+
+    // NEW: Notify Super Admins about new administrative/supplier accounts
+    if (user.role === UserRole.ADMIN || user.role === UserRole.SUPPLIER) {
+       try {
+         const NotificationService = (await import('../notification/notification.service')).default;
+         await NotificationService.notify({
+           type: 'NEW_USER_CREATED',
+           title: 'New Account Created',
+           message: `A new ${user.role} account has been created for ${user.profile?.fullName || user.email}.`,
+           module: 'USER',
+           triggeredById: createdBy,
+           relatedId: user.id,
+           global: true
+         });
+       } catch (err) {
+         console.error('Notification failed for user creation:', err);
+       }
+    }
+
+    return user;
+  }
+
+  /**
+   * Update User
+   */
+  async updateUser(id: string, data: any, updatedBy: string) {
+    const targetUser = await prisma.user.findUnique({ where: { id } });
+    if (!targetUser) throw new ApiError('User not found', 404);
+
+    // 1. Super Admin Protection
+    if (targetUser.role === UserRole.SUPER_ADMIN) {
+      throw new ApiError('Super Admin account is protected and cannot be modified.', 403);
+    }
+
+    // 2. Self Protection
+    if (id === updatedBy && (data.role || data.isActive === false)) {
+      throw new ApiError('Self-protection rule: You cannot change your own role or deactivate yourself.', 403);
+    }
+
+    // 3. Prevent Promotion to Super Admin
+    if (data.role === UserRole.SUPER_ADMIN) {
+      throw new ApiError('System protection rule: Promotion to Super Admin is not allowed.', 403);
+    }
+
+    const updateData: any = {
+      updatedBy,
+    };
+
+    if (data.role) updateData.role = data.role;
+    if (data.status) {
+      updateData.isActive = data.status === 'ACTIVE';
+      updateData.status = data.status === 'ACTIVE' ? UserStatus.ACTIVE : UserStatus.SUSPENDED;
+    }
+
+    if (data.fullName || data.phoneNumber) {
+      updateData.profile = {
+        update: {
+          fullName: data.fullName,
+          phoneNumber: data.phoneNumber,
+        },
+      };
+    }
+
+    // Handle Password Update if provided
+    if (data.password) {
+      updateData.passwordHash = await bcrypt.hash(data.password, 12);
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      include: { profile: true },
+    });
+
+    // Audit Log
+    await AuditService.log({
+      userId: updatedBy,
+      action: 'USER_UPDATED',
+      entityType: 'USER',
+      entityId: id,
+      changes: data,
+    });
+
+    return updatedUser;
+  }
+
+  /**
+   * Delete User (Soft Delete)
+   */
+  async deleteUser(id: string, deletedBy: string) {
+    const targetUser = await prisma.user.findUnique({ where: { id } });
+    if (!targetUser) throw new ApiError('User not found', 404);
+
+    // 1. Super Admin Protection
+    if (targetUser.role === UserRole.SUPER_ADMIN) {
+      throw new ApiError('Super Admin account is protected and cannot be deleted.', 403);
+    }
+
+    // 2. Self Protection
+    if (id === deletedBy) {
+      throw new ApiError('Self-protection rule: You cannot delete your own account.', 403);
+    }
+
+    await prisma.user.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        isActive: false,
+        status: UserStatus.SUSPENDED,
+        updatedBy: deletedBy,
+      },
+    });
+
+    // Audit Log
+    await AuditService.log({
+      userId: deletedBy,
+      action: 'USER_DELETED',
+      entityType: 'USER',
+      entityId: id,
+    });
+
+    return { success: true, message: 'User moved to trash successfully.' };
+  }
+
+  // --- Keep other methods like getStatistics, getDashboardSummary, etc. ---
+  // (I'll add them back to maintain compatibility)
+
+  /**
+   * Get Admin Summary
+   */
+  async getAdminSummary() {
+    const [total, active, suspended] = await Promise.all([
+      prisma.user.count({ where: { role: UserRole.ADMIN, deletedAt: null } }),
+      prisma.user.count({ where: { role: UserRole.ADMIN, isActive: true, deletedAt: null } }),
+      prisma.user.count({ where: { role: UserRole.ADMIN, isActive: false, deletedAt: null } }),
+    ]);
+    return { totalAdmins: total, activeAdmins: active, suspendedAdmins: suspended };
+  }
+
+  async getStatistics() {
+    const [totalUsers, totalAdmins, activeUsers, inactiveUsers] = await Promise.all([
+      prisma.user.count({ where: { role: UserRole.USER, deletedAt: null } }),
+      prisma.user.count({ where: { role: UserRole.ADMIN, deletedAt: null } }),
+      prisma.user.count({ where: { isActive: true, deletedAt: null } }),
+      prisma.user.count({ where: { isActive: false, deletedAt: null } }),
+    ]);
+    return { totalUsers, totalAdmins, activeUsers, inactiveUsers, totalAccounts: totalUsers + totalAdmins };
+  }
+
+  async getDashboardSummary() {
+    const [totalUsers, totalProducts, totalOrders, revenueResult] = await Promise.all([
+      prisma.user.count({ where: { role: UserRole.USER, deletedAt: null } }),
+      prisma.product.count({ where: { isActive: true } }),
+      prisma.order.count(),
+      prisma.order.aggregate({ _sum: { total: true } }),
+    ]);
+    return { totalUsers, totalProducts, totalOrders, totalRevenue: Number(revenueResult._sum.total || 0) };
+  }
+
+  async getMonthlyAnalytics() {
+    const lastSixMonths = Array.from({ length: 6 }, (_, i) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      return {
+        month: date.toLocaleString('default', { month: 'short' }),
+        year: date.getFullYear(),
+        startDate: new Date(date.getFullYear(), date.getMonth(), 1),
+        endDate: new Date(date.getFullYear(), date.getMonth() + 1, 0),
+      };
+    }).reverse();
+
+    const stats = await Promise.all(
+      lastSixMonths.map(async (m) => {
+        const orders = await prisma.order.aggregate({
+          where: { createdAt: { gte: m.startDate, lte: m.endDate } },
+          _count: { id: true },
+          _sum: { total: true },
+        });
+        return { month: m.month, orders: Number(orders._count.id || 0), revenue: Number(orders._sum.total || 0) };
+      })
+    );
+    return stats;
+  }
+
+  async getRecentActivity() {
+    const activities = await prisma.auditLog.findMany({
+      take: 10,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        user: { select: { email: true, profile: { select: { fullName: true } } } },
+      },
+    });
+
+    return activities.map((a) => ({
+      id: a.id,
+      action: a.action.replace(/_/g, ' '),
+      timestamp: a.createdAt,
+      user: a.user?.profile?.fullName || a.user?.email || 'System',
+      type: this.getActivityType(a.action),
+    }));
+  }
+
+  private getActivityType(action: string): 'success' | 'pending' | 'issue' {
+    const actionLower = action.toLowerCase();
+    if (actionLower.includes('create') || actionLower.includes('approve') || actionLower.includes('payment') || actionLower.includes('order completed')) return 'success';
+    if (actionLower.includes('update') || actionLower.includes('login')) return 'pending';
+    if (actionLower.includes('delete') || actionLower.includes('reject') || actionLower.includes('error') || actionLower.includes('fail')) return 'issue';
+    return 'pending';
   }
 }
 

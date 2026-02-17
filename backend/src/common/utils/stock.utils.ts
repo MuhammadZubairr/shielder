@@ -45,14 +45,16 @@ export const deductStock = async (
     const productName = product.translations[0]?.name || 'Unknown Product';
     
     try {
-      const { NotificationService } = require('@/modules/notification/notification.service');
-      const { NotificationType, UserRole } = require('@prisma/client');
+      const NotificationService = (await import('@/modules/notification/notification.service')).default;
+      const { NotificationType, UserRole } = await import('@prisma/client');
 
-      await NotificationService.createNotification({
+      await NotificationService.notify({
         type: NotificationType.LOW_STOCK,
         title: 'Low Stock Alert',
         message: `Product "${productName}" is running low on stock. Current: ${newStock}`,
+        module: 'INVENTORY',
         roleTarget: UserRole.ADMIN,
+        relatedId: productId
       });
       
       logger.info(`Low stock notification created for product: ${productId}`);
