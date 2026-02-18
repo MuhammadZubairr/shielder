@@ -41,35 +41,35 @@ const notificationService = {
     search?: string;
     global?: boolean;
   } = {}) => {
-    return api.get('/notifications', { params });
+    return api.get('notifications', { params });
   },
 
   getStats: () => {
-    return api.get('/notifications/stats');
+    return api.get('notifications/stats');
   },
 
   getUnreadCount: () => {
-    return api.get('/notifications/unread-count');
+    return api.get('notifications/unread-count');
   },
 
   markAsRead: (id: string) => {
-    return api.patch(`/notifications/${id}/read`);
+    return api.patch(`notifications/${id}/read`);
   },
 
   markAllAsRead: () => {
-    return api.patch('/notifications/read-all');
+    return api.patch('notifications/read-all');
   },
 
   deleteNotification: (id: string) => {
-    return api.delete(`/notifications/${id}`);
+    return api.delete(`notifications/${id}`);
   },
 
   getPreferences: () => {
-    return api.get('/notifications/preferences');
+    return api.get('notifications/preferences');
   },
 
   updatePreferences: (preferences: Partial<NotificationPreference>) => {
-    return api.put('/notifications/preferences', preferences);
+    return api.put('notifications/preferences', preferences);
   }
 };
 

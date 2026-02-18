@@ -36,7 +36,7 @@ export const paymentService = {
    * Get payment dashboard statistics
    */
   async getStats(): Promise<ApiResponse<PaymentStats>> {
-    const response = await apiClient.get('/payments/stats');
+    const response = await apiClient.get('payments/stats');
     return response.data;
   },
 
@@ -52,7 +52,7 @@ export const paymentService = {
     dateFrom?: string;
     dateTo?: string;
   }): Promise<PaginatedResponse<Payment>> {
-    const response = await apiClient.get('/payments', { params });
+    const response = await apiClient.get('payments', { params });
     return response.data;
   },
 
@@ -60,7 +60,7 @@ export const paymentService = {
    * Get single payment details
    */
   async getPaymentById(id: string): Promise<ApiResponse<Payment>> {
-    const response = await apiClient.get(`/payments/${id}`);
+    const response = await apiClient.get(`payments/${id}`);
     return response.data;
   },
 
@@ -74,7 +74,7 @@ export const paymentService = {
     transactionId?: string;
     notes?: string;
   }): Promise<ApiResponse<Payment>> {
-    const response = await apiClient.post('/payments', data);
+    const response = await apiClient.post('payments', data);
     return response.data;
   },
 
@@ -82,7 +82,7 @@ export const paymentService = {
    * Process a refund for a payment
    */
   async refundPayment(id: string, notes?: string): Promise<ApiResponse<Payment>> {
-    const response = await apiClient.post(`/payments/${id}/refund`, { notes });
+    const response = await apiClient.post(`payments/${id}/refund`, { notes });
     return response.data;
   },
 };

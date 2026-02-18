@@ -53,27 +53,27 @@ export interface SystemSettings {
 
 const settingsService = {
   getSettings: () => {
-    return api.get('/settings');
+    return api.get('settings');
   },
 
   updateSettings: (section: string, data: any) => {
-    return api.put(`/settings/${section}`, data);
+    return api.put(`settings/${section}`, data);
   },
 
   verifyPassword: (password: string) => {
-    return api.post('/settings/verify', { password });
+    return api.post('settings/verify', { password });
   },
 
   triggerBackup: () => {
-    return api.post('/settings/backup');
+    return api.post('settings/backup');
   },
 
   getLogs: (params: any) => {
-    return api.get('/settings/logs', { params });
+    return api.get('settings/logs', { params });
   },
 
   getSnapshots: () => {
-    return api.get('/settings/snapshots');
+    return api.get('settings/snapshots');
   }
 };
 

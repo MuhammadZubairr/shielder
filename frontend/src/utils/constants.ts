@@ -7,10 +7,14 @@
  * API Configuration
  */
 const getBaseUrl = () => {
+  // Use the environment variable, or default to localhost
   let url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
   
-  // Ensure it has a protocol in production
-  if (typeof window !== 'undefined' && !url.startsWith('http') && !url.includes('localhost')) {
+  // Clean the URL: remove trailing slash if it exists
+  url = url.endsWith('/') ? url.slice(0, -1) : url;
+
+  // Add protocol if missing (works on both client and server)
+  if (!url.startsWith('http') && !url.includes('localhost')) {
     url = `https://${url}`;
   }
   
