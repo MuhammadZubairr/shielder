@@ -133,19 +133,28 @@ class AuthService {
    * Store authentication data in localStorage
    */
   private storeAuthData(authData: any): void {
-    // Backend returns { tokens: { accessToken, refreshToken }, user: { ... } }
-    const tokens = authData.tokens || authData;
-    const accessToken = tokens.accessToken;
-    const refreshToken = tokens.refreshToken;
+    if (!authData) return;
+
+    // Extraction logic that handles both {user, tokens: {at, rt}} and {at, rt}
+    let accessToken = authData.accessToken;
+    let refreshToken = authData.refreshToken;
+    const user = authData.user;
+
+    if (authData.tokens) {
+      accessToken = authData.tokens.accessToken || accessToken;
+      refreshToken = authData.tokens.refreshToken || refreshToken;
+    }
 
     if (accessToken) {
       localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
     }
+    
     if (refreshToken) {
       localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
     }
-    if (authData.user) {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(authData.user));
+    
+    if (user) {
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
     }
   }
 

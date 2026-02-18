@@ -58,10 +58,12 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // Skip refresh logic for specific auth endpoints and login
-    const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
-                          originalRequest.url?.includes('/auth/signup') ||
-                          originalRequest.url?.includes('/auth/refresh');
+    // Response interceptor should handle 401s except for auth endpoints
+    const url = originalRequest.url || '';
+    const isAuthEndpoint = url.includes('auth/login') || 
+                          url.includes('auth/signup') || 
+                          url.includes('auth/refresh') ||
+                          url.includes('auth/verify-email');
 
     // If error is 401 and we haven't retried yet and it's not an auth login/signup
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
@@ -72,15 +74,16 @@ apiClient.interceptors.response.use(
         const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
         if (!refreshToken) {
-          // Instead of immediate throw, we'll try to let it fall through to logout logic
           console.warn('[API] No refresh token found during 401 recovery');
           throw new Error('No refresh token');
         }
 
-        // Refresh the token
+        // Refresh the token - ensure Slash between BASE_URL and endpoint
+        const refreshUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.BASE_URL.endsWith('/') ? '' : '/'}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`;
+        
         const response = await axios.post(
-          `${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`,
-          { refreshToken: refreshToken.replace(/"/g, '') } // Ensure no quotes
+          refreshUrl,
+          { refreshToken: refreshToken.replace(/"/g, '') }
         );
 
         const { accessToken, refreshToken: newRefreshToken } = response.data.data;
@@ -92,7 +95,9 @@ apiClient.interceptors.response.use(
         }
 
         // Retry original request with new token
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        }
         return apiClient(originalRequest);
       } catch (refreshError) {
         // If refresh fails, clear tokens and redirect to login
@@ -100,9 +105,9 @@ apiClient.interceptors.response.use(
         localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER);
 
-        // Redirect to login
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+        // Only redirect if specifically a refresh failure, not a random 401 that couldn't refresh
+        if (typeof window !== 'undefined' && !url.includes('auth/me')) {
+          window.location.href = '/login?expired=true';
         }
 
         return Promise.reject(refreshError);
