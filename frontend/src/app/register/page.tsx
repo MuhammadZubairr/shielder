@@ -5,18 +5,36 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, ChevronLeft, Shield, User, Phone, Building2, MapPin } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/auth.store';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { ROUTES, VALIDATION_RULES, LOCALES } from '@/utils/constants';
 import type { RegisterRequest } from '@/types';
 
 export default function RegisterPage() {
   const { register, isSubmitting } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuthStore();
+  const router = useRouter();
   const { t, isRTL, locale, setLocale } = useLanguage();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user) {
+      if (user.role === 'SUPER_ADMIN') {
+        router.push(ROUTES.SUPER_ADMIN_DASHBOARD);
+      } else if (user.role === 'ADMIN') {
+        router.push(ROUTES.ADMIN_DASHBOARD);
+      } else {
+        router.push(ROUTES.CUSTOMER_DASHBOARD);
+      }
+    }
+  }, [isLoading, isAuthenticated, user, router]);
+
   const [formData, setFormData] = useState<RegisterRequest>({
     email: '',
     password: '',

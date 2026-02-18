@@ -9,13 +9,6 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   
-  // i18n configuration
-  i18n: {
-    locales: ['en', 'ar'],
-    defaultLocale: 'en',
-    localeDetection: false,
-  },
-
   // Environment variables exposed to the browser
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api',
