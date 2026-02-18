@@ -6,8 +6,19 @@
 /**
  * API Configuration
  */
+const getBaseUrl = () => {
+  let url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+  
+  // Ensure it has a protocol in production
+  if (typeof window !== 'undefined' && !url.startsWith('http') && !url.includes('localhost')) {
+    url = `https://${url}`;
+  }
+  
+  return url;
+};
+
 export const API_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api',
+  BASE_URL: getBaseUrl(),
   TIMEOUT: 30000, // 30 seconds
 } as const;
 
