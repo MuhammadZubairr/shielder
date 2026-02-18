@@ -133,12 +133,20 @@ class AuthService {
    * Store authentication data in localStorage
    */
   private storeAuthData(authData: any): void {
-    const accessToken = authData.accessToken || authData.tokens?.accessToken;
-    const refreshToken = authData.refreshToken || authData.tokens?.refreshToken;
+    // Backend returns { tokens: { accessToken, refreshToken }, user: { ... } }
+    const tokens = authData.tokens || authData;
+    const accessToken = tokens.accessToken;
+    const refreshToken = tokens.refreshToken;
 
-    if (accessToken) localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
-    if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
-    if (authData.user) localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(authData.user));
+    if (accessToken) {
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+    }
+    if (refreshToken) {
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+    }
+    if (authData.user) {
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(authData.user));
+    }
   }
 
   /**

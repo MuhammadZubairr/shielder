@@ -72,13 +72,15 @@ apiClient.interceptors.response.use(
         const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
         if (!refreshToken) {
+          // Instead of immediate throw, we'll try to let it fall through to logout logic
+          console.warn('[API] No refresh token found during 401 recovery');
           throw new Error('No refresh token');
         }
 
         // Refresh the token
         const response = await axios.post(
           `${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`,
-          { refreshToken }
+          { refreshToken: refreshToken.replace(/"/g, '') } // Ensure no quotes
         );
 
         const { accessToken, refreshToken: newRefreshToken } = response.data.data;
