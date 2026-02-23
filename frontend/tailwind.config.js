@@ -4,7 +4,12 @@ module.exports = {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './public/locales/**/*.json',
   ],
+  // RTL/LTR: Tailwind v3.3+ ships `rtl:` and `ltr:` variants out-of-the-box.
+  // They activate based on the nearest ancestor [dir="rtl"] / [dir="ltr"].
+  // LanguageContext sets document.documentElement.dir on every locale change.
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -48,7 +53,8 @@ module.exports = {
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
-        arabic: ['var(--font-arabic)', 'system-ui', 'sans-serif'],
+        // Cairo is loaded in root layout with variable '--font-cairo'
+        arabic: ['var(--font-cairo)', 'Cairo', 'system-ui', 'sans-serif'],
       },
     },
   },

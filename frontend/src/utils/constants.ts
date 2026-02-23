@@ -38,6 +38,7 @@ export const API_ENDPOINTS = {
     REFRESH_TOKEN: 'auth/refresh',
     ME: 'auth/me',
     VERIFY_EMAIL: 'auth/verify-email', // Note: backend expects GET /verify-email/:token
+    CHANGE_PASSWORD: 'auth/change-password',
   },
   // Users
   USERS: {
@@ -229,11 +230,16 @@ export const ROUTES = {
   CUSTOMER_PROFILE: '/customer/profile',
   
   // Admin
-  ADMIN_DASHBOARD: '/admin',
-  ADMIN_PRODUCTS: '/admin/approvals',
+  ADMIN_DASHBOARD: '/admin/dashboard',
+  ADMIN_CATEGORIES: '/admin/categories',
+  ADMIN_SUBCATEGORIES: '/admin/subcategories',
+  ADMIN_PRODUCTS: '/admin/products',
   ADMIN_ORDERS: '/admin/orders',
   ADMIN_USERS: '/admin/users',
-  ADMIN_REPORTS: '/admin/analytics',
+  ADMIN_QUOTATIONS: '/admin/quotations',
+  ADMIN_REPORTS: '/admin/reports',
+  ADMIN_NOTIFICATIONS: '/admin/notifications',
+  ADMIN_SETTINGS: '/admin/settings',
 
   // Super Admin
   SUPER_ADMIN_DASHBOARD: '/superadmin/dashboard',

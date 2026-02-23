@@ -1,6 +1,10 @@
 /**
  * Seed Super Admin Account
  * Run: npx tsx src/scripts/seed-super-admin.ts
+ * 
+ * ⚠️ SECURITY NOTE:
+ * Passwords are hashed with bcrypt (12 rounds) before storage.
+ * NEVER store plain text passwords or update passwordHash without bcrypt.
  */
 
 import { PrismaClient, UserRole, UserStatus } from '@prisma/client';
@@ -24,8 +28,8 @@ async function main() {
     return;
   }
 
-  // Hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
+  // Hash password with bcrypt (12 rounds - matches AuthService)
+  const hashedPassword = await bcrypt.hash(password, 12);
 
   // Create super admin
   const superAdmin = await prisma.user.create({

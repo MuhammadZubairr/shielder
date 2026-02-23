@@ -46,7 +46,7 @@ export class SuperAdminService {
    */
   async getAllUsers(filters: any, pagination: PaginationParams) {
     const { search, role, status, dateFrom, dateTo } = filters;
-    
+
     const where: any = {
       deletedAt: null,
     };
@@ -113,6 +113,11 @@ export class SuperAdminService {
       throw new ApiError('System protection rule: You cannot create another Super Admin account.', 403);
     }
 
+    // 2b. Admin accounts must use @shielder.com domain
+    if (data.role === UserRole.ADMIN && !data.email.endsWith('@shielder.com')) {
+      throw new ApiError('Admin accounts must use an @shielder.com email address.', 400);
+    }
+
     // 3. Hash password
     const passwordHash = await bcrypt.hash(data.password, 12);
 
@@ -129,6 +134,7 @@ export class SuperAdminService {
           create: {
             fullName: data.fullName,
             phoneNumber: data.phoneNumber,
+            companyName: data.companyName || 'Shielder',
           },
         },
       },
@@ -146,20 +152,20 @@ export class SuperAdminService {
 
     // NEW: Notify Super Admins about new administrative/supplier accounts
     if (user.role === UserRole.ADMIN || user.role === UserRole.SUPPLIER) {
-       try {
-         const NotificationService = (await import('../notification/notification.service')).default;
-         await NotificationService.notify({
-           type: 'NEW_USER_CREATED',
-           title: 'New Account Created',
-           message: `A new ${user.role} account has been created for ${user.profile?.fullName || user.email}.`,
-           module: 'USER',
-           triggeredById: createdBy,
-           relatedId: user.id,
-           global: true
-         });
-       } catch (err) {
-         console.error('Notification failed for user creation:', err);
-       }
+      try {
+        const NotificationService = (await import('../notification/notification.service')).default;
+        await NotificationService.notify({
+          type: 'NEW_USER_CREATED',
+          title: 'New Account Created',
+          message: `A new ${user.role} account has been created for ${user.profile?.fullName || user.email}.`,
+          module: 'USER',
+          triggeredById: createdBy,
+          relatedId: user.id,
+          global: true
+        });
+      } catch (err) {
+        console.error('Notification failed for user creation:', err);
+      }
     }
 
     return user;
@@ -293,13 +299,40 @@ export class SuperAdminService {
   }
 
   async getDashboardSummary() {
-    const [totalUsers, totalProducts, totalOrders, revenueResult] = await Promise.all([
-      prisma.user.count({ where: { role: UserRole.USER, deletedAt: null } }),
+    const activePublishedFilter = { isActive: true, status: 'PUBLISHED' as const };
+
+    const [totalStockResult, totalProducts, totalOrders, revenueResult, products] = await Promise.all([
+      // Only sum stock for active + published products
+      prisma.product.aggregate({
+        where: activePublishedFilter,
+        _sum: { stock: true }
+      }),
+      // Count active products
       prisma.product.count({ where: { isActive: true } }),
-      prisma.order.count(),
-      prisma.order.aggregate({ _sum: { total: true } }),
+      // Exclude cancelled orders
+      prisma.order.count({ where: { status: { not: 'CANCELLED' } } }),
+      // Only sum revenue from paid orders
+      prisma.order.aggregate({
+        where: { paymentStatus: 'PAID' },
+        _sum: { total: true }
+      }),
+      // Only compute inventory value from active + published products
+      prisma.product.findMany({
+        where: activePublishedFilter,
+        select: { stock: true, price: true }
+      })
     ]);
-    return { totalUsers, totalProducts, totalOrders, totalRevenue: Number(revenueResult._sum.total || 0) };
+
+    const totalStock = totalStockResult._sum.stock || 0;
+    const inventoryValue = products.reduce((sum, p) => sum + Number(p.price) * p.stock, 0);
+
+    return {
+      totalStock,
+      totalProducts,
+      totalOrders,
+      totalRevenue: Number(revenueResult._sum.total || 0),
+      inventoryValue
+    };
   }
 
   async getMonthlyAnalytics() {

@@ -3,12 +3,12 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  BarChart3, 
-  Box, 
-  Layers, 
-  Users, 
-  Bell, 
+import {
+  BarChart3,
+  Box,
+  Layers,
+  Users,
+  Bell,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -19,7 +19,13 @@ import {
   Wallet,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FileText,
+  ChevronDown,
+  PlusCircle,
+  Clock,
+  AlertCircle,
+  PieChart
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -34,8 +40,9 @@ function cn(...inputs: ClassValue[]) {
 interface MenuItem {
   name: string;
   icon: React.ElementType;
-  href: string;
+  href?: string;
   badge?: boolean;
+  children?: { name: string; href: string; icon: React.ElementType }[];
 }
 
 const superAdminMenuItems: MenuItem[] = [
@@ -47,6 +54,17 @@ const superAdminMenuItems: MenuItem[] = [
   { name: 'Orders', icon: ShoppingCart, href: '/superadmin/orders' },
   { name: 'Users', icon: Users, href: '/superadmin/users' },
   { name: 'Payments', icon: Wallet, href: '/superadmin/payments' },
+  {
+    name: 'Quotations',
+    icon: FileText,
+    children: [
+      { name: 'All Quotations', href: '/superadmin/quotations', icon: FileText },
+      { name: 'Create Quotation', href: '/superadmin/quotations/create', icon: PlusCircle },
+      { name: 'Draft Quotations', href: '/superadmin/quotations/drafts', icon: Clock },
+      { name: 'Expired Quotations', href: '/superadmin/quotations/expired', icon: AlertCircle },
+      { name: 'Quotation Reports', href: '/superadmin/quotations/reports', icon: PieChart },
+    ]
+  },
   { name: 'Reports', icon: BarChart3, href: '/superadmin/reports' },
   { name: 'Notifications', icon: Bell, href: '/superadmin/notifications', badge: true },
   { name: 'Settings', icon: Settings, href: '/superadmin/settings' },
@@ -66,8 +84,18 @@ export const Sidebar = () => {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(
+    // Auto-expand if a quotation path is active
+    pathname.includes('/superadmin/quotations') ? ['Quotations'] : []
+  );
 
   const menuItems = user?.role === 'SUPER_ADMIN' ? superAdminMenuItems : adminMenuItems;
+
+  const toggleExpanded = (name: string) => {
+    setExpandedMenus(prev =>
+      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+    );
+  };
 
   // Re-check unread notifications periodically or on mount
   useEffect(() => {
@@ -82,7 +110,14 @@ export const Sidebar = () => {
           console.error('Failed to fetch notifications', error);
         }
       };
+      
+      // Fetch immediately
       fetchNotifications();
+      
+      // Then refresh every 30 seconds (reduced frequency)
+      const interval = setInterval(fetchNotifications, 30000);
+      
+      return () => clearInterval(interval);
     }
   }, [user]);
 
@@ -106,25 +141,25 @@ export const Sidebar = () => {
             "flex items-center space-x-2 transition-all duration-300",
             collapsed ? "opacity-0 invisible w-0" : "opacity-100 visible w-auto"
           )}>
-            <span className="text-xl font-black text-white tracking-[0.1em]">
-               SHIELDER
+            <span className="text-xl font-black text-gray-800 tracking-[0.1em]">
+              SHIELDER
             </span>
           </div>
-          
+
           {/* Desktop Toggle Button */}
-          <button 
+          <button
             onClick={toggleSidebar}
             className={cn(
-              "hidden lg:flex p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all duration-300",
+              "hidden lg:flex p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all duration-300",
               collapsed ? "mx-auto" : ""
             )}
           >
             {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           </button>
         </div>
-        {!collapsed && <div className="h-[1px] w-full bg-white/10" />}
+        {!collapsed && <div className="h-[1px] w-full bg-gray-200" />}
         {collapsed && (
-          <div className="w-8 h-8 rounded-lg bg-shielder-primary flex items-center justify-center text-white font-black text-xs">
+          <div className="w-8 h-8 rounded-lg bg-[#FF6B35] flex items-center justify-center text-white font-black text-xs">
             S
           </div>
         )}
@@ -136,42 +171,107 @@ export const Sidebar = () => {
         collapsed ? "px-2" : "px-4"
       )}>
         {menuItems.map((item) => {
+          // Group item with children
+          if (item.children) {
+            const isExpanded = expandedMenus.includes(item.name);
+            const isGroupActive = item.children.some(c => pathname === c.href || pathname.startsWith(c.href + '/'));
+            return (
+              <div key={item.name}>
+                <button
+                  onClick={() => !collapsed && toggleExpanded(item.name)}
+                  className={cn(
+                    'w-full flex items-center py-3 rounded-lg transition-all duration-300 group relative',
+                    collapsed ? 'justify-center px-0' : 'px-4',
+                    isGroupActive
+                      ? 'bg-[#FF6B35] text-white shadow-md'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  )}
+                  title={collapsed ? item.name : ''}
+                >
+                  <item.icon
+                    size={20}
+                    className={cn('min-w-[20px]', isGroupActive ? 'text-white scale-110' : 'text-gray-500 group-hover:text-gray-900')}
+                  />
+                  <span className={cn(
+                    'ml-4 font-medium transition-all duration-500 whitespace-nowrap flex-1 text-left',
+                    collapsed ? 'opacity-0 invisible w-0 ml-0 overflow-hidden' : 'opacity-100 visible w-auto'
+                  )}>
+                    {item.name}
+                  </span>
+                  {!collapsed && (
+                    <ChevronDown
+                      size={14}
+                      className={cn('transition-transform duration-300', isExpanded ? 'rotate-180' : '')}
+                    />
+                  )}
+                </button>
+                {/* Sub-items */}
+                {isExpanded && !collapsed && (
+                  <div className="ml-4 mt-1 space-y-1">
+                    {item.children.map(child => {
+                      const isChildActive = pathname === child.href || pathname.startsWith(child.href + '/');
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          onClick={() => setIsMobileOpen(false)}
+                          prefetch={true}
+                          className={cn(
+                            'flex items-center py-2 px-3 rounded-lg text-sm transition-all duration-200 group',
+                            isChildActive
+                              ? 'bg-[#FF6B35]/10 text-[#FF6B35] font-semibold border-l-3 border-[#FF6B35]'
+                              : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                          )}
+                        >
+                          <child.icon size={15} className="min-w-[15px] mr-3" />
+                          <span className="whitespace-nowrap">{child.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          // Regular item
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.href!}
               onClick={() => setIsMobileOpen(false)}
+              prefetch={true}
               className={cn(
-                "flex items-center py-3 rounded-md transition-all duration-300 group relative",
-                collapsed ? "justify-center px-0" : "px-4",
-                isActive 
-                  ? "bg-shielder-secondary text-white border-l-4 border-shielder-primary" 
-                  : "text-white/70 hover:bg-shielder-primary hover:text-white"
+                'flex items-center py-3 rounded-lg transition-all duration-300 group relative',
+                collapsed ? 'justify-center px-0' : 'px-4',
+                isActive
+                  ? 'bg-[#FF6B35] text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               )}
-              title={collapsed ? item.name : ""}
+              title={collapsed ? item.name : ''}
             >
-              <item.icon 
-                size={20} 
+              <item.icon
+                size={20}
                 className={cn(
-                  "min-w-[20px] transition-colors", 
-                  isActive ? "text-white scale-110" : "text-gray-400 group-hover:text-white"
-                )} 
+                  'min-w-[20px] transition-colors',
+                  isActive ? 'text-white scale-110' : 'text-gray-500 group-hover:text-gray-900'
+                )}
               />
               <span className={cn(
-                "ml-4 font-medium transition-all duration-500 whitespace-nowrap",
-                isActive ? "text-white font-bold" : "",
-                collapsed ? "opacity-0 invisible w-0 ml-0 overflow-hidden" : "opacity-100 visible w-auto"
+                'ml-4 font-medium transition-all duration-500 whitespace-nowrap',
+                isActive ? 'text-white font-bold' : '',
+                collapsed ? 'opacity-0 invisible w-0 ml-0 overflow-hidden' : 'opacity-100 visible w-auto'
               )}>
                 {item.name}
               </span>
-              
+
               {item.badge && unreadCount > 0 && (
                 <span className={cn(
-                  "absolute bg-red-500 text-white text-[10px] font-bold rounded-full text-center transition-all duration-300",
-                  collapsed 
-                    ? "top-2 right-2 w-2 h-2 p-0" 
-                    : "right-4 px-1.5 py-0.5 min-w-[20px]"
+                  'absolute bg-red-500 text-white text-[10px] font-bold rounded-full text-center transition-all duration-300',
+                  collapsed
+                    ? 'top-2 right-2 w-2 h-2 p-0'
+                    : 'right-4 px-1.5 py-0.5 min-w-[20px]'
                 )}>
                   {collapsed ? '' : (unreadCount > 99 ? '99+' : unreadCount)}
                 </span>
@@ -183,13 +283,13 @@ export const Sidebar = () => {
 
       {/* Footer / Logout */}
       <div className={cn(
-        "p-4 bg-black/10 border-t border-white/5 transition-all duration-300",
+        "p-4 bg-gray-50 border-t border-gray-200 transition-all duration-300",
         collapsed ? "p-2" : "p-4"
       )}>
         <button
           onClick={handleLogout}
           className={cn(
-            "w-full flex items-center rounded-md text-white/70 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 group",
+            "w-full flex items-center rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-300 group",
             collapsed ? "justify-center px-0 py-3" : "px-4 py-3"
           )}
           title={collapsed ? "Logout" : ""}
@@ -209,9 +309,9 @@ export const Sidebar = () => {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside 
+      <aside
         className={cn(
-          "hidden lg:flex fixed left-0 top-0 h-screen bg-shielder-dark text-white z-50 flex-col shadow-[4px_0_10px_rgba(0,0,0,0.1)] transition-all duration-300",
+          "hidden lg:flex fixed left-0 top-0 h-screen bg-white text-gray-700 z-50 flex-col shadow-[2px_0_8px_rgba(0,0,0,0.08)] transition-all duration-300 border-r border-gray-100",
           collapsed ? "w-[72px]" : "w-[260px]"
         )}
       >
@@ -224,24 +324,24 @@ export const Sidebar = () => {
         isMobileOpen ? "visible" : "invisible"
       )}>
         {/* Overlay */}
-        <div 
+        <div
           className={cn(
             "absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300",
             isMobileOpen ? "opacity-100" : "opacity-0"
           )}
           onClick={() => setIsMobileOpen(false)}
         />
-        
+
         {/* Drawer */}
-        <aside 
+        <aside
           className={cn(
-            "absolute left-0 top-0 h-full w-[260px] bg-shielder-dark shadow-2xl transition-transform duration-300",
+            "absolute left-0 top-0 h-full w-[260px] bg-white shadow-2xl transition-transform duration-300 border-r border-gray-100",
             isMobileOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
-          <button 
+          <button
             onClick={() => setIsMobileOpen(false)}
-            className="absolute top-8 right-4 text-white hover:rotate-90 transition-transform p-2"
+            className="absolute top-8 right-4 text-gray-600 hover:text-gray-900 hover:rotate-90 transition-transform p-2"
           >
             <X size={24} />
           </button>

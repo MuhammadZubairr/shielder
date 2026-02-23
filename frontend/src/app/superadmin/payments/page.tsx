@@ -171,7 +171,7 @@ export default function PaymentsPage() {
           </button>
           <button 
             onClick={() => { setShowRecordModal(true); fetchUnpaidOrders(); }}
-            className="flex items-center space-x-2 px-5 py-2.5 bg-shielder-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-shielder-primary/20 hover:scale-105 transition-all active:scale-95"
+            className="flex items-center space-x-2 px-5 py-2.5 bg-[#FF6B35] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#FF6B35]/20 hover:scale-105 transition-all active:scale-95"
           >
             <Plus size={18} />
             <span>Add Payment</span>
@@ -374,7 +374,7 @@ export default function PaymentsPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-shielder-dark/60 backdrop-blur-sm" onClick={() => setShowRecordModal(false)}></div>
           <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden">
-            <div className="p-6 bg-shielder-primary text-white flex justify-between items-center">
+            <div className="p-6 bg-[#FF6B35] text-white flex justify-between items-center">
               <div>
                 <h2 className="text-xl font-black uppercase tracking-tight">Add New Payment</h2>
                 <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mt-1">Enter payment details below</p>
@@ -476,7 +476,7 @@ export default function PaymentsPage() {
                 </button>
                 <button 
                   type="submit"
-                  className="flex-1 px-6 py-4 bg-shielder-primary text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-xl shadow-shielder-primary/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center space-x-2"
+                  className="flex-1 px-6 py-4 bg-[#FF6B35] text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-xl shadow-[#FF6B35]/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center space-x-2"
                 >
                   <span>Confirm Payment</span>
                   <ArrowRight size={14} />

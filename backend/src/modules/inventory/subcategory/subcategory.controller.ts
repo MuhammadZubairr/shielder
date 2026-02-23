@@ -17,8 +17,12 @@ export class SubcategoryController {
       const subcategory = await subcategoryService.create({
         ...req.body,
         image,
-        isActive: req.body.isActive === 'true' || req.body.isActive === true
-      });
+        isActive: req.body.isActive === 'true' || req.body.isActive === true,
+        nameEn: req.body.nameEn,
+        descriptionEn: req.body.descriptionEn,
+        nameAr: req.body.nameAr,
+        descriptionAr: req.body.descriptionAr,
+      }, req.locale);
       res.status(201).json({ success: true, data: subcategory });
     } catch (error) {
       next(error);
@@ -40,7 +44,7 @@ export class SubcategoryController {
         categoryId: req.query.categoryId as string,
         isActive: req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined
       };
-      const locale = (req.query.locale as string) || 'en';
+      const locale = (req.query.locale as string) || req.locale || 'en';
       
       const result = await subcategoryService.list(filters, pagination, locale);
       res.json({ success: true, ...result });
@@ -74,7 +78,7 @@ export class SubcategoryController {
    */
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const locale = (req.query.locale as string) || 'en';
+      const locale = (req.query.locale as string) || req.locale || 'en';
       const subcategory = await subcategoryService.getById(String(req.params.id), locale);
       res.json({ success: true, data: subcategory });
     } catch (error) {
@@ -96,8 +100,12 @@ export class SubcategoryController {
       const subcategory = await subcategoryService.update(String(req.params.id), {
         ...req.body,
         image,
-        isActive: req.body.isActive !== undefined ? (req.body.isActive === 'true' || req.body.isActive === true) : undefined
-      });
+        isActive: req.body.isActive !== undefined ? (req.body.isActive === 'true' || req.body.isActive === true) : undefined,
+        nameEn: req.body.nameEn,
+        descriptionEn: req.body.descriptionEn,
+        nameAr: req.body.nameAr,
+        descriptionAr: req.body.descriptionAr,
+      }, req.locale);
       res.json({ success: true, data: subcategory });
     } catch (error) {
       next(error);

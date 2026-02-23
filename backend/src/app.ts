@@ -11,6 +11,7 @@ import morgan from 'morgan';
 import { appConfig } from './config/app.config';
 import { env } from './config/env';
 import { errorHandler, notFoundHandler } from './common/middleware/error.middleware';
+import { languageMiddleware } from './common/middleware/language.middleware';
 import { logger } from './common/logger/logger';
 
 // Import routes
@@ -28,6 +29,7 @@ import orderRoutes from './modules/order/order.routes';
 import paymentRoutes from './modules/payment/payment.routes';
 import reportsRoutes from './modules/reports/reports.routes';
 import settingsRoutes from './modules/settings/settings.routes';
+import quotationRoutes from './modules/quotation/quotation.routes';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { swaggerConfig } from './config/swagger';
@@ -57,8 +59,19 @@ export const createApp = (): Application => {
   const specs = swaggerJsdoc(swaggerConfig);
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
-  // Security middleware
-  app.use(helmet());
+  // Security middleware - Configure helmet to allow cross-origin images
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: ["'self'", 'data:', 'http://localhost:3000', 'https:'],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https:'],
+        scriptSrc: ["'self'"],
+        connectSrc: ["'self'"],
+      },
+    },
+  }));
 
   // CORS middleware
   app.use(cors(appConfig.cors));
@@ -66,6 +79,9 @@ export const createApp = (): Application => {
   // Body parsing middleware
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  // Language middleware – sets req.locale from Accept-Language header
+  app.use(languageMiddleware);
 
   // Compression middleware
   app.use(compression());
@@ -100,7 +116,7 @@ export const createApp = (): Application => {
   // API routes
   const apiPrefix = appConfig.api.prefix; // /api
   const versionedPrefix = `${apiPrefix}/${appConfig.api.version}`; // /api/v1
-  
+
   // Log prefixes for debugging
   console.log(`[BOOT] Registering routes with prefixes: ${apiPrefix} and ${versionedPrefix}`);
 
@@ -120,6 +136,7 @@ export const createApp = (): Application => {
     app.use(`${prefix}/payments`, paymentRoutes);
     app.use(`${prefix}/reports`, reportsRoutes);
     app.use(`${prefix}/settings`, settingsRoutes);
+    app.use(`${prefix}/quotations`, quotationRoutes);
   };
 
   mountRoutes(apiPrefix);

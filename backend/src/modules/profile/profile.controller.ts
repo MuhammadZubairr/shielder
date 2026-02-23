@@ -128,4 +128,90 @@ export class ProfileController {
       next(error);
     }
   }
+
+  /**
+   * @swagger
+   * /api/profile/preferences:
+   *   patch:
+   *     summary: Update profile preferences (theme etc)
+   *     tags: [User Profile]
+   *     security: [{ bearerAuth: [] }]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *     responses:
+   *       200:
+   *         description: Preferences updated
+   */
+  static async updatePreferences(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user!.userId;
+      const profile = await ProfileService.updatePreferences(userId, req.body);
+      
+      res.status(200).json({
+        success: true,
+        message: 'Preferences updated successfully',
+        data: profile,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * @swagger
+   * /api/profile/upload-image:
+   *   post:
+   *     summary: Upload profile image
+   *     tags: [User Profile]
+   *     security: [{ bearerAuth: [] }]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         multipart/form-data:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               profileImage:
+   *                 type: string
+   *                 format: binary
+   *     responses:
+   *       200:
+   *         description: Profile image uploaded successfully
+   */
+  static async uploadProfileImage(req: AuthRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user!.userId;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({
+          success: false,
+          message: 'No file uploaded',
+        });
+      }
+
+      // Generate URL for the uploaded file
+      const profileImageUrl = `/uploads/profile/${file.filename}`;
+
+      // Update profile with new image URL
+      const profile = await ProfileService.updateProfile(userId, {
+        profileImage: profileImageUrl,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Profile image uploaded successfully',
+        data: {
+          profileImage: profileImageUrl,
+          profile,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

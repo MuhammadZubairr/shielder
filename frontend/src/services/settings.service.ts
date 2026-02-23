@@ -51,13 +51,54 @@ export interface SystemSettings {
   autoBackupSchedule: string | null;
 }
 
+const SECTION_FIELDS: Record<string, string[]> = {
+  general: [
+    'systemName', 'companyName', 'companyLogo', 'companyEmail',
+    'companyPhone', 'companyAddress', 'currency', 'timezone', 'dateFormat', 'language',
+  ],
+  order: [
+    'defaultOrderStatus', 'autoCompleteOrderAfterPayment', 'allowPartialPayment',
+    'allowOrderCancellation', 'autoCancelUnpaidOrdersHours',
+  ],
+  payment: [
+    'paymentMethodsEnabled', 'onlinePaymentEnabled', 'paymentTestMode',
+    'paymentGatewayApiKey', 'paymentGatewaySecretKey', 'paymentWebhookUrl',
+  ],
+  notification: [
+    'enableEmailNotifications', 'enableLowStockAlerts', 'lowStockThreshold',
+    'enableOrderStatusNotifications', 'enablePaymentNotifications', 'roleNotificationMappings',
+  ],
+  security: [
+    'passwordMinLength', 'maxLoginAttempts', 'accountLockDurationMinutes',
+    'sessionTimeoutMinutes', 'enableTwoFactorAuth', 'forceStrongPasswords',
+  ],
+};
+
 const settingsService = {
   getSettings: () => {
     return api.get('settings');
   },
 
   updateSettings: (section: string, data: any) => {
-    return api.put(`settings/${section}`, data);
+    const fields = SECTION_FIELDS[section];
+    let sectionData = fields
+      ? Object.fromEntries(fields.map((k) => [k, data[k]]).filter(([, v]) => v !== undefined))
+      : { ...data };
+
+    // Ensure paymentMethodsEnabled is always an array (never null)
+    if (section === 'payment' && !Array.isArray(sectionData.paymentMethodsEnabled)) {
+      sectionData.paymentMethodsEnabled = [];
+    }
+
+    return api.put(`settings/${section}`, sectionData);
+  },
+
+  uploadCompanyLogo: (file: File) => {
+    const formData = new FormData();
+    formData.append('logo', file);
+    return api.post('settings/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   },
 
   verifyPassword: (password: string) => {
@@ -74,7 +115,6 @@ const settingsService = {
 
   getSnapshots: () => {
     return api.get('settings/snapshots');
-  }
-};
+  }};
 
 export default settingsService;

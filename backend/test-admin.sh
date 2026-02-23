@@ -8,7 +8,7 @@ echo "================================"
 echo -e "\n1️⃣ Login as Super Admin..."
 LOGIN_RESPONSE=$(curl -s -X POST http://localhost:5001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"superadmin@shielder.com","password":"SuperAdmin@2026"}')
+  -d '{"email":"superadmin@shielder.com","password":"Super@123"}')
 
 TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.data.accessToken')
 

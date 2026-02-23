@@ -4,9 +4,22 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+/**
+ * ⚠️ IMPORTANT: PASSWORD SECURITY
+ * 
+ * This script properly hashes passwords using bcrypt before storing them.
+ * NEVER update passwordHash directly in the database without bcrypt hashing.
+ * 
+ * Bcrypt Salt Rounds: 12 (matches AuthService.SALT_ROUNDS)
+ * 
+ * Always use:
+ * - AuthService.changePassword() for user password changes
+ * - This script for resetting superadmin password
+ * - bcrypt.hash(password, 12) for any manual password updates
+ */
 async function main() {
   const email = 'superadmin@shielder.com';
-  const password = 'SuperAdmin@2026';
+  const password = 'Super@123';
   const hashedPassword = await bcrypt.hash(password, 12);
 
   console.log(`Checking for user: ${email}`);

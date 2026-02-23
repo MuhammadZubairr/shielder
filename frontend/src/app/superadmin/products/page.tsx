@@ -494,7 +494,7 @@ const ProductManagement = () => {
           </button>
           <button 
             onClick={() => { resetForm(); setShowAddEditModal(true); }}
-            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#0205A6] text-white rounded-[10px] hover:bg-[#045870] transition-all font-semibold shadow-md active:scale-95"
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#FF6B35] text-white rounded-[10px] hover:bg-[#FF5722] transition-all font-semibold shadow-md active:scale-95"
           >
             <Plus size={18} />
             Add Product
@@ -647,7 +647,7 @@ const ProductManagement = () => {
                         <div className="absolute right-0 top-[80%] w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-[60] py-2 animate-in fade-in slide-in-from-top-2 zoom-in duration-200">
                           <button 
                             onClick={() => { setSelectedProduct(prod); setShowViewModal(true); setOpenMenuId(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-[#045870]/5 hover:text-[#045870] transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-[#FF6B35]/5 hover:text-[#FF6B35] transition-colors"
                           >
                             <Eye size={16} />
                             View Details
@@ -655,7 +655,7 @@ const ProductManagement = () => {
                           
                           <button 
                             onClick={() => { openEditModal(prod); setOpenMenuId(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-[#0205A6]/5 hover:text-[#0205A6] transition-colors"
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-gray-600 hover:bg-[#FF6B35]/5 hover:text-[#FF6B35] transition-colors"
                           >
                             <Edit2 size={16} />
                             Edit Product
@@ -725,7 +725,7 @@ const ProductManagement = () => {
                   onClick={() => setPagination(p => ({ ...p, page: i + 1 }))}
                   className={`min-w-[32px] h-8 text-xs font-black rounded-lg transition-all ${
                     pagination.page === i + 1 
-                      ? 'bg-[#0205A6] text-white shadow-sm' 
+                      ? 'bg-[#FF6B35] text-white shadow-sm' 
                       : 'text-gray-400 hover:bg-gray-100'
                   }`}
                 >
@@ -763,14 +763,14 @@ const ProductManagement = () => {
             <div className="overflow-y-auto px-8 py-8 md:px-10">
               {!bulkResults ? (
                 <div className="space-y-8">
-                  <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-6">
+                  <div className="bg-orange-50/50 border border-orange-100 rounded-2xl p-6">
                     <div className="flex items-start gap-4">
-                      <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                      <div className="p-3 bg-orange-100 text-orange-600 rounded-xl">
                         <AlertTriangle size={24} />
                       </div>
                       <div className="space-y-1">
-                        <h4 className="text-sm font-bold text-blue-900">Important Instructions</h4>
-                        <p className="text-xs text-blue-700 leading-relaxed">
+                        <h4 className="text-sm font-bold text-orange-900">Important Instructions</h4>
+                        <p className="text-xs text-orange-700 leading-relaxed">
                           Please ensure your file matches the template exactly. Categories, subcategories, and brands must already exist in the system (English names).
                         </p>
                         <button 
@@ -793,10 +793,10 @@ const ProductManagement = () => {
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                       />
                       <div className={`w-full py-12 border-2 border-dashed rounded-[32px] flex flex-col items-center justify-center transition-all ${
-                        bulkFile ? 'border-blue-500 bg-blue-50/30' : 'border-slate-200 bg-slate-50'
+                        bulkFile ? 'border-orange-500 bg-orange-50/30' : 'border-slate-200 bg-slate-50'
                       }`}>
                         <div className={`p-4 rounded-2xl mb-4 transition-all ${
-                          bulkFile ? 'bg-blue-600 text-white' : 'bg-white text-slate-400 shadow-sm'
+                          bulkFile ? 'bg-[#FF6B35] text-white' : 'bg-white text-slate-400 shadow-sm'
                         }`}>
                           <Upload size={32} />
                         </div>
@@ -818,7 +818,7 @@ const ProductManagement = () => {
                       <button
                         type="submit"
                         disabled={bulkUploading || !bulkFile}
-                        className="flex-[2] px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold text-sm hover:bg-blue-700 shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                        className="flex-[2] px-8 py-4 bg-[#FF6B35] text-white rounded-2xl font-bold text-sm hover:bg-[#FF5722] shadow-lg shadow-[#FF6B35]/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                       >
                         {bulkUploading ? (
                           <>
@@ -918,7 +918,7 @@ const ProductManagement = () => {
                 {/* Image Section */}
                 <div className="flex flex-col items-center justify-center">
                   <div className="relative group">
-                    <div className="w-44 h-44 rounded-[32px] bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden transition-all duration-300 group-hover:border-blue-500 group-hover:bg-blue-50/30 relative">
+                    <div className="w-44 h-44 rounded-[32px] bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden transition-all duration-300 group-hover:border-orange-500 group-hover:bg-orange-50/30 relative">
                       {imagePreview ? (
                         <Image src={imagePreview} className="object-cover transition-transform duration-500 group-hover:scale-105" alt="Preview" fill />
                       ) : (
@@ -931,7 +931,7 @@ const ProductManagement = () => {
                     <button 
                       type="button"
                       onClick={() => setImagePreview('https://images.unsplash.com/photo-1578506065344-f216f414457e?q=80&w=800&auto=format&fit=crop')} 
-                      className="absolute -bottom-2 -right-2 p-3.5 bg-blue-600 text-white rounded-2xl shadow-lg hover:bg-blue-700 hover:scale-110 active:scale-95 transition-all duration-200 border-4 border-white"
+                      className="absolute -bottom-2 -right-2 p-3.5 bg-[#FF6B35] text-white rounded-2xl shadow-lg hover:bg-[#FF5722] hover:scale-110 active:scale-95 transition-all duration-200 border-4 border-white"
                     >
                       <Upload size={18} />
                     </button>
@@ -1158,7 +1158,7 @@ const ProductManagement = () => {
                 </div>
 
                 {/* Status Toggle */}
-                <div className="flex items-center justify-between p-5 bg-blue-50/30 rounded-3xl border border-blue-100/50">
+                <div className="flex items-center justify-between p-5 bg-orange-50/30 rounded-3xl border border-orange-100/50">
                    <div className="flex flex-col">
                      <span className="text-sm font-bold text-slate-800">Publish Immediately</span>
                      <span className="text-[11px] text-slate-500 font-medium">Make this product visible to customers upon saving.</span>
@@ -1166,7 +1166,7 @@ const ProductManagement = () => {
                    <button 
                     type="button"
                     onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.isActive ? 'bg-blue-600' : 'bg-slate-200'}`}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.isActive ? 'bg-[#FF6B35]' : 'bg-slate-200'}`}
                    >
                      <span
                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.isActive ? 'translate-x-5' : 'translate-x-0'}`}
@@ -1187,7 +1187,7 @@ const ProductManagement = () => {
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="order-1 sm:order-2 flex-[1.5] px-8 py-4 bg-blue-600 text-white rounded-2xl font-bold text-sm hover:bg-blue-700 shadow-lg shadow-blue-500/25 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 group"
+                  className="order-1 sm:order-2 flex-[1.5] px-8 py-4 bg-[#FF6B35] text-white rounded-2xl font-bold text-sm hover:bg-[#FF5722] shadow-lg shadow-[#FF6B35]/25 transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 group"
                 >
                   {formLoading ? (
                     <Loader2 className="animate-spin" size={18} />
@@ -1267,7 +1267,7 @@ const ProductManagement = () => {
                     <div className="space-y-4">
                       <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2 flex items-center justify-between">
                         <span>Technical Specifications</span>
-                        <span className="text-[8px] bg-[#0205A6]/10 text-[#0205A6] px-2 py-0.5 rounded-full">{selectedProduct.specifications.length} ENTRIES</span>
+                        <span className="text-[8px] bg-[#FF6B35]/10 text-[#FF6B35] px-2 py-0.5 rounded-full">{selectedProduct.specifications.length} ENTRIES</span>
                       </h4>
                       <div className="grid grid-cols-1 gap-2">
                         {selectedProduct.specifications.map((spec, i) => (
@@ -1302,7 +1302,7 @@ const ProductManagement = () => {
                 <div className="mt-12 flex gap-4">
                    <button 
                     onClick={() => { setShowViewModal(false); openEditModal(selectedProduct); }}
-                    className="flex-1 py-4 bg-[#0A1E36] text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-[#0205A6] transition-all"
+                    className="flex-1 py-4 bg-gray-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-700 transition-all"
                    >
                      Update Records
                    </button>

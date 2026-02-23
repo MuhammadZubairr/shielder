@@ -12,6 +12,7 @@ import type {
   RefreshTokenRequest,
   ApiResponse,
   User,
+  ChangePasswordRequest,
 } from '@/types';
 
 /**
@@ -113,6 +114,17 @@ class AuthService {
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
 
       return user;
+    } catch (error) {
+      throw new Error(handleApiError(error));
+    }
+  }
+
+  /**
+   * Change password
+   */
+  async changePassword(data: ChangePasswordRequest): Promise<void> {
+    try {
+      await apiClient.patch(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, data);
     } catch (error) {
       throw new Error(handleApiError(error));
     }

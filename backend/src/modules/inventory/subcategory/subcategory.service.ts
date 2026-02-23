@@ -10,9 +10,23 @@ export interface SubcategoryFilters {
 
 export class SubcategoryService {
   /**
-   * Create a new subcategory with translations
+   * Create a new subcategory with translations.
+   * Accepts either single-locale { name, locale } or bilingual { nameEn, nameAr }.
    */
-  async create(data: { name: string; description?: string; categoryId: string; image?: string; isActive?: boolean }) {
+  async create(
+    data: {
+      name?: string;
+      description?: string;
+      categoryId: string;
+      image?: string;
+      isActive?: boolean;
+      nameEn?: string;
+      descriptionEn?: string;
+      nameAr?: string;
+      descriptionAr?: string;
+    },
+    locale: string = 'en',
+  ) {
     // Check if category exists
     const category = await prisma.category.findUnique({
       where: { id: data.categoryId },
@@ -22,19 +36,29 @@ export class SubcategoryService {
       throw new ApiError('Parent category not found', 404);
     }
 
-    // Check for duplicate name in same category (locale: en)
-    const existing = await prisma.subcategoryTranslation.findFirst({
-      where: {
-        name: data.name,
-        locale: 'en',
-        subcategory: {
-          categoryId: data.categoryId,
-        },
-      },
-    });
+    // Build translation entries
+    const translationsToCreate: { name: string; description?: string; locale: string }[] = [];
+    if (data.nameEn) translationsToCreate.push({ name: data.nameEn, description: data.descriptionEn, locale: 'en' });
+    if (data.nameAr) translationsToCreate.push({ name: data.nameAr, description: data.descriptionAr, locale: 'ar' });
+    if (translationsToCreate.length === 0 && data.name) {
+      translationsToCreate.push({ name: data.name, description: data.description, locale });
+    }
+    if (translationsToCreate.length === 0) {
+      throw new ApiError('Subcategory name is required', 400);
+    }
 
-    if (existing) {
-      throw new ApiError('Subcategory with this name already exists in this category', 400);
+    // Check for duplicate names in each locale
+    for (const t of translationsToCreate) {
+      const existing = await prisma.subcategoryTranslation.findFirst({
+        where: {
+          name: t.name,
+          locale: t.locale,
+          subcategory: { categoryId: data.categoryId },
+        },
+      });
+      if (existing) {
+        throw new ApiError(`Subcategory with this ${t.locale === 'ar' ? 'Arabic' : 'English'} name already exists in this category`, 400);
+      }
     }
 
     return await prisma.subcategory.create({
@@ -43,20 +67,16 @@ export class SubcategoryService {
         image: data.image,
         isActive: data.isActive ?? true,
         translations: {
-          create: {
-            name: data.name,
-            description: data.description,
-            locale: 'en',
-          },
+          create: translationsToCreate,
         },
       },
       include: {
         translations: true,
         category: {
           include: {
-            translations: { where: { locale: 'en' } }
-          }
-        }
+            translations: true,
+          },
+        },
       },
     });
   }
@@ -91,13 +111,11 @@ export class SubcategoryService {
         skip: pagination.skip,
         take: pagination.limit,
         include: {
-          translations: {
-            where: { locale },
-          },
+          translations: true, // all translations for bilingual forms
           category: {
             include: {
-              translations: { where: { locale } }
-            }
+              translations: true,
+            },
           },
           _count: {
             select: { products: true },
@@ -107,13 +125,23 @@ export class SubcategoryService {
       }),
     ]);
 
-    // Flatten translations for the frontend
-    const formattedSubcategories = subcategories.map((sub) => ({
-      ...sub,
-      name: sub.translations[0]?.name || '',
-      description: sub.translations[0]?.description || '',
-      categoryName: sub.category.translations[0]?.name || 'Unknown Category'
-    }));
+    // Flatten translations — expose locale name + bilingual fields
+    const formattedSubcategories = subcategories.map((sub) => {
+      const locTrans = sub.translations.find(t => t.locale === locale) || sub.translations[0];
+      const enTrans = sub.translations.find(t => t.locale === 'en');
+      const arTrans = sub.translations.find(t => t.locale === 'ar');
+      const catLocTrans = sub.category.translations.find(t => t.locale === locale) || sub.category.translations[0];
+      return {
+        ...sub,
+        name: locTrans?.name || '',
+        description: locTrans?.description || '',
+        nameEn: enTrans?.name || '',
+        descriptionEn: enTrans?.description || '',
+        nameAr: arTrans?.name || '',
+        descriptionAr: arTrans?.description || '',
+        categoryName: catLocTrans?.name || 'Unknown Category',
+      };
+    });
 
     return createPaginatedResponse(formattedSubcategories, total, pagination.page, pagination.limit);
   }
@@ -136,21 +164,21 @@ export class SubcategoryService {
   }
 
   /**
-   * Get single subcategory
+   * Get single subcategory — returns ALL translations for admin bilingual form
    */
   async getById(id: string, locale: string = 'en') {
     const subcategory = await prisma.subcategory.findUnique({
       where: { id },
       include: {
-        translations: { where: { locale } },
+        translations: true,
         category: {
           include: {
-            translations: { where: { locale } }
-          }
+            translations: true,
+          },
         },
         _count: {
-          select: { products: true }
-        }
+          select: { products: true },
+        },
       },
     });
 
@@ -158,18 +186,44 @@ export class SubcategoryService {
       throw new ApiError('Subcategory not found', 404);
     }
 
+    const locTrans = subcategory.translations.find(t => t.locale === locale) || subcategory.translations[0];
+    const enTrans = subcategory.translations.find(t => t.locale === 'en');
+    const arTrans = subcategory.translations.find(t => t.locale === 'ar');
+    const catEnTrans = subcategory.category.translations.find(t => t.locale === locale) || subcategory.category.translations[0];
+
     return {
       ...subcategory,
-      name: subcategory.translations[0]?.name || '',
-      description: subcategory.translations[0]?.description || '',
-      categoryName: subcategory.category.translations[0]?.name || 'Unknown Category'
+      name: locTrans?.name || '',
+      description: locTrans?.description || '',
+      nameEn: enTrans?.name || '',
+      descriptionEn: enTrans?.description || '',
+      nameAr: arTrans?.name || '',
+      descriptionAr: arTrans?.description || '',
+      categoryName: catEnTrans?.name || 'Unknown Category',
     };
   }
 
   /**
    * Update subcategory
    */
-  async update(id: string, data: { name?: string; description?: string; categoryId?: string; image?: string; isActive?: boolean }) {
+  /**
+   * Update subcategory — accepts bilingual fields
+   */
+  async update(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      categoryId?: string;
+      image?: string;
+      isActive?: boolean;
+      nameEn?: string;
+      descriptionEn?: string;
+      nameAr?: string;
+      descriptionAr?: string;
+    },
+    locale: string = 'en',
+  ) {
     const subcategory = await prisma.subcategory.findUnique({
       where: { id },
     });
@@ -184,23 +238,24 @@ export class SubcategoryService {
       if (!category) throw new ApiError('Parent category not found', 404);
     }
 
-    // Update translations if name or description provided
-    if (data.name || data.description) {
-      await prisma.subcategoryTranslation.upsert({
-        where: {
-          subcategoryId_locale: { subcategoryId: id, locale: 'en' },
-        },
-        update: {
-          name: data.name,
-          description: data.description,
-        },
-        create: {
-          subcategoryId: id,
-          locale: 'en',
-          name: data.name || '',
-          description: data.description,
-        },
-      });
+    // Build translation upserts
+    const upserts: { locale: string; name: string; description?: string }[] = [];
+    if (data.nameEn !== undefined) upserts.push({ locale: 'en', name: data.nameEn, description: data.descriptionEn });
+    if (data.nameAr !== undefined) upserts.push({ locale: 'ar', name: data.nameAr, description: data.descriptionAr });
+    if (upserts.length === 0 && data.name !== undefined) {
+      upserts.push({ locale, name: data.name, description: data.description });
+    }
+
+    if (upserts.length > 0) {
+      await Promise.all(
+        upserts.map(t =>
+          prisma.subcategoryTranslation.upsert({
+            where: { subcategoryId_locale: { subcategoryId: id, locale: t.locale } },
+            update: { name: t.name, description: t.description },
+            create: { subcategoryId: id, locale: t.locale, name: t.name, description: t.description },
+          }),
+        ),
+      );
     }
 
     return await prisma.subcategory.update({
@@ -211,7 +266,7 @@ export class SubcategoryService {
         isActive: data.isActive,
       },
       include: {
-        translations: { where: { locale: 'en' } },
+        translations: true,
       },
     });
   }

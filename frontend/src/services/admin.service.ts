@@ -22,6 +22,12 @@ class AdminService {
     return apiClient.get('analytics/orders/monthly');
   }
 
+  async getQuotationsTotalCount() {
+    return apiClient.get('/quotations', { params: { limit: 1, page: 1 } });
+  }
+
+  
+
   async getByCategory() {
     return apiClient.get('analytics/products/by-category');
   }

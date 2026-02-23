@@ -266,7 +266,7 @@ export default function OrdersPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <Link 
                         href={`/superadmin/orders/${order.id}`}
-                        className="p-2 text-gray-400 hover:text-shielder-primary hover:bg-shielder-primary/5 rounded-lg transition-all inline-flex items-center"
+                        className="p-2 text-gray-400 hover:text-[#FF6B35] hover:bg-[#FF6B35]/5 rounded-lg transition-all inline-flex items-center"
                       >
                         <Eye size={18} />
                       </Link>

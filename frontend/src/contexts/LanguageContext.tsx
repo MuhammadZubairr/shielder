@@ -1,27 +1,38 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Locale, getTranslation, isRTL } from '@/utils/translations';
+import {
+  type Locale,
+  type TranslationKey,
+  createT,
+  isRTLLocale,
+  localeDir,
+  localeFontClass,
+  DEFAULT_LOCALE,
+} from '@/i18n/config';
 import { STORAGE_KEYS } from '@/utils/constants';
+
+type TFunction = (key: TranslationKey | string) => string;
 
 interface LanguageContextType {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  t: ReturnType<typeof getTranslation>;
+  /** Type-safe translation function. Usage: t('dashboard') */
+  t: TFunction;
   isRTL: boolean;
+  dir: 'rtl' | 'ltr';
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('en');
+  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Get saved locale from localStorage
-    const savedLocale = localStorage.getItem(STORAGE_KEYS.LOCALE) as Locale;
-    if (savedLocale && (savedLocale === 'en' || savedLocale === 'ar')) {
-      setLocaleState(savedLocale);
+    const saved = localStorage.getItem(STORAGE_KEYS.LOCALE) as Locale | null;
+    if (saved === 'en' || saved === 'ar') {
+      setLocaleState(saved);
     }
     setMounted(true);
   }, []);
@@ -29,30 +40,39 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!mounted) return;
 
-    // Update document direction and lang attribute
-    const direction = isRTL(locale) ? 'rtl' : 'ltr';
-    document.documentElement.dir = direction;
-    document.documentElement.lang = locale;
-    
-    // Save to localStorage
+    // Sync <html> direction, lang and Cairo font class
+    const dir = localeDir(locale);
+    const fontClass = localeFontClass(locale);
+    const html = document.documentElement;
+
+    html.dir  = dir;
+    html.lang = locale;
+
+    // Apply / remove Cairo font on <body> for Arabic
+    if (locale === 'ar') {
+      document.body.classList.add(fontClass);
+    } else {
+      // Remove any previously added font class
+      document.body.classList.forEach(cls => {
+        if (cls.includes('font-')) document.body.classList.remove(cls);
+      });
+    }
+
     localStorage.setItem(STORAGE_KEYS.LOCALE, locale);
   }, [locale, mounted]);
 
-  const setLocale = (newLocale: Locale) => {
-    setLocaleState(newLocale);
-  };
+  const setLocale = (newLocale: Locale) => setLocaleState(newLocale);
 
-  const value = {
+  const value: LanguageContextType = {
     locale,
     setLocale,
-    t: getTranslation(locale),
-    isRTL: isRTL(locale),
+    t: createT(locale),
+    isRTL: isRTLLocale(locale),
+    dir: localeDir(locale),
   };
 
-  // Prevent flash of wrong direction
-  if (!mounted) {
-    return null;
-  }
+  // Avoid flash of wrong direction on first paint
+  if (!mounted) return null;
 
   return (
     <LanguageContext.Provider value={value}>
@@ -63,8 +83,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
 export function useLanguage() {
   const context = useContext(LanguageContext);
-  if (context === undefined) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
-  }
+  if (!context) throw new Error('useLanguage must be used within a LanguageProvider');
   return context;
 }
+
+// Re-export Locale type for consumers that import from this file
+export type { Locale };

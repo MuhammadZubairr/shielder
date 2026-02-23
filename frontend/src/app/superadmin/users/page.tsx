@@ -105,7 +105,7 @@ export default function UserManagement() {
         password: '',
         fullName: '',
         phoneNumber: '',
-        role: 'USER',
+        role: 'ADMIN',
         status: 'ACTIVE'
       });
     }
@@ -378,8 +378,8 @@ export default function UserManagement() {
       {/* Add/Edit User Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-white/20 animate-in zoom-in-95 duration-200">
-            <div className="bg-shielder-dark p-6 flex items-center justify-between">
+          <div className="bg-white w-full max-w-lg max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden border border-white/20 animate-in zoom-in-95 duration-200 flex flex-col">
+            <div className="bg-shielder-dark p-6 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center space-x-3 text-white">
                 <div className="p-2 bg-white/10 rounded-xl">
                   {editingUser ? <Edit size={24} /> : <UserPlus size={24} />}
@@ -394,7 +394,8 @@ export default function UserManagement() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+              <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
@@ -421,17 +422,41 @@ export default function UserManagement() {
 
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
-                <div className="relative">
-                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
-                   <input 
-                    type="email" 
-                    required
-                    disabled={!!editingUser}
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-shielder-primary border-gray-200 disabled:opacity-50"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  />
-                </div>
+                {formData.role === 'ADMIN' && !editingUser ? (
+                  // ADMIN: prefix input + fixed @shielder.com suffix
+                  <div className="flex items-stretch">
+                    <div className="relative flex-1">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                      <input
+                        type="text"
+                        required
+                        placeholder="username"
+                        className="w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-r-0 border-gray-200 rounded-l-xl text-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#FF6B35]"
+                        value={formData.email.replace('@shielder.com', '')}
+                        onChange={(e) => {
+                          const prefix = e.target.value.replace(/@.*/, '').replace(/\s/g, '');
+                          setFormData({...formData, email: prefix ? `${prefix}@shielder.com` : ''});
+                        }}
+                      />
+                    </div>
+                    <span className="flex items-center px-3 py-2.5 bg-[#0C1B33] text-white text-xs font-black rounded-r-xl border border-[#0C1B33] whitespace-nowrap select-none">
+                      @shielder.com
+                    </span>
+                  </div>
+                ) : (
+                  // Non-ADMIN or edit mode: normal email input
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
+                    <input
+                      type="email"
+                      required
+                      disabled={!!editingUser}
+                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-shielder-primary disabled:opacity-50"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    />
+                  </div>
+                )}
               </div>
 
               {!editingUser && (
@@ -457,7 +482,7 @@ export default function UserManagement() {
                   <select 
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-shielder-primary"
                     value={formData.role}
-                    onChange={(e) => setFormData({...formData, role: e.target.value})}
+                    onChange={(e) => setFormData({...formData, role: e.target.value, email: ''})}
                   >
                     <option value="ADMIN">Admin</option>
                     <option value="USER">Simple User</option>
@@ -475,8 +500,9 @@ export default function UserManagement() {
                   </select>
                 </div>
               </div>
+              </div>
 
-              <div className="pt-4 flex space-x-3">
+              <div className="px-6 py-4 border-t border-gray-100 flex space-x-3 flex-shrink-0">
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
@@ -486,7 +512,7 @@ export default function UserManagement() {
                 </button>
                 <button 
                   type="submit"
-                  className="flex-[2] py-3 bg-shielder-primary text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-shielder-dark transition-all shadow-lg shadow-shielder-primary/20"
+                  className="flex-[2] py-3 bg-[#FF6B35] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#FF5722] transition-all shadow-lg shadow-[#FF6B35]/20"
                 >
                   {editingUser ? 'Save Changes' : 'Create Account'}
                 </button>

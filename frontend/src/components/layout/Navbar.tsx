@@ -6,9 +6,13 @@ import { useDashboard } from '@/contexts/DashboardContext';
 import { usePathname } from 'next/navigation';
 import { NotificationDropdown } from './NotificationDropdown';
 import { ProfileDropdown } from './ProfileDropdown';
+import { GlobalSearch } from './GlobalSearch';
+import { useAuth } from '@/hooks/useAuth';
+import profileService from '@/services/profile.service';
 
 export const Navbar = () => {
   const { setIsMobileOpen, toggleSidebar, sidebarCollapsed } = useDashboard();
+  const { user } = useAuth();
   const pathname = usePathname();
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -28,24 +32,45 @@ export const Navbar = () => {
       .join(' ');
   };
 
-  // Dark mode persistence (Mock logic for now)
+  // Dark mode persistence
   useEffect(() => {
+    // 1. Initial sync from localStorage (instant feedback)
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
     }
-  }, []);
 
-  const toggleDarkMode = () => {
+    // 2. Sync from user profile preference if available
+    const dbTheme = (user?.profile?.preferences as any)?.theme;
+    if (dbTheme) {
+      const isDbDark = dbTheme === 'dark';
+      setIsDarkMode(isDbDark);
+      if (isDbDark) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+    }
+  }, [user]);
+
+  const toggleDarkMode = async () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+    const theme = newMode ? 'dark' : 'light';
+    localStorage.setItem('theme', theme);
+    // Dispatch a custom event so ThemeClientWrapper updates immediately
+    window.dispatchEvent(new Event('theme-toggle'));
+
+    // Persist to DB if logged in
+    if (user) {
+      try {
+        await profileService.updatePreferences({ theme });
+      } catch (error) {
+        console.error('Failed to sync theme preference:', error);
+      }
     }
   };
 
@@ -75,6 +100,11 @@ export const Navbar = () => {
             System Control Panel
           </p>
         </div>
+      </div>
+
+      {/* Global Search - Dynamic Responsive Behavior */}
+      <div className="flex-1 max-w-xl mx-4 lg:mx-12">
+        <GlobalSearch />
       </div>
 
       {/* Right Actions */}

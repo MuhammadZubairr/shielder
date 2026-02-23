@@ -9,19 +9,50 @@ export interface CategoryFilters {
 
 export class CategoryService {
   /**
-   * Create a new category with translations
+   * Create a new category with translations.
+   * Accepts either:
+   *  - { name, description, locale } — single-locale (backwards-compatible)
+   *  - { nameEn, descriptionEn, nameAr, descriptionAr } — bilingual at once
    */
-  async create(data: { name: string; description?: string; image?: string; isActive?: boolean }) {
-    // Check for duplicate name in default locale (en)
-    const existing = await prisma.categoryTranslation.findFirst({
-      where: {
-        name: data.name,
-        locale: 'en',
-      },
-    });
+  async create(
+    data: {
+      name?: string;
+      description?: string;
+      image?: string;
+      isActive?: boolean;
+      nameEn?: string;
+      descriptionEn?: string;
+      nameAr?: string;
+      descriptionAr?: string;
+    },
+    locale: string = 'en',
+  ) {
+    // Build translation entries to create
+    const translationsToCreate: { name: string; description?: string; locale: string }[] = [];
 
-    if (existing) {
-      throw new ApiError('Category with this name already exists', 400);
+    if (data.nameEn) {
+      translationsToCreate.push({ name: data.nameEn, description: data.descriptionEn, locale: 'en' });
+    }
+    if (data.nameAr) {
+      translationsToCreate.push({ name: data.nameAr, description: data.descriptionAr, locale: 'ar' });
+    }
+    // Fallback: single name + locale
+    if (translationsToCreate.length === 0 && data.name) {
+      translationsToCreate.push({ name: data.name, description: data.description, locale });
+    }
+
+    if (translationsToCreate.length === 0) {
+      throw new ApiError('Category name is required', 400);
+    }
+
+    // Check for duplicate name in each target locale
+    for (const t of translationsToCreate) {
+      const existing = await prisma.categoryTranslation.findFirst({
+        where: { name: t.name, locale: t.locale },
+      });
+      if (existing) {
+        throw new ApiError(`Category with this ${t.locale === 'ar' ? 'Arabic' : 'English'} name already exists`, 400);
+      }
     }
 
     return await prisma.category.create({
@@ -29,11 +60,7 @@ export class CategoryService {
         image: data.image,
         isActive: data.isActive ?? true,
         translations: {
-          create: {
-            name: data.name,
-            description: data.description,
-            locale: 'en',
-          },
+          create: translationsToCreate,
         },
       },
       include: {
@@ -68,9 +95,7 @@ export class CategoryService {
         skip: pagination.skip,
         take: pagination.limit,
         include: {
-          translations: {
-            where: { locale },
-          },
+          translations: true, // Include ALL translations for bilingual admin forms
           _count: {
             select: { subcategories: true, products: true },
           },
@@ -79,12 +104,21 @@ export class CategoryService {
       }),
     ]);
 
-    // Flatten translations for the frontend
-    const formattedCategories = categories.map((cat) => ({
-      ...cat,
-      name: cat.translations[0]?.name || '',
-      description: cat.translations[0]?.description || '',
-    }));
+    // Flatten translations for the frontend — expose locale name + bilingual fields
+    const formattedCategories = categories.map((cat) => {
+      const locTrans = cat.translations.find(t => t.locale === locale) || cat.translations[0];
+      const enTrans = cat.translations.find(t => t.locale === 'en');
+      const arTrans = cat.translations.find(t => t.locale === 'ar');
+      return {
+        ...cat,
+        name: locTrans?.name || '',
+        description: locTrans?.description || '',
+        nameEn: enTrans?.name || '',
+        descriptionEn: enTrans?.description || '',
+        nameAr: arTrans?.name || '',
+        descriptionAr: arTrans?.description || '',
+      };
+    });
 
     return createPaginatedResponse(formattedCategories, total, pagination.page, pagination.limit);
   }
@@ -107,15 +141,13 @@ export class CategoryService {
   }
 
   /**
-   * Get category by ID
+   * Get category by ID — returns the requested locale name plus ALL translations for admin forms
    */
   async getById(id: string, locale: string = 'en') {
     const category = await prisma.category.findUnique({
       where: { id },
       include: {
-        translations: {
-          where: { locale },
-        },
+        translations: true, // Return ALL translations so admin can edit bilingual fields
         _count: {
           select: { subcategories: true, products: true },
         },
@@ -126,35 +158,83 @@ export class CategoryService {
       throw new ApiError('Category not found', 404);
     }
 
+    const localeTranslation = category.translations.find(t => t.locale === locale);
+    const enTranslation = category.translations.find(t => t.locale === 'en');
+    const arTranslation = category.translations.find(t => t.locale === 'ar');
+
     return {
       ...category,
-      name: category.translations[0]?.name || '',
-      description: category.translations[0]?.description || '',
+      // Convenience fields for current locale
+      name: localeTranslation?.name || enTranslation?.name || '',
+      description: localeTranslation?.description || enTranslation?.description || '',
+      // Bilingual fields for admin forms
+      nameEn: enTranslation?.name || '',
+      descriptionEn: enTranslation?.description || '',
+      nameAr: arTranslation?.name || '',
+      descriptionAr: arTranslation?.description || '',
     };
   }
 
   /**
-   * Update category
+   * Update category — accepts single-locale or bilingual fields
    */
-  async update(id: string, data: { name?: string; description?: string; image?: string; isActive?: boolean }) {
+  async update(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      image?: string;
+      isActive?: boolean;
+      nameEn?: string;
+      descriptionEn?: string;
+      nameAr?: string;
+      descriptionAr?: string;
+    },
+    locale: string = 'en',
+  ) {
     // Check if category exists
     const category = await prisma.category.findUnique({ where: { id } });
     if (!category) {
       throw new ApiError('Category not found', 404);
     }
 
-    if (data.name) {
-      const existing = await prisma.categoryTranslation.findFirst({
-        where: {
-          name: data.name,
-          locale: 'en',
-          NOT: { categoryId: id },
-        },
-      });
+    // Build translation upserts
+    const upserts: { locale: string; name: string; description?: string }[] = [];
 
-      if (existing) {
-        throw new ApiError('Category with this name already exists', 400);
+    if (data.nameEn !== undefined) {
+      upserts.push({ locale: 'en', name: data.nameEn, description: data.descriptionEn });
+    }
+    if (data.nameAr !== undefined) {
+      upserts.push({ locale: 'ar', name: data.nameAr, description: data.descriptionAr });
+    }
+    // Fallback: single name + locale
+    if (upserts.length === 0 && data.name !== undefined) {
+      upserts.push({ locale, name: data.name, description: data.description });
+    }
+
+    // Check for duplicate names
+    for (const t of upserts) {
+      if (t.name) {
+        const existing = await prisma.categoryTranslation.findFirst({
+          where: { name: t.name, locale: t.locale, NOT: { categoryId: id } },
+        });
+        if (existing) {
+          throw new ApiError(`Category with this ${t.locale === 'ar' ? 'Arabic' : 'English'} name already exists`, 400);
+        }
       }
+    }
+
+    // Run upserts for each locale
+    if (upserts.length > 0) {
+      await Promise.all(
+        upserts.map(t =>
+          prisma.categoryTranslation.upsert({
+            where: { categoryId_locale: { categoryId: id, locale: t.locale } },
+            create: { categoryId: id, locale: t.locale, name: t.name, description: t.description },
+            update: { name: t.name, description: t.description },
+          }),
+        ),
+      );
     }
 
     return await prisma.category.update({
@@ -162,13 +242,6 @@ export class CategoryService {
       data: {
         image: data.image,
         isActive: data.isActive,
-        translations: data.name || data.description ? {
-          upsert: {
-            where: { categoryId_locale: { categoryId: id, locale: 'en' } },
-            create: { name: data.name || '', description: data.description, locale: 'en' },
-            update: { name: data.name, description: data.description },
-          },
-        } : undefined,
       },
       include: {
         translations: true,

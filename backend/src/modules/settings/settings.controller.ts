@@ -6,8 +6,32 @@ import { Request, Response } from 'express';
 import SettingsService from './settings.service';
 import { asyncHandler } from '@/common/middleware/error.middleware';
 import { AuthRequest } from '@/types/global';
+import { upload } from '@/common/middleware/upload.middleware';
 
 class SettingsController {
+    /**
+     * POST /api/settings/logo
+     * Upload and update company logo
+     */
+    uploadCompanyLogo = [
+      upload.single('logo'),
+      asyncHandler(async (req: AuthRequest, res: Response) => {
+        if (!req.file) {
+          res.status(400).json({ success: false, message: 'No file uploaded' });
+          return;
+        }
+        // Save file path (relative to uploads/)
+        const logoPath = `/uploads/${req.file.filename}`;
+        // Update settings
+        await SettingsService.updateSettings(
+          req.user?.id as string,
+          'general',
+          { companyLogo: logoPath },
+          req.ip as any
+        );
+        res.json({ success: true, message: 'Company logo updated', data: { companyLogo: logoPath } });
+      })
+    ];
   /**
    * GET /api/settings
    */
@@ -21,7 +45,8 @@ class SettingsController {
    */
   updateSettings = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = (req.user?.id as string) || '';
-    const section = (req.params.section as string) || '';
+    // Derive section from URL path (e.g., /general → 'general')
+    const section = req.path.split('/').filter(Boolean)[0] || (req.params.section as string) || '';
     const ipAddress = (req.ip as any) || '';
 
     const data = await (SettingsService as any).updateSettings(userId, section, req.body, ipAddress);

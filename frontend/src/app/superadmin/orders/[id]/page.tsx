@@ -106,7 +106,7 @@ export default function OrderDetailPage() {
           
           {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
             <div className="relative group">
-              <button className="bg-shielder-primary text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-shielder-primary/20 flex items-center space-x-2 transition-all active:scale-95">
+              <button className="bg-[#FF6B35] text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-[#FF6B35]/20 flex items-center space-x-2 transition-all active:scale-95 hover:bg-[#FF5722]">
                 <span>Update Status</span>
                 <ChevronRight size={16} />
               </button>

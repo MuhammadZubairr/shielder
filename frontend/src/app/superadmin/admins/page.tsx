@@ -335,7 +335,7 @@ export default function AdminManagementPage() {
         </div>
         <button 
           onClick={() => { resetForm(); setShowAddModal(true); }}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0205A6] text-white rounded-[10px] hover:bg-[#045870] transition-colors font-semibold shadow-sm"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#FF6B35] text-white rounded-[10px] hover:bg-[#FF5722] transition-colors font-semibold shadow-sm"
         >
           <UserPlus size={18} />
           Add Admin
@@ -455,7 +455,7 @@ export default function AdminManagementPage() {
                     <div className="flex flex-col items-end gap-1.5">
                       <button 
                         onClick={() => openEditModal(admin)}
-                        className="w-24 flex items-center justify-center gap-1.5 py-1 text-[9px] font-black uppercase tracking-widest text-[#045870] bg-[#045870]/5 hover:bg-[#045870]/10 rounded-lg transition-all border border-transparent hover:border-[#045870]/20 disabled:opacity-20"
+                        className="w-24 flex items-center justify-center gap-1.5 py-1 text-[9px] font-black uppercase tracking-widest text-[#FF6B35] bg-[#FF6B35]/5 hover:bg-[#FF6B35]/10 rounded-lg transition-all border border-transparent hover:border-[#FF6B35]/20 disabled:opacity-20"
                         disabled={admin.id === currentUser?.id}
                       >
                         <Edit2 size={10} />
@@ -529,7 +529,7 @@ export default function AdminManagementPage() {
                   onClick={() => setPagination(prev => ({ ...prev, page: i + 1 }))}
                   className={`w-7 h-7 rounded-lg text-[10px] font-black transition-all ${
                     pagination.page === i + 1 
-                      ? 'bg-[#0205A6] text-white shadow-md' 
+                      ? 'bg-[#FF6B35] text-white shadow-md' 
                       : 'bg-white border border-gray-100 text-gray-400 hover:border-gray-300'
                   }`}
                 >
@@ -553,10 +553,10 @@ export default function AdminManagementPage() {
       {/* 5. ADD ADMIN MODAL */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A1E36]/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+          <div className="bg-white w-full max-w-lg max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#0205A6] text-white rounded-lg">
+                <div className="p-2 bg-[#FF6B35] text-white rounded-lg">
                   <UserPlus size={20} />
                 </div>
                 <div>
@@ -568,7 +568,8 @@ export default function AdminManagementPage() {
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleCreateAdmin} className="p-6 space-y-5">
+            <form onSubmit={handleCreateAdmin} className="flex-1 overflow-y-auto">
+              <div className="p-6 space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 sm:col-span-1">
                   <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Full Name</label>
@@ -594,14 +595,25 @@ export default function AdminManagementPage() {
               </div>
               <div>
                 <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Corporate Email</label>
-                <input
-                  type="email"
-                  required
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0205A6] focus:bg-white focus:outline-none transition-all text-sm"
-                  placeholder="admin@shielder.sa"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                />
+                <div className="flex items-stretch">
+                  <div className="relative flex-1">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                    <input
+                      type="text"
+                      required
+                      placeholder="admin"
+                      className="w-full pl-9 pr-3 py-2.5 bg-gray-50 border border-r-0 border-gray-200 rounded-l-xl focus:ring-2 focus:ring-inset focus:ring-[#0205A6] focus:bg-white focus:outline-none transition-all text-sm"
+                      value={formData.email.replace('@shielder.com', '')}
+                      onChange={(e) => {
+                        const prefix = e.target.value.replace(/@.*/, '').replace(/\s/g, '');
+                        setFormData({...formData, email: prefix ? `${prefix}@shielder.com` : ''});
+                      }}
+                    />
+                  </div>
+                  <span className="flex items-center px-3 py-2.5 bg-[#0C1B33] text-white text-xs font-black rounded-r-xl border border-[#0C1B33] whitespace-nowrap select-none">
+                    @shielder.com
+                  </span>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -627,7 +639,8 @@ export default function AdminManagementPage() {
                   />
                 </div>
               </div>
-              <div className="pt-4 flex gap-3">
+              </div>
+              <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex gap-3 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
@@ -638,7 +651,7 @@ export default function AdminManagementPage() {
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex-1 px-4 py-3 bg-[#0205A6] text-white rounded-xl hover:bg-[#0A1E36] transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
+                  className="flex-1 px-4 py-3 bg-[#FF6B35] text-white rounded-xl hover:bg-[#FF5722] transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
                 >
                   {formLoading ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
                   Add Admin
@@ -652,10 +665,10 @@ export default function AdminManagementPage() {
       {/* 6. EDIT ADMIN MODAL */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A1E36]/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+          <div className="bg-white w-full max-w-lg max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#045870] text-white rounded-lg">
+                <div className="p-2 bg-[#FF6B35] text-white rounded-lg">
                   <Edit2 size={20} />
                 </div>
                 <div>
@@ -667,7 +680,8 @@ export default function AdminManagementPage() {
                 <X size={20} />
               </button>
             </div>
-            <form onSubmit={handleUpdateAdmin} className="p-6 space-y-5">
+            <form onSubmit={handleUpdateAdmin} className="flex-1 overflow-y-auto">
+              <div className="p-6 space-y-5">
               <div>
                 <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Full Name</label>
                 <input
@@ -712,7 +726,8 @@ export default function AdminManagementPage() {
                   <option value="false">SUSPENDED</option>
                 </select>
               </div>
-              <div className="pt-4 flex gap-3">
+              </div>
+              <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex gap-3 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
@@ -723,7 +738,7 @@ export default function AdminManagementPage() {
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className="flex-1 px-4 py-3 bg-[#0205A6] text-white rounded-xl hover:bg-[#0A1E36] transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
+                  className="flex-1 px-4 py-3 bg-[#FF6B35] text-white rounded-xl hover:bg-[#FF5722] transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
                 >
                   {formLoading ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
                   Save Changes

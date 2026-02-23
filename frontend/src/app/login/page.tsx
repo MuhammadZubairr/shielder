@@ -1,26 +1,57 @@
+"use client";
+import settingsService from '@/services/settings.service';
 /**
  * Login Page
  * User login form with Arabic/English support
  */
 
-'use client';
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Lock, ChevronLeft, Shield } from 'lucide-react';
+import { Mail, Lock, ChevronLeft, Shield, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ROUTES, VALIDATION_RULES } from '@/utils/constants';
+import { ROUTES, VALIDATION_RULES, STORAGE_KEYS } from '@/utils/constants';
 import type { LoginRequest } from '@/types';
+import toast from 'react-hot-toast';
 
 export default function LoginPage() {
+    // Use static logo for login page (public, no API call)
+    const companyLogo = null; // or set to "/images/company-logo.png" if you have a static logo
+
+    // Clear auth state if session expired
+    useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('expired')) {
+        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.USER);
+        try {
+          const { useAuthStore } = require('@/store/auth.store');
+          useAuthStore.getState().setUser(null);
+          useAuthStore.getState().setError(null);
+          useAuthStore.getState().setLoading(false);
+        } catch (e) {}
+      }
+    }, []);
   const { login, isSubmitting } = useAuth();
   const { isAuthenticated, user, isLoading } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t, isRTL, locale, setLocale } = useLanguage();
+
+  const expired = searchParams.get('expired');
+
+  // Show session expired alert
+  useEffect(() => {
+    if (expired) {
+      toast.error('Session Expired: Please log in again to continue.', {
+        id: 'session-expired',
+      });
+    }
+  }, [expired]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -40,6 +71,7 @@ export default function LoginPage() {
     password: '',
   });
   const [errors, setErrors] = useState<Partial<LoginRequest>>({});
+  const [showPassword, setShowPassword] = useState(false);
 
   /**
    * Validate form
@@ -48,13 +80,13 @@ export default function LoginPage() {
     const newErrors: Partial<LoginRequest> = {};
 
     if (!formData.email) {
-      newErrors.email = t.emailRequired;
+      newErrors.email = t('emailRequired');
     } else if (!VALIDATION_RULES.EMAIL_REGEX.test(formData.email)) {
-      newErrors.email = t.invalidEmail;
+      newErrors.email = t('invalidEmail');
     }
 
     if (!formData.password) {
-      newErrors.password = t.passwordRequired;
+      newErrors.password = t('passwordRequired');
     }
 
     setErrors(newErrors);
@@ -88,147 +120,171 @@ export default function LoginPage() {
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center bg-shielder-dark p-4 md:p-8 ${isRTL ? 'font-arabic' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="bg-white rounded-[2rem] overflow-hidden flex flex-col md:flex-row w-full max-w-6xl shadow-2xl min-h-[600px]">
-        {/* Left Side: Illustration/Image */}
-        <div className="w-full md:w-1/2 relative bg-gradient-to-br from-white to-blue-50 p-8 flex flex-col justify-between overflow-hidden">
-          <div className="z-10">
-            <div className="flex items-center gap-2 mb-12">
-              <Shield className="w-10 h-10 text-shielder-dark" />
-              <span className="text-3xl font-bold tracking-wider text-shielder-dark">SHIELDER</span>
-            </div>
-            
-            <div className="relative">
-              <div className="absolute -top-10 -left-10 w-64 h-64 bg-shielder-accent/10 rounded-full blur-3xl"></div>
-              <div className="absolute top-40 right-0 w-48 h-48 bg-shielder-dark/5 rounded-full blur-2xl"></div>
-            </div>
-          </div>
-
-          <div className="relative z-10">
-            <h2 className="text-4xl font-bold text-shielder-dark mb-4 leading-tight">
-              {t.welcomeToShielder}
-              <br />
-              <span className="text-shielder-accent">{t.loginToExplore}</span>
-            </h2>
-            
-            {/* Carousel Indicators */}
-            <div className="flex gap-2 mt-8">
-              <div className="w-2 h-2 rounded-full bg-shielder-accent"></div>
-              <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-              <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-              <div className="w-8 h-2 rounded-full bg-shielder-accent/30"></div>
-            </div>
-          </div>
-
-          {/* Abstract Image Background */}
-          <div className="absolute inset-0 z-0 opacity-40">
+    <div className={`min-h-screen flex items-center justify-center bg-gray-50 p-4 ${isRTL ? 'font-arabic' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Main Container */}
+      <div className="bg-white rounded-[2rem] overflow-hidden flex flex-col md:flex-row w-full max-w-[1200px] shadow-2xl min-h-[600px]">
+        
+        {/* Left Side - Background Image */}
+        <div className="w-full md:w-1/2 relative">
+          {/* Background Image */}
+          <div className="absolute inset-0">
             <Image 
-              src="/images/login-image.png" 
-              alt="Decorative background" 
+              src="/images/login image new download.jpg" 
+              alt="Shielder Construction" 
               fill
               className="object-cover"
               priority
             />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30"></div>
+          </div>
+
+          {/* Content Overlay */}
+          <div className="relative z-10 h-full flex flex-col justify-between p-6 md:p-8">
+            {/* Logo at Top Right */}
+            <div className="flex items-start justify-end">
+              <Image 
+                src="/images/shielder image.png" 
+                alt="Shielder Logo" 
+                width={320}
+                height={320}
+                className="drop-shadow-2xl"
+              />
+            </div>
+
+            {/* Welcome Card at Bottom */}
+            <div className="space-y-4">
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 max-w-xs">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 leading-snug">
+                  Welcome to the Shielder
+                  <br />
+                  Login to explore
+                </h2>
+              </div>
+              
+              {/* Pagination Dots */}
+              <div className="flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-gray-900"></div>
+                <div className="w-2 h-2 rounded-full bg-[#FF6B35]"></div>
+                <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right Side: Login Form */}
-        <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col relative bg-white">
+        {/* Right Side - Login Form */}
+        <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col relative bg-white">
           {/* Back Button */}
-          <Link href={ROUTES.HOME} className={`absolute top-8 ${isRTL ? 'right-8' : 'left-8'} text-gray-400 hover:text-shielder-dark transition-colors`}>
+          <Link href={ROUTES.HOME} className={`absolute top-8 ${isRTL ? 'right-8' : 'left-8'} text-gray-400 hover:text-gray-700 transition-colors`}>
             <ChevronLeft className={`w-6 h-6 ${isRTL ? 'rotate-180' : ''}`} />
           </Link>
 
           {/* Language Switcher */}
           <button
             onClick={() => setLocale(locale === 'en' ? 'ar' : 'en')}
-            className={`absolute top-8 ${isRTL ? 'left-8' : 'right-8'} text-sm font-medium text-shielder-accent hover:underline`}
+            className={`absolute top-8 ${isRTL ? 'left-8' : 'right-8'} text-sm font-medium text-gray-500 hover:text-gray-700`}
           >
             {locale === 'en' ? 'العربية' : 'English'}
           </button>
 
           <div className="my-auto">
-            <h1 className="text-3xl md:text-4xl font-bold text-shielder-dark mb-12">
-              {t.loginYourAccount}
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-10">
+              {t('loginYourAccount')}
             </h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email */}
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-shielder-dark ml-1">
-                  {t.email}
+                <label className="text-sm font-medium text-gray-700">
+                  {t('email')}
                 </label>
                 <div className="relative group">
-                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-shielder-accent transition-colors`}>
+                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#FF6B35] transition-colors`}>
                     <Mail className="w-5 h-5" />
                   </div>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="example@gmail.com"
-                    autoComplete="email"
-                    className={`w-full py-4 ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} bg-white border-2 rounded-full outline-none transition-all ${
-                      errors.email ? 'border-red-500' : 'border-gray-200 focus:border-shielder-accent'
-                    }`}
-                  />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="example@gmail.com"
+                        autoComplete="email"
+                        className={`w-full py-3.5 ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} bg-white border rounded-xl outline-none transition-all ${
+                          errors.email ? 'border-red-500' : 'border-gray-300 focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35]'
+                        }`}
+                      />
                 </div>
                 {errors.email && (
-                  <p className="text-xs text-red-500 mt-1 ml-4">{errors.email}</p>
+                  <p className="text-xs text-red-500 mt-1 ml-1">{errors.email}</p>
                 )}
               </div>
 
               {/* Password */}
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-shielder-dark ml-1">
-                  {t.password}
+                <label className="text-sm font-medium text-gray-700">
+                  {t('password')}
                 </label>
                 <div className="relative group">
-                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-shielder-accent transition-colors`}>
+                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#FF6B35] transition-colors`}>
                     <Lock className="w-5 h-5" />
                   </div>
-                  <input
-                    type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    className={`w-full py-4 ${isRTL ? 'pr-12 pl-4' : 'pl-12 pr-4'} bg-white border-2 rounded-full outline-none transition-all ${
-                      errors.password ? 'border-red-500' : 'border-gray-200 focus:border-shielder-accent'
-                    }`}
-                  />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="••••••••"
+                        autoComplete="current-password"
+                        className={`w-full py-3.5 ${isRTL ? 'pr-12 pl-12' : 'pl-12 pr-12'} bg-white border rounded-xl outline-none transition-all ${
+                          errors.password ? 'border-red-500' : 'border-gray-300 focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35]'
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className={`absolute inset-y-0 ${isRTL ? 'left-4' : 'right-4'} flex items-center text-gray-400 hover:text-gray-600 transition-colors`}
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
                 </div>
                 {errors.password && (
-                  <p className="text-xs text-red-500 mt-1 ml-4">{errors.password}</p>
+                  <p className="text-xs text-red-500 mt-1 ml-1">{errors.password}</p>
                 )}
-                <div className={`flex ${isRTL ? 'justify-start pl-2' : 'justify-end pr-2'}`}>
+                <div className={`flex ${isRTL ? 'justify-start' : 'justify-end'}`}>
                   <Link 
                     href="#" 
-                    className="text-sm font-semibold text-shielder-accent hover:text-shielder-dark transition-colors hover:underline"
+                    className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
                   >
-                    {t.forgotPassword}
+                    {t('forgotPassword')}
                   </Link>
                 </div>
               </div>
 
               {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-4 bg-shielder-accent hover:bg-shielder-accent/90 text-white rounded-full font-bold text-lg shadow-lg hover:shadow-shielder-accent/20 transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed mt-8"
-              >
-                {isSubmitting ? t.loading : t.continue}
-              </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full mt-8 bg-[#FF6B35] hover:bg-[#FF5722] text-white font-semibold py-3.5 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                  >
+                    {isSubmitting ? t('loading') || 'Loading...' : 'Continue'}
+                  </button>
             </form>
 
-            <div className="mt-8 text-center text-gray-500">
-              <p>
-                {t.dontHaveAccount}{' '}
-                <Link href={ROUTES.REGISTER} className="text-shielder-accent font-bold hover:underline">
-                  {t.signUp}
-                </Link>
+            <div className="mt-8 text-center text-gray-600">
+              <p className="text-sm">
+                {t('dontHaveAccount')}{' '}
+                <a
+                  href="#"
+                  className="text-[#FF6B35] font-semibold hover:text-[#FF5722] transition-colors"
+                  onClick={e => {
+                    e.preventDefault();
+                    // Remove ?expired from URL before navigating
+                    const url = ROUTES.REGISTER;
+                    window.location.href = url;
+                  }}
+                >
+                  {t('signUp')}
+                </a>
               </p>
             </div>
           </div>

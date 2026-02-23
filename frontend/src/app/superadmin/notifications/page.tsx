@@ -228,7 +228,7 @@ export default function NotificationsPage() {
           </button>
           <button 
             onClick={() => fetchNotifications()}
-            className="p-2 bg-shielder-primary/10 text-shielder-primary rounded-xl hover:bg-shielder-primary/20 transition-all"
+            className="p-2 bg-[#FF6B35]/10 text-[#FF6B35] rounded-xl hover:bg-[#FF6B35]/20 transition-all"
           >
             <RefreshCcw size={20} className={loading ? 'animate-spin' : ''} />
           </button>
@@ -363,7 +363,7 @@ export default function NotificationsPage() {
                           </div>
                           <button 
                             onClick={() => togglePreference(p.key as keyof NotificationPreference)}
-                            className={`w-12 h-6 rounded-full transition-all relative ${preferences[p.key as keyof NotificationPreference] ? 'bg-shielder-primary shadow-lg shadow-shielder-primary/20' : 'bg-gray-200'}`}
+                            className={`w-12 h-6 rounded-full transition-all relative ${preferences[p.key as keyof NotificationPreference] ? 'bg-[#FF6B35] shadow-lg shadow-[#FF6B35]/20' : 'bg-gray-200'}`}
                           >
                             <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${preferences[p.key as keyof NotificationPreference] ? 'translate-x-6' : ''}`} />
                           </button>
@@ -445,7 +445,7 @@ export default function NotificationsPage() {
                     </td>
                   </tr>
                 ) : notifications.map((n) => (
-                  <tr key={n.id} className={`hover:bg-gray-50 group transition-all ${!n.isRead ? 'bg-shielder-primary/[0.01]' : ''}`}>
+                  <tr key={n.id} className={`hover:bg-gray-50 group transition-all ${!n.isRead ? 'bg-[#FF6B35]/[0.01]' : ''}`}>
                     <td className="px-6 py-5">
                       <span className="text-[10px] font-mono text-gray-400 uppercase">#{n.id.slice(0, 8)}...</span>
                     </td>
@@ -479,7 +479,7 @@ export default function NotificationsPage() {
                         </span>
                       ) : (
                         <span className="flex items-center text-[10px] font-black uppercase tracking-widest text-shielder-primary animate-pulse">
-                          <div className="w-1.5 h-1.5 bg-shielder-primary rounded-full mr-2" /> New Alert
+                          <div className="w-1.5 h-1.5 bg-[#FF6B35] rounded-full mr-2" /> New Alert
                         </span>
                       )}
                     </td>

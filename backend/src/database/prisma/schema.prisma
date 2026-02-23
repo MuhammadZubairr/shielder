@@ -41,6 +41,7 @@ model User {
   triggeredNotifications  Notification[]          @relation("NotificationTriggerer")
   notificationPreferences NotificationPreference?
   profile                 UserProfile?
+  quotationsCreated       Quotation[]             @relation("QuotationCreator")
 
   @@index([email])
   @@index([role])
@@ -79,7 +80,7 @@ model UserProfile {
   phoneNumber       String?  @map("phone_number")
   profileImage      String?  @map("profile_image")
   preferredLanguage String   @default("en") @map("preferred_language")
-  companyName       String?  @map("company_name")
+  companyName       String?  @default("Shielder") @map("company_name")
   taxId             String?  @map("tax_id")
   preferences       Json?
   createdAt         DateTime @default(now()) @map("created_at")
@@ -165,6 +166,7 @@ model Product {
   sku                   String?
   cartItems             CartItem[]
   orderItems            OrderItem[]
+  quotationItems        QuotationItem[]
   attachments           ProductAttachment[]
   specifications        ProductSpecification[]
   translations          ProductTranslation[]
@@ -247,10 +249,11 @@ model Order {
   updatedAt       DateTime        @updatedAt @map("updated_at")
   userId          String          @map("user_id")
   status          OrderStatus     @default(PENDING)
-  orderItems      OrderItem[]
-  payments        Payment[]
-  users           User            @relation(fields: [userId], references: [id])
-  stockHistory    stock_history[]  @relation("OrderToStockHistory")
+  orderItems        OrderItem[]
+  payments          Payment[]
+  users             User              @relation(fields: [userId], references: [id])
+  stockHistory      stock_history[]   @relation("OrderToStockHistory")
+  convertedQuotation Quotation?
 
   @@index([orderNumber])
   @@index([status])
@@ -575,6 +578,9 @@ enum NotificationType {
   NEW_USER_CREATED
   REFUND_ISSUED
   SYSTEM_ALERT
+  QUOTATION_APPROVED
+  QUOTATION_EXPIRED
+  QUOTATION_CREATED
 }
 
 enum OrderStatus {
@@ -618,4 +624,93 @@ enum StockChangeType {
   ORDER_CANCELLED
   MANUAL_ADJUSTMENT
   RESTOCK
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  VIEWED
+  APPROVED
+  REJECTED
+  EXPIRED
+  CONVERTED
+}
+
+enum QuotationActivityType {
+  CREATED
+  EDITED
+  SENT
+  VIEWED
+  APPROVED
+  REJECTED
+  CONVERTED
+  DELETED
+  EXPIRED
+  REACTIVATED
+}
+
+model Quotation {
+  id               String              @id @default(uuid())
+  quotationNumber  String              @unique @map("quotation_number")
+  status           QuotationStatus     @default(DRAFT)
+  customerName     String              @map("customer_name")
+  customerEmail    String              @map("customer_email")
+  customerPhone    String?             @map("customer_phone")
+  customerAddress  String?             @map("customer_address")
+  companyName      String?             @map("company_name")
+  subtotal         Decimal             @db.Decimal(10, 2)
+  discount         Decimal             @default(0) @db.Decimal(10, 2)
+  tax              Decimal             @default(0) @db.Decimal(10, 2)
+  total            Decimal             @db.Decimal(10, 2)
+  notes            String?
+  terms            String?
+  quotationDate    DateTime            @default(now()) @map("quotation_date")
+  expiryDate       DateTime            @map("expiry_date")
+  createdById      String              @map("created_by_id")
+  convertedOrderId String?             @unique @map("converted_order_id")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  createdBy        User                @relation("QuotationCreator", fields: [createdById], references: [id])
+  convertedOrder   Order?              @relation(fields: [convertedOrderId], references: [id])
+  items            QuotationItem[]
+  activities       QuotationActivity[]
+
+  @@index([status])
+  @@index([createdById])
+  @@index([expiryDate])
+  @@index([quotationNumber])
+  @@map("quotations")
+}
+
+model QuotationItem {
+  id          String    @id @default(uuid())
+  quotationId String    @map("quotation_id")
+  productId   String    @map("product_id")
+  productName String    @map("product_name")
+  quantity    Int
+  unitPrice   Decimal   @db.Decimal(10, 2) @map("unit_price")
+  discount    Decimal   @default(0) @db.Decimal(10, 2)
+  totalPrice  Decimal   @db.Decimal(10, 2) @map("total_price")
+
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id])
+
+  @@index([quotationId])
+  @@index([productId])
+  @@map("quotation_items")
+}
+
+model QuotationActivity {
+  id          String               @id @default(uuid())
+  quotationId String               @map("quotation_id")
+  action      QuotationActivityType
+  performedBy String               @map("performed_by")
+  note        String?
+  createdAt   DateTime             @default(now()) @map("created_at")
+
+  quotation   Quotation            @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+
+  @@index([quotationId])
+  @@map("quotation_activities")
 }

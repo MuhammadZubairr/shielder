@@ -1,6 +1,3 @@
-/**
- * System Settings Routes
- */
 
 import { Router } from 'express';
 import SettingsController from './settings.controller';
@@ -14,6 +11,12 @@ const router = Router();
 
 // All settings routes require Super Admin
 router.use(authenticate, requireRoles(UserRole.SUPER_ADMIN));
+
+/**
+ * @route   POST /api/settings/logo
+ * @desc    Upload and update company logo
+ */
+router.post('/logo', SettingsController.uploadCompanyLogo);
 
 /**
  * @route   GET /api/settings

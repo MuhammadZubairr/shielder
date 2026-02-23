@@ -17,8 +17,13 @@ export class CategoryController {
         ...req.body,
         image: req.file ? `/uploads/categories/${req.file.filename}` : undefined,
         isActive: req.body.isActive === 'true' || req.body.isActive === true,
+        // Bilingual fields forwarded as-is
+        nameEn: req.body.nameEn,
+        descriptionEn: req.body.descriptionEn,
+        nameAr: req.body.nameAr,
+        descriptionAr: req.body.descriptionAr,
       };
-      const category = await categoryService.create(data);
+      const category = await categoryService.create(data, req.locale);
       res.status(201).json({ success: true, data: category });
     } catch (error) {
       next(error);
@@ -39,7 +44,7 @@ export class CategoryController {
         search: req.query.search as string,
         isActive: req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined,
       };
-      const result = await categoryService.list(filters, pagination, req.headers['accept-language'] as string);
+      const result = await categoryService.list(filters, pagination, req.locale);
       res.json({ success: true, ...result });
     } catch (error) {
       next(error);
@@ -71,7 +76,7 @@ export class CategoryController {
    */
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const category = await categoryService.getById(String(req.params.id), req.headers['accept-language'] as string);
+      const category = await categoryService.getById(String(req.params.id), req.locale);
       res.json({ success: true, data: category });
     } catch (error) {
       next(error);
@@ -92,8 +97,13 @@ export class CategoryController {
         ...req.body,
         image: req.file ? `/uploads/categories/${req.file.filename}` : undefined,
         isActive: req.body.isActive !== undefined ? (req.body.isActive === 'true' || req.body.isActive === true) : undefined,
+        // Bilingual fields
+        nameEn: req.body.nameEn,
+        descriptionEn: req.body.descriptionEn,
+        nameAr: req.body.nameAr,
+        descriptionAr: req.body.descriptionAr,
       };
-      const category = await categoryService.update(String(req.params.id), data);
+      const category = await categoryService.update(String(req.params.id), data, req.locale);
       res.json({ success: true, data: category });
     } catch (error) {
       next(error);

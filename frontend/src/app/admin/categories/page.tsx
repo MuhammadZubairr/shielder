@@ -1,112 +1,273 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Plus, Edit, Trash2, Folder, ChevronRight, MoreVertical } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  FolderTree,
+  Plus,
+  Search,
+  RefreshCcw,
+  Filter,
+  CheckCircle2,
+  X,
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 import adminService from '@/services/admin.service';
-import toast from 'react-hot-toast';
 
-export default function CategoriesPage() {
-  const [categories, setCategories] = useState<any[]>([]);
+import CategoriesTable from './CategoriesTable';
+import CategoryFormModal from './CategoryFormModal';
+import DeleteConfirmationModal from './DeleteConfirmationModal';
+import type { Category, CategorySummary } from './types';
+
+export default function AdminCategoriesPage() {
+  const { t, isRTL } = useLanguage();
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [summary, setSummary] = useState<CategorySummary>({
+    totalCategories: 0,
+    activeCategories: 0,
+    disabledCategories: 0,
+  });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    pages: 1,
+  });
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // ── Modal state ────────────────────────────────────────────────────────────
+  const [formMode, setFormMode] = useState<'create' | 'edit' | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
+  // ── Fetch ──────────────────────────────────────────────────────────────────
+  const fetchData = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      const [catRes, summaryRes] = await Promise.all([
+        adminService.getCategories({
+          page: pagination.page,
+          limit: pagination.limit,
+          search: search || undefined,
+          isActive:
+            statusFilter === '' ? undefined : statusFilter === 'ACTIVE',
+        }),
+        adminService.getCategorySummary(),
+      ]);
+
+      setCategories(catRes.data.data || []);
+      setPagination((prev) => ({
+        ...prev,
+        total: catRes.data.pagination?.total || 0,
+        pages: catRes.data.pagination?.pages || 1,
+      }));
+      setSummary(
+        summaryRes.data.data || {
+          totalCategories: 0,
+          activeCategories: 0,
+          disabledCategories: 0,
+        }
+      );
+    } catch (err: any) {
+      if (err?.response?.status !== 401) {
+        toast.error(
+          err?.response?.data?.message || t('fetchCategoriesFailed')
+        );
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [pagination.page, pagination.limit, search, statusFilter, t]);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoading(true);
-        const { data } = await adminService.getCategories();
-        setCategories(data.data || []);
-      } catch (err) {
-        console.error('Failed to fetch categories');
-        setCategories([
-          { id: '1', name: 'Excavators', subCount: 5, prodCount: 42, color: 'bg-blue-500' },
-          { id: '2', name: 'Bulldozers', subCount: 3, prodCount: 28, color: 'bg-orange-500' },
-          { id: '3', name: 'Loaders', subCount: 4, prodCount: 35, color: 'bg-green-500' },
-          { id: '4', name: 'Cranes', subCount: 6, prodCount: 15, color: 'bg-purple-500' },
-        ] as any);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCategories();
-  }, []);
+    fetchData();
+  }, [fetchData]);
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this category?')) {
-      try {
-        await adminService.deleteCategory(id);
-        setCategories(categories.filter((c: any) => c.id !== id));
-        toast.success('Category deleted successfully');
-      } catch (err) {
-        toast.error('Failed to delete category');
-      }
-    }
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setPagination((p) => ({ ...p, page: 1 }));
+  }, [search, statusFilter]);
+
+  // ── Handlers ───────────────────────────────────────────────────────────────
+  const openCreate = () => {
+    setSelectedCategory(null);
+    setFormMode('create');
   };
 
+  const openEdit = (cat: Category) => {
+    setSelectedCategory(cat);
+    setFormMode('edit');
+  };
+
+  const openDelete = (cat: Category) => setDeleteTarget(cat);
+
+  const closeForm = () => {
+    setFormMode(null);
+    setSelectedCategory(null);
+  };
+
+  const closeDelete = () => setDeleteTarget(null);
+
+  const onMutationSuccess = () => fetchData();
+
+  const summaryCards = [
+    {
+      label: t('totalCategories'),
+      value: summary.totalCategories,
+      icon: FolderTree,
+      color: '#5B5FC7',
+    },
+    {
+      label: t('activeCategories'),
+      value: summary.activeCategories,
+      icon: CheckCircle2,
+      color: '#16A34A',
+    },
+    {
+      label: t('disabledCategories'),
+      value: summary.disabledCategories,
+      icon: X,
+      color: '#DC2626',
+    },
+  ];
+
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-8">
-      <div className="flex justify-between items-center">
+    <main
+      className="space-y-6 pb-6"
+      dir={isRTL ? 'rtl' : 'ltr'}
+      aria-label={t('categoriesTitle')}
+    >
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Category Management</h1>
-          <p className="text-gray-500 mt-1 font-medium">Organize your marketplace hierarchy with categories and subcategories.</p>
+          <h1 className="text-2xl font-extrabold text-gray-800">{t('categoriesTitle')}</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{t('categoriesSubtitle')}</p>
         </div>
-        <button className="flex items-center px-5 py-2.5 bg-shielder-primary text-white rounded-xl hover:bg-shielder-secondary transition-all shadow-lg shadow-shielder-primary/20 font-bold">
-          <Plus size={20} className="mr-2" /> Add Category
+        <button
+          onClick={openCreate}
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#FF6B35] hover:bg-[#FF5722] text-white rounded-xl transition-all font-semibold shadow-md active:scale-95 text-sm"
+          aria-label={t('addCategory')}
+        >
+          <Plus size={18} />
+          {t('addCategory')}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {loading ? (
-          [1, 2, 3, 4].map(i => (
-            <div key={i} className="bg-white p-6 rounded-2xl border border-gray-100 animate-pulse h-48"></div>
-          ))
-        ) : categories.map((cat: any) => (
-          <div key={cat.id} className="bg-white group rounded-2xl border border-gray-100 overflow-hidden hover:border-shielder-primary/30 hover:shadow-xl transition-all duration-300">
-            <div className={`h-2 ${cat.color || 'bg-shielder-primary'}`}></div>
-            <div className="p-6">
-              <div className="flex justify-between items-start">
-                <div className="p-3 bg-gray-50 rounded-xl group-hover:bg-shielder-primary/5 transition-colors">
-                  <Folder className="text-shielder-primary" size={24} />
-                </div>
-                <div className="flex space-x-1">
-                  <button className="p-2 text-gray-400 hover:text-shielder-primary hover:bg-gray-50 rounded-lg transition-all">
-                    <Edit size={16} />
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(cat.id)}
-                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="mt-6">
-                <h3 className="text-xl font-bold text-gray-800">{cat.name}</h3>
-                <div className="flex items-center space-x-4 mt-3">
-                  <div className="text-sm font-medium">
-                    <span className="text-shielder-primary">{cat.subCount}</span>
-                    <span className="text-gray-400 ml-1">Subcategories</span>
-                  </div>
-                  <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
-                  <div className="text-sm font-medium">
-                    <span className="text-shielder-primary">{cat.prodCount}</span>
-                    <span className="text-gray-400 ml-1">Products</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 pt-6 border-t border-gray-50 flex justify-between items-center">
-                <button className="text-sm font-bold text-shielder-primary hover:text-shielder-secondary flex items-center transition-colors">
-                  View Details <ChevronRight size={16} className="ml-1" />
-                </button>
-                <div className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">
-                  SH-{cat.id.slice(0, 4)}
-                </div>
-              </div>
+      {/* ── Summary Cards ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {summaryCards.map((card, i) => (
+          <div
+            key={i}
+            className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow"
+          >
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                {card.label}
+              </p>
+              <h3 className="text-3xl font-black text-gray-800 mt-1">{card.value}</h3>
+            </div>
+            <div
+              className="p-3 rounded-2xl"
+              style={{ backgroundColor: `${card.color}18` }}
+            >
+              <card.icon size={24} style={{ color: card.color }} aria-hidden="true" />
             </div>
           </div>
         ))}
       </div>
-    </div>
+
+      {/* ── Search & Filter Bar ── */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row gap-3 items-center">
+        {/* Search */}
+        <div className="relative flex-1 w-full">
+          <Search
+            className={`absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none ${
+              isRTL ? 'right-3' : 'left-3'
+            }`}
+            size={16}
+          />
+          <input
+            type="text"
+            placeholder={t('searchCategories')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={`w-full py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FC7] text-sm transition-all ${
+              isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'
+            }`}
+            aria-label={t('search')}
+          />
+        </div>
+
+        <div className="flex gap-2 w-full md:w-auto">
+          {/* Status filter */}
+          <div className="relative flex-1 md:w-44">
+            <Filter
+              className={`absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none ${
+                isRTL ? 'right-3' : 'left-3'
+              }`}
+              size={14}
+            />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={`w-full py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5B5FC7] text-sm appearance-none cursor-pointer ${
+                isRTL ? 'pr-9 pl-4' : 'pl-9 pr-4'
+              }`}
+              aria-label={t('filter')}
+            >
+              <option value="">{t('allStatuses')}</option>
+              <option value="ACTIVE">{t('activeOnly')}</option>
+              <option value="DISABLED">{t('disabledOnly')}</option>
+            </select>
+          </div>
+
+          {/* Refresh */}
+          <button
+            onClick={() => fetchData()}
+            disabled={refreshing}
+            className="p-2.5 text-gray-400 hover:text-[#FF6B35] hover:bg-[#FF6B35]/5 rounded-lg transition-colors border border-gray-200 disabled:opacity-40"
+            title={t('refresh')}
+            aria-label={t('refresh')}
+          >
+            <RefreshCcw size={18} className={refreshing ? 'animate-spin' : ''} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Table ── */}
+      <CategoriesTable
+        categories={categories}
+        loading={loading || refreshing}
+        pagination={pagination}
+        onPageChange={(page) => setPagination((p) => ({ ...p, page }))}
+        onEdit={openEdit}
+        onDelete={openDelete}
+      />
+
+      {/* ── Modals ── */}
+      {formMode && (
+        <CategoryFormModal
+          mode={formMode}
+          category={selectedCategory}
+          onClose={closeForm}
+          onSuccess={onMutationSuccess}
+        />
+      )}
+
+      {deleteTarget && (
+        <DeleteConfirmationModal
+          category={deleteTarget}
+          onClose={closeDelete}
+          onSuccess={onMutationSuccess}
+        />
+      )}
+    </main>
   );
 }

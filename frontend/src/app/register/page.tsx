@@ -1,39 +1,71 @@
+"use client";
 /**
  * Register Page
  * User registration form with Arabic/English support
  */
 
-'use client';
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Lock, ChevronLeft, Shield, User, Phone, Building2, MapPin } from 'lucide-react';
+import { Mail, Lock, ChevronLeft, Shield, User, Phone, Building2, MapPin, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ROUTES, VALIDATION_RULES, LOCALES } from '@/utils/constants';
+import { ROUTES, VALIDATION_RULES, LOCALES, STORAGE_KEYS } from '@/utils/constants';
 import type { RegisterRequest } from '@/types';
 
 export default function RegisterPage() {
+  // Company logo is not fetched here to avoid triggering protected API endpoints
+  // for unauthenticated users (which would cause a false 'Session Expired' redirect).
+  const companyLogo = null;
   const { register, isSubmitting } = useAuth();
   const { isAuthenticated, user, isLoading } = useAuthStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { t, isRTL, locale, setLocale } = useLanguage();
 
-  // Redirect if already authenticated
+  // Only redirect if authenticated, do not redirect unauthenticated users
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user) {
+    // Only run redirect logic after loading is complete
+    if (isLoading) return;
+    const pathname = window.location.pathname;
+    // If ?expired is present, do not redirect
+    const search = window.location.search;
+    if (search.includes('expired')) return;
+    if (isAuthenticated && user) {
       if (user.role === 'SUPER_ADMIN') {
-        router.push(ROUTES.SUPER_ADMIN_DASHBOARD);
+        router.replace(ROUTES.SUPER_ADMIN_DASHBOARD);
       } else if (user.role === 'ADMIN') {
-        router.push(ROUTES.ADMIN_DASHBOARD);
+        router.replace(ROUTES.ADMIN_DASHBOARD);
       } else {
-        router.push(ROUTES.CUSTOMER_DASHBOARD);
+        router.replace(ROUTES.CUSTOMER_DASHBOARD);
       }
+    } else if (isAuthenticated === false && pathname === ROUTES.REGISTER) {
+      // Stay on register page
+      return;
+    } else if (isAuthenticated === false && pathname !== ROUTES.REGISTER) {
+      // Only redirect if not already on login or register
+      if (pathname !== ROUTES.LOGIN && pathname !== ROUTES.REGISTER) {
+        router.replace(ROUTES.LOGIN);
+      }
+      // If on register, do nothing (stay on page)
+      return;
     }
   }, [isLoading, isAuthenticated, user, router]);
+
+  // Show session expired alert if redirected from login
+  useEffect(() => {
+    const expired = searchParams.get('expired');
+    if (expired) {
+      // Show toast or alert
+      import('react-hot-toast').then(({ toast }) => {
+        toast.error('Session Expired: Please log in again to continue.', {
+          id: 'session-expired-signup',
+        });
+      });
+    }
+  }, [searchParams]);
 
   const [formData, setFormData] = useState<RegisterRequest>({
     email: '',
@@ -46,6 +78,8 @@ export default function RegisterPage() {
   });
   const [errors, setErrors] = useState<Partial<Record<keyof RegisterRequest | 'confirmPassword', string>>>({});
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   /**
    * Validate form
@@ -54,27 +88,27 @@ export default function RegisterPage() {
     const newErrors: Partial<Record<keyof RegisterRequest | 'confirmPassword', string>> = {};
 
     if (!formData.email) {
-      newErrors.email = t.emailRequired;
+      newErrors.email = t('emailRequired');
     } else if (!VALIDATION_RULES.EMAIL_REGEX.test(formData.email)) {
-      newErrors.email = t.invalidEmail;
+      newErrors.email = t('invalidEmail');
     }
 
     if (!formData.password) {
-      newErrors.password = t.passwordRequired;
+      newErrors.password = t('passwordRequired');
     } else if (!VALIDATION_RULES.PASSWORD_REGEX.test(formData.password)) {
-      newErrors.password = t.passwordMinLength;
+      newErrors.password = t('passwordMinLength');
     }
 
     if (confirmPassword !== formData.password) {
-      newErrors.confirmPassword = t.passwordMismatch;
+      newErrors.confirmPassword = t('passwordMismatch');
     }
 
     if (!formData.fullName) {
-      newErrors.fullName = t.nameRequired;
+      newErrors.fullName = t('nameRequired');
     }
 
     if (!formData.address) {
-      newErrors.address = t.addressRequired;
+      newErrors.address = t('addressRequired');
     }
 
     setErrors(newErrors);
@@ -90,9 +124,21 @@ export default function RegisterPage() {
     if (!validate()) return;
 
     try {
-      await register({ ...formData, preferredLanguage: locale });
+      const result = await register({ ...formData, preferredLanguage: locale });
+      // Debug: Check localStorage and Zustand state
+      const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+      const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+      const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+      console.log('Registration result:', result);
+      console.log('AccessToken:', accessToken);
+      console.log('RefreshToken:', refreshToken);
+      console.log('User:', userStr);
+      if (!accessToken || !refreshToken || !userStr) {
+        alert('Registration succeeded but authentication data is missing. Please check backend response and localStorage logic.');
+      }
     } catch (error) {
       console.error('Registration error:', error);
+      alert('Registration failed: ' + (typeof error === 'object' && error !== null && 'message' in error ? (error as any).message : String(error)));
     }
   };
 
@@ -110,77 +156,86 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center bg-shielder-dark p-4 md:p-8 ${isRTL ? 'font-arabic' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="bg-white rounded-[2rem] overflow-hidden flex flex-col md:flex-row w-full max-w-6xl shadow-2xl min-h-[700px]">
-        {/* Left Side: Illustration/Image */}
-        <div className="w-full md:w-1/2 relative bg-gradient-to-br from-white to-blue-50 p-8 flex flex-col justify-between overflow-hidden">
-          <div className="z-10">
-            <div className="flex items-center gap-2 mb-12">
-              <Shield className="w-10 h-10 text-shielder-dark" />
-              <span className="text-3xl font-bold tracking-wider text-shielder-dark">SHIELDER</span>
-            </div>
-            
-            <div className="relative">
-              <div className="absolute -top-10 -left-10 w-64 h-64 bg-shielder-accent/10 rounded-full blur-3xl"></div>
-              <div className="absolute top-40 right-0 w-48 h-48 bg-shielder-dark/5 rounded-full blur-2xl"></div>
-            </div>
-          </div>
-
-          <div className="relative z-10">
-            <h2 className="text-4xl font-bold text-shielder-dark mb-4 leading-tight">
-              {t.createAccount}
-              <br />
-              <span className="text-shielder-accent">{t.signUp}</span>
-            </h2>
-            
-            <div className="flex gap-2 mt-8">
-              <div className="w-8 h-2 rounded-full bg-shielder-accent/30"></div>
-              <div className="w-2 h-2 rounded-full bg-shielder-accent"></div>
-              <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-              <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-            </div>
-          </div>
-
-          {/* Abstract Image Background */}
-          <div className="absolute inset-0 z-0 opacity-40">
+    <div className={`min-h-screen flex items-center justify-center bg-gray-50 p-4 ${isRTL ? 'font-arabic' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Main Container */}
+      <div className="bg-white rounded-[2rem] overflow-hidden flex flex-col md:flex-row w-full max-w-[1200px] shadow-2xl min-h-[650px]">
+        
+        {/* Left Side - Background Image */}
+        <div className="w-full md:w-1/2 relative">
+          {/* Background Image */}
+          <div className="absolute inset-0">
             <Image 
-              src="/images/login-image.png" 
-              alt="Decorative background" 
+              src="/images/login image new download.jpg" 
+              alt="Shielder Construction" 
               fill
               className="object-cover"
               priority
             />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30"></div>
+          </div>
+
+          {/* Content Overlay */}
+          <div className="relative z-10 h-full flex flex-col justify-between p-6 md:p-8">
+            {/* Logo at Top Right */}
+            <div className="flex items-start justify-end">
+              <Image 
+                src="/images/shielder image.png" 
+                alt="Shielder Logo" 
+                width={300}
+                height={300}
+                className="drop-shadow-2xl"
+              />
+            </div>
+
+            {/* Welcome Card at Bottom */}
+            <div className="space-y-4">
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-6 max-w-xs">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-900 leading-snug">
+                  Welcome to the Shielder
+                  <br />
+                  Login to explore
+                </h2>
+              </div>
+              
+              {/* Pagination Dots */}
+              <div className="flex gap-2">
+                <div className="w-2 h-2 rounded-full bg-gray-900"></div>
+                <div className="w-2 h-2 rounded-full bg-[#FF6B35]"></div>
+                <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right Side: Register Form */}
-        <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col relative bg-white overflow-y-auto">
+        {/* Right Side - Register Form */}
+        <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col relative bg-white overflow-y-auto">
           {/* Back Button */}
-          <Link href={ROUTES.LOGIN} className={`absolute top-8 ${isRTL ? 'right-8' : 'left-8'} text-gray-400 hover:text-shielder-dark transition-colors`}>
+          <Link href={ROUTES.LOGIN} className={`absolute top-8 ${isRTL ? 'right-8' : 'left-8'} text-gray-400 hover:text-gray-700 transition-colors`}>
             <ChevronLeft className={`w-6 h-6 ${isRTL ? 'rotate-180' : ''}`} />
           </Link>
 
           {/* Language Switcher */}
           <button
             onClick={() => setLocale(locale === 'en' ? 'ar' : 'en')}
-            className={`absolute top-8 ${isRTL ? 'left-8' : 'right-8'} text-sm font-medium text-shielder-accent hover:underline`}
+            className={`absolute top-8 ${isRTL ? 'left-8' : 'right-8'} text-sm font-medium text-gray-500 hover:text-gray-700`}
           >
             {locale === 'en' ? 'العربية' : 'English'}
           </button>
 
           <div className="my-auto pt-8">
-            <h1 className="text-3xl font-bold text-shielder-dark mb-8">
-              {t.createAccount}
+            <h1 className="text-3xl font-bold text-gray-900 mb-8">
+              {t('createAccount')}
             </h1>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Full Name */}
               <div className="space-y-1">
-                <label className="text-sm font-semibold text-shielder-dark ml-1">
-                  {t.name}
+                <label className="text-sm font-medium text-gray-700">
+                  {t('name')}
                 </label>
                 <div className="relative group">
-                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-shielder-accent transition-colors`}>
+                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#FF6B35] transition-colors`}>
                     <User className="w-4 h-4" />
                   </div>
                   <input
@@ -188,24 +243,23 @@ export default function RegisterPage() {
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
-                    placeholder={t.enterName}
-                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} bg-white border-2 rounded-full outline-none transition-all ${
-                      errors.fullName ? 'border-red-500' : 'border-gray-200 focus:border-shielder-accent'
-                    }`}
+                    placeholder={t('enterName')}
+                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} bg-white border rounded-xl outline-none transition-all ${errors.fullName ? 'border-red-500' : 'border-gray-300 focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35]'
+                      }`}
                   />
                 </div>
                 {errors.fullName && (
-                  <p className="text-[10px] text-red-500 mt-1 ml-4">{errors.fullName}</p>
+                  <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.fullName}</p>
                 )}
               </div>
 
               {/* Email */}
               <div className="space-y-1">
-                <label className="text-sm font-semibold text-shielder-dark ml-1">
-                  {t.email}
+                <label className="text-sm font-medium text-gray-700">
+                  {t('email')}
                 </label>
                 <div className="relative group">
-                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-shielder-accent transition-colors`}>
+                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#FF6B35] transition-colors`}>
                     <Mail className="w-4 h-4" />
                   </div>
                   <input
@@ -214,23 +268,22 @@ export default function RegisterPage() {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="example@mail.com"
-                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} bg-white border-2 rounded-full outline-none transition-all ${
-                      errors.email ? 'border-red-500' : 'border-gray-200 focus:border-shielder-accent'
-                    }`}
+                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} bg-white border rounded-xl outline-none transition-all ${errors.email ? 'border-red-500' : 'border-gray-300 focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35]'
+                      }`}
                   />
                 </div>
                 {errors.email && (
-                  <p className="text-[10px] text-red-500 mt-1 ml-4">{errors.email}</p>
+                  <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.email}</p>
                 )}
               </div>
 
               {/* Phone */}
               <div className="space-y-1">
-                <label className="text-sm font-semibold text-shielder-dark ml-1">
-                  {t.phone}
+                <label className="text-sm font-medium text-gray-700">
+                  {t('phone')}
                 </label>
                 <div className="relative group">
-                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-shielder-accent transition-colors`}>
+                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#FF6B35] transition-colors`}>
                     <Phone className="w-4 h-4" />
                   </div>
                   <input
@@ -239,20 +292,19 @@ export default function RegisterPage() {
                     value={formData.phoneNumber}
                     onChange={handleChange}
                     placeholder="+966 ..."
-                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} bg-white border-2 rounded-full outline-none transition-all ${
-                      errors.phoneNumber ? 'border-red-500' : 'border-gray-200 focus:border-shielder-accent'
-                    }`}
+                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} bg-white border rounded-xl outline-none transition-all ${errors.phoneNumber ? 'border-red-500' : 'border-gray-300 focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35]'
+                      }`}
                   />
                 </div>
               </div>
 
               {/* Company */}
               <div className="space-y-1">
-                <label className="text-sm font-semibold text-shielder-dark ml-1">
-                  {t.company}
+                <label className="text-sm font-medium text-gray-700">
+                  {t('company')}
                 </label>
                 <div className="relative group">
-                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-shielder-accent transition-colors`}>
+                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#FF6B35] transition-colors`}>
                     <Building2 className="w-4 h-4" />
                   </div>
                   <input
@@ -260,19 +312,19 @@ export default function RegisterPage() {
                     name="companyName"
                     value={formData.companyName}
                     onChange={handleChange}
-                    placeholder={t.enterCompany}
-                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} bg-white border-2 rounded-full outline-none transition-all border-gray-200 focus:border-shielder-accent`}
+                    placeholder={t('enterCompany')}
+                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} bg-white border rounded-xl outline-none transition-all border-gray-300 focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35]`}
                   />
                 </div>
               </div>
 
               {/* Address */}
               <div className="space-y-1 md:col-span-2">
-                <label className="text-sm font-semibold text-shielder-dark ml-1">
-                  {t.address}
+                <label className="text-sm font-medium text-gray-700">
+                  {t('address')}
                 </label>
                 <div className="relative group">
-                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-shielder-accent transition-colors`}>
+                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#FF6B35] transition-colors`}>
                     <MapPin className="w-4 h-4" />
                   </div>
                   <input
@@ -280,63 +332,74 @@ export default function RegisterPage() {
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
-                    placeholder={t.enterAddress}
-                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} bg-white border-2 rounded-full outline-none transition-all ${
-                      errors.address ? 'border-red-500' : 'border-gray-200 focus:border-shielder-accent'
-                    }`}
+                    placeholder={t('enterAddress')}
+                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} bg-white border rounded-xl outline-none transition-all ${errors.address ? 'border-red-500' : 'border-gray-300 focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35]'
+                      }`}
                   />
                 </div>
                 {errors.address && (
-                  <p className="text-[10px] text-red-500 mt-1 ml-4">{errors.address}</p>
+                  <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.address}</p>
                 )}
               </div>
 
               {/* Password */}
               <div className="space-y-1">
-                <label className="text-sm font-semibold text-shielder-dark ml-1">
-                  {t.password}
+                <label className="text-sm font-medium text-gray-700">
+                  {t('password')}
                 </label>
                 <div className="relative group">
-                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-shielder-accent transition-colors`}>
+                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#FF6B35] transition-colors`}>
                     <Lock className="w-4 h-4" />
                   </div>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} bg-white border-2 rounded-full outline-none transition-all ${
-                      errors.password ? 'border-red-500' : 'border-gray-200 focus:border-shielder-accent'
-                    }`}
+                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} bg-white border rounded-xl outline-none transition-all ${errors.password ? 'border-red-500' : 'border-gray-300 focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35]'
+                      }`}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className={`absolute inset-y-0 ${isRTL ? 'left-4' : 'right-4'} flex items-center text-gray-400 hover:text-gray-600 transition-colors`}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
                 {errors.password && (
-                  <p className="text-[10px] text-red-500 mt-1 ml-4">{errors.password}</p>
+                  <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.password}</p>
                 )}
               </div>
 
               {/* Confirm Password */}
               <div className="space-y-1">
-                <label className="text-sm font-semibold text-shielder-dark ml-1">
-                  {t.confirmPassword}
+                <label className="text-sm font-medium text-gray-700">
+                  {t('confirmPassword')}
                 </label>
                 <div className="relative group">
-                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-shielder-accent transition-colors`}>
+                  <div className={`absolute inset-y-0 ${isRTL ? 'right-4' : 'left-4'} flex items-center pointer-events-none text-gray-400 group-focus-within:text-[#FF6B35] transition-colors`}>
                     <Lock className="w-4 h-4" />
                   </div>
                   <input
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} bg-white border-2 rounded-full outline-none transition-all ${
-                      errors.confirmPassword ? 'border-red-500' : 'border-gray-200 focus:border-shielder-accent'
-                    }`}
+                    className={`w-full py-3 ${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} bg-white border rounded-xl outline-none transition-all ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300 focus:border-[#FF6B35] focus:ring-1 focus:ring-[#FF6B35]'
+                      }`}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className={`absolute inset-y-0 ${isRTL ? 'left-4' : 'right-4'} flex items-center text-gray-400 hover:text-gray-600 transition-colors`}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="text-[10px] text-red-500 mt-1 ml-4">{errors.confirmPassword}</p>
+                  <p className="text-[10px] text-red-500 mt-1 ml-1">{errors.confirmPassword}</p>
                 )}
               </div>
 
@@ -345,18 +408,18 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 bg-shielder-accent hover:bg-shielder-accent/90 text-white rounded-full font-bold text-lg shadow-lg hover:shadow-shielder-accent/20 transition-all transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full mt-6 bg-[#FF6B35] hover:bg-[#FF5722] text-white font-semibold py-3.5 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
                 >
-                  {isSubmitting ? t.loading : t.signUp}
+                  {isSubmitting ? t('loading') : 'Continue'}
                 </button>
               </div>
             </form>
 
-            <div className="mt-6 text-center text-gray-500">
-              <p>
-                {t.alreadyHaveAccount}{' '}
-                <Link href={ROUTES.LOGIN} className="text-shielder-accent font-bold hover:underline">
-                  {t.signIn}
+            <div className="mt-6 text-center text-gray-600">
+              <p className="text-sm">
+                {t('alreadyHaveAccount')}{' '}
+                <Link href={ROUTES.LOGIN} className="text-[#FF6B35] font-semibold hover:text-[#FF5722] transition-colors">
+                  {t('signIn')}
                 </Link>
               </p>
             </div>

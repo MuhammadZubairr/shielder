@@ -19,6 +19,8 @@ declare global {
         role: UserRole;
         preferredLanguage?: string;
       };
+      /** Normalised locale set by languageMiddleware — 'en' | 'ar' */
+      locale: string;
     }
   }
 }

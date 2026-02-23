@@ -3,6 +3,27 @@
  */
 
 /**
+ * Get full image URL from relative upload path
+ */
+export const getImageUrl = (imagePath: string | null | undefined): string | null => {
+  if (!imagePath) return null;
+  
+  // If it's already a full URL, return as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  
+  // Get backend URL from API_CONFIG and remove /api suffix
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+  const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+  
+  // Ensure imagePath starts with /
+  const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+  
+  return `${baseUrl}${path}`;
+};
+
+/**
  * Formats a number as SAR currency
  */
 export const formatCurrency = (amount: number | string): string => {

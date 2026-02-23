@@ -9,20 +9,27 @@ interface ProtectedRouteProps {
   requiredRole?: string | string[];
 }
 
-export const ProtectedRoute = ({ children, requiredRole = ['ADMIN', 'SUPER_ADMIN'] }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
   const { user, isAuthenticated, isLoading } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (!isAuthenticated) {
-        router.push('/login');
-        return;
-      }
+    if (isLoading) return;
 
-      if (requiredRole) {
-        const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-        if (user && !roles.includes(user.role)) {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
+    if (requiredRole && user) {
+      const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+      if (!roles.includes(user.role)) {
+        // Redirect to the correct panel based on actual role
+        if (user.role === 'SUPER_ADMIN') {
+          router.push('/superadmin/dashboard');
+        } else if (user.role === 'ADMIN') {
+          router.push('/admin/dashboard');
+        } else {
           router.push('/');
         }
       }
@@ -33,17 +40,16 @@ export const ProtectedRoute = ({ children, requiredRole = ['ADMIN', 'SUPER_ADMIN
     if (isLoading) return false;
     if (!isAuthenticated) return false;
     if (!requiredRole) return true;
-    
     const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-    return user && roles.includes(user.role);
+    return !!user && roles.includes(user.role);
   };
 
   if (isLoading || !isAuthenticated || !isAuthorized()) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-shielder-dark">
-        <div className="flex flex-col items-center">
-          <div className="w-16 h-16 border-4 border-shielder-primary border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-white font-medium">Authenticating Shielder Access...</p>
+      <div className="h-screen w-full flex items-center justify-center bg-[#0C1B33]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-14 h-14 border-4 border-[#FF6B35] border-t-transparent rounded-full animate-spin" />
+          <p className="text-white/70 text-sm font-semibold tracking-wider">Authenticating...</p>
         </div>
       </div>
     );
@@ -51,3 +57,4 @@ export const ProtectedRoute = ({ children, requiredRole = ['ADMIN', 'SUPER_ADMIN
 
   return <>{children}</>;
 };
+

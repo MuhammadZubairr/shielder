@@ -60,7 +60,7 @@ export const useAuth = () => {
       if (response.user.role === 'SUPER_ADMIN') {
         router.push(ROUTES.SUPER_ADMIN_DASHBOARD);
       } else if (response.user.role === 'ADMIN') {
-        router.push(ROUTES.ADMIN_DASHBOARD);
+        router.push('/admin/dashboard');
       } else {
         router.push(ROUTES.CUSTOMER_DASHBOARD);
       }

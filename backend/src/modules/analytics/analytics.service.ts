@@ -108,6 +108,7 @@ class AnalyticsService {
       totalUsers,
       totalProducts,
       totalCategories,
+      stockAggregate,
     ] = await Promise.all([
       prisma.order.aggregate({
         where: {
@@ -133,7 +134,19 @@ class AnalyticsService {
         },
       }),
       prisma.category.count(),
+      prisma.product.aggregate({
+        where: { isActive: true },
+        _sum: { stock: true },
+      }),
     ]);
+
+    // inventoryValue = SUM(stock * price) via raw query
+    const inventoryValueResult = await prisma.$queryRaw<{ value: string }[]>`
+      SELECT COALESCE(SUM(stock * price), 0)::TEXT AS value
+      FROM products
+      WHERE is_active = true
+    `;
+    const inventoryValue = Number(inventoryValueResult[0]?.value || 0);
 
     return {
       totalRevenue: Number(revenueAggregate._sum.total || 0),
@@ -141,6 +154,8 @@ class AnalyticsService {
       totalUsers,
       totalProducts,
       totalCategories,
+      totalStock: stockAggregate._sum.stock || 0,
+      inventoryValue,
     };
   }
 }

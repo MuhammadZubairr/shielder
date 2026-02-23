@@ -29,6 +29,25 @@ import { ApiErrorResponse } from '@/types';
 type TabType = 'general' | 'order' | 'payment' | 'notification' | 'security' | 'backup' | 'logs';
 
 export default function SettingsPage() {
+    // Logo upload state and ref (for general tab)
+    const [uploadingLogo, setUploadingLogo] = useState(false);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>, onChange: OnChangeType) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setUploadingLogo(true);
+      try {
+        const { data } = await settingsService.uploadCompanyLogo(file);
+        onChange('companyLogo', data.data.companyLogo);
+        toast.success('Logo updated');
+      } catch (err) {
+        toast.error('Failed to upload logo');
+      } finally {
+        setUploadingLogo(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
   const [activeTab, setActiveTab] = useState<TabType>('general');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,6 +63,15 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetchSettings();
+    
+    // Check for tab in URL
+    if (typeof window !== 'undefined') {
+       const params = new URLSearchParams(window.location.search);
+       const tab = params.get('tab') as TabType;
+       if (tab && ['general', 'order', 'payment', 'notification', 'security', 'backup', 'logs'].includes(tab)) {
+         setActiveTab(tab);
+       }
+    }
   }, []);
 
   useEffect(() => {
@@ -56,7 +84,24 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       const { data } = await settingsService.getSettings();
-      setFormData(data.data);
+      // Normalize nulls so controlled inputs never get null values
+      const raw = data.data || {};
+      const normalized: SystemSettings = {
+        ...raw,
+        companyLogo: raw.companyLogo ?? null,
+        companyEmail: raw.companyEmail ?? '',
+        companyPhone: raw.companyPhone ?? '',
+        companyAddress: raw.companyAddress ?? '',
+        paymentMethodsEnabled: Array.isArray(raw.paymentMethodsEnabled) ? raw.paymentMethodsEnabled : [],
+        paymentGatewayApiKey: raw.paymentGatewayApiKey ?? '',
+        paymentGatewaySecretKey: raw.paymentGatewaySecretKey ?? '',
+        paymentWebhookUrl: raw.paymentWebhookUrl ?? '',
+        roleNotificationMappings: raw.roleNotificationMappings ?? null,
+        autoCancelUnpaidOrdersHours: raw.autoCancelUnpaidOrdersHours ?? null,
+        lastBackupDate: raw.lastBackupDate ?? null,
+        autoBackupSchedule: raw.autoBackupSchedule ?? null,
+      };
+      setFormData(normalized);
     } catch (err) {
       toast.error('Failed to load settings');
     } finally {
@@ -76,7 +121,7 @@ export default function SettingsPage() {
     }
   };
 
-  const handleInputChange = (field: string, value: string | number | boolean) => {
+  const handleInputChange = (field: string, value: string | number | boolean | string[] | null) => {
     setFormData((prev) => {
       if (!prev) return null;
       return { ...prev, [field]: value };
@@ -179,33 +224,35 @@ export default function SettingsPage() {
         {/* Main Content Area */}
         <main className="flex-1 min-w-0">
           <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden mb-8">
-            <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
-              <div>
-                <h2 className="text-xl font-black text-shielder-dark uppercase tracking-tight">
-                  {sidebarItems.find(i => i.id === activeTab)?.label} Settings
-                </h2>
-                <p className="text-sm text-gray-500 font-medium">Manage and configure your system-wide parameters.</p>
-              </div>
-              {activeTab !== 'logs' && activeTab !== 'backup' && (
-                <button
-                  onClick={() => handleSave(activeTab)}
-                  disabled={saving}
-                  className="flex items-center gap-2 px-6 py-3 bg-shielder-dark text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all shadow-md disabled:opacity-50"
-                >
-                  {saving ? <RefreshCcw className="animate-spin" size={16} /> : <Save size={16} />}
-                  Save Changes
-                </button>
-              )}
+            <div className="p-8 border-b border-gray-50 bg-gray-50/30">
+              <h2 className="text-xl font-black text-shielder-dark uppercase tracking-tight">
+                {sidebarItems.find(i => i.id === activeTab)?.label} Settings
+              </h2>
+              <p className="text-sm text-gray-500 font-medium">Manage and configure your system-wide parameters.</p>
             </div>
 
             <div className="p-8">
-              {activeTab === 'general' && renderGeneralTab(formData, handleInputChange)}
+              {activeTab === 'general' && renderGeneralTab(formData, handleInputChange, uploadingLogo, fileInputRef, handleLogoUpload)}
               {activeTab === 'order' && renderOrderTab(formData, handleInputChange)}
               {activeTab === 'payment' && renderPaymentTab(formData, handleInputChange)}
               {activeTab === 'notification' && renderNotificationTab(formData, handleInputChange)}
               {activeTab === 'security' && renderSecurityTab(formData, handleInputChange)}
               {activeTab === 'backup' && renderBackupTab(formData, handleInputChange, () => setShowConfirmModal(true), () => setPendingAction(() => () => triggerBackup()))}
               {activeTab === 'logs' && renderLogsTab(logs, logsLoading)}
+
+              {/* Save Changes button at the bottom */}
+              {activeTab !== 'logs' && activeTab !== 'backup' && (
+                <div className="flex justify-end mt-8">
+                  <button
+                    onClick={() => handleSave(activeTab)}
+                    disabled={saving}
+                    className="flex items-center gap-2 px-6 py-3 bg-[#FF6B35] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#FF5722] transition-all shadow-md disabled:opacity-50"
+                  >
+                    {saving ? <RefreshCcw className="animate-spin" size={16} /> : <Save size={16} />}
+                    Save Changes
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </main>
@@ -240,7 +287,7 @@ export default function SettingsPage() {
                   <button 
                     onClick={handleVerifyAndProceed}
                     disabled={verifying || !verifyPassword}
-                    className="flex-1 py-4 bg-shielder-primary text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-shielder-primary/20 disabled:opacity-50"
+                    className="flex-1 py-4 bg-[#FF6B35] text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-[#FF6B35]/20 disabled:opacity-50"
                   >
                     {verifying ? 'Verifying...' : 'Authorize Action'}
                   </button>
@@ -275,7 +322,13 @@ export default function SettingsPage() {
 
 type OnChangeType = (f: string, v: string | number | boolean | string[] | null) => void;
 
-function renderGeneralTab(data: SystemSettings, onChange: OnChangeType) {
+function renderGeneralTab(
+  data: SystemSettings,
+  onChange: OnChangeType,
+  uploadingLogo: boolean,
+  fileInputRef: React.RefObject<HTMLInputElement>,
+  handleLogoUpload: (e: React.ChangeEvent<HTMLInputElement>, onChange: OnChangeType) => void
+) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div className="space-y-6">
@@ -322,12 +375,34 @@ function renderGeneralTab(data: SystemSettings, onChange: OnChangeType) {
             <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">Company Logo</label>
             <div className="w-24 h-24 bg-white rounded-2xl shadow-sm mx-auto mb-4 flex items-center justify-center overflow-hidden border border-gray-100 relative">
                {data.companyLogo ? (
-                 <Image src={data.companyLogo} alt="Logo" className="object-contain p-2" fill />
+                 <Image 
+                   src={data.companyLogo.startsWith('http') ? data.companyLogo : `http://localhost:5001${data.companyLogo}`}
+                   alt="Logo"
+                   className="object-contain p-2"
+                   fill
+                 />
                ) : (
                  <UploadCloud className="text-gray-300" size={32} />
                )}
+               {uploadingLogo && (
+                 <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs font-bold">Uploading...</div>
+               )}
             </div>
-            <button className="text-[10px] font-black uppercase tracking-widest text-shielder-primary hover:underline">Upload New File</button>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              onChange={e => handleLogoUpload(e, onChange)}
+            />
+            <button
+              type="button"
+              className="text-[10px] font-black uppercase tracking-widest text-shielder-primary hover:underline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingLogo}
+            >
+              {uploadingLogo ? 'Uploading...' : 'Upload New File'}
+            </button>
         </div>
         <div>
           <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">Physical Address</label>
@@ -349,9 +424,33 @@ function renderGeneralTab(data: SystemSettings, onChange: OnChangeType) {
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
                 <option value="GBP">GBP (£)</option>
+                <option value="SAR">SAR (ر.س)</option>
                 <option value="PKR">PKR (Rs.)</option>
               </select>
             </div>
+            <div>
+              <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">Timezone</label>
+              <select 
+                value={data.timezone}
+                onChange={(e) => onChange('timezone', e.target.value)}
+                className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+              >
+                <option value="UTC">UTC (GMT+0)</option>
+                <option value="America/New_York">Eastern Time (GMT-5)</option>
+                <option value="America/Chicago">Central Time (GMT-6)</option>
+                <option value="America/Los_Angeles">Pacific Time (GMT-8)</option>
+                <option value="Europe/London">London (GMT+0)</option>
+                <option value="Europe/Paris">Paris (GMT+1)</option>
+                <option value="Asia/Dubai">Dubai (GMT+4)</option>
+                <option value="Asia/Riyadh">Riyadh (GMT+3)</option>
+                <option value="Asia/Karachi">Karachi (GMT+5)</option>
+                <option value="Asia/Kolkata">India (GMT+5:30)</option>
+                <option value="Asia/Shanghai">Shanghai (GMT+8)</option>
+                <option value="Asia/Tokyo">Tokyo (GMT+9)</option>
+              </select>
+            </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">Date Format</label>
               <select 
@@ -373,6 +472,21 @@ function renderGeneralTab(data: SystemSettings, onChange: OnChangeType) {
 function renderOrderTab(data: SystemSettings, onChange: OnChangeType) {
   return (
     <div className="space-y-8">
+       <div>
+          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">Default Order Status</label>
+          <select
+            value={data.defaultOrderStatus}
+            onChange={(e) => onChange('defaultOrderStatus', e.target.value)}
+            className="w-full md:w-64 px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+          >
+            <option value="PENDING">Pending</option>
+            <option value="CONFIRMED">Confirmed</option>
+            <option value="PROCESSING">Processing</option>
+            <option value="SHIPPED">Shipped</option>
+            <option value="DELIVERED">Delivered</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+       </div>
        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="bg-gray-50 p-8 rounded-[32px] hover:bg-white border border-transparent hover:border-gray-100 transition-all group">
              <div className="flex items-center justify-between mb-4">
@@ -381,7 +495,7 @@ function renderOrderTab(data: SystemSettings, onChange: OnChangeType) {
                 </div>
                 <button 
                   onClick={() => onChange('autoCompleteOrderAfterPayment', !data.autoCompleteOrderAfterPayment)}
-                  className={`w-12 h-6 rounded-full transition-all relative ${data.autoCompleteOrderAfterPayment ? 'bg-shielder-primary' : 'bg-gray-200'}`}
+                  className={`w-12 h-6 rounded-full transition-all relative ${data.autoCompleteOrderAfterPayment ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
                 >
                   <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data.autoCompleteOrderAfterPayment ? 'translate-x-6' : ''}`} />
                 </button>
@@ -397,7 +511,7 @@ function renderOrderTab(data: SystemSettings, onChange: OnChangeType) {
                 </div>
                 <button 
                   onClick={() => onChange('allowPartialPayment', !data.allowPartialPayment)}
-                  className={`w-12 h-6 rounded-full transition-all relative ${data.allowPartialPayment ? 'bg-shielder-primary' : 'bg-gray-200'}`}
+                  className={`w-12 h-6 rounded-full transition-all relative ${data.allowPartialPayment ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
                 >
                   <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data.allowPartialPayment ? 'translate-x-6' : ''}`} />
                 </button>
@@ -413,7 +527,7 @@ function renderOrderTab(data: SystemSettings, onChange: OnChangeType) {
                 </div>
                 <button 
                   onClick={() => onChange('allowOrderCancellation', !data.allowOrderCancellation)}
-                  className={`w-12 h-6 rounded-full transition-all relative ${data.allowOrderCancellation ? 'bg-shielder-primary' : 'bg-gray-200'}`}
+                  className={`w-12 h-6 rounded-full transition-all relative ${data.allowOrderCancellation ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
                 >
                   <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data.allowOrderCancellation ? 'translate-x-6' : ''}`} />
                 </button>
@@ -497,7 +611,7 @@ function renderPaymentTab(data: SystemSettings, onChange: OnChangeType) {
                 </div>
                 <button 
                   onClick={() => onChange('paymentTestMode', !data.paymentTestMode)}
-                  className={`w-12 h-6 rounded-full transition-all relative ${!data.paymentTestMode ? 'bg-shielder-primary' : 'bg-gray-200'}`}
+                  className={`w-12 h-6 rounded-full transition-all relative ${!data.paymentTestMode ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
                 >
                   <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${!data.paymentTestMode ? 'translate-x-6' : ''}`} />
                 </button>
@@ -562,7 +676,7 @@ function renderNotificationTab(data: SystemSettings, onChange: OnChangeType) {
             </div>
             <button 
               onClick={() => onChange(t.key, !data[t.key])}
-              className={`w-12 h-6 rounded-full transition-all relative ${data[t.key] ? 'bg-shielder-primary' : 'bg-gray-200'}`}
+              className={`w-12 h-6 rounded-full transition-all relative ${data[t.key] ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
             >
               <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data[t.key] ? 'translate-x-6' : ''}`} />
             </button>

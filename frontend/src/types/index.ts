@@ -54,6 +54,11 @@ export interface RegisterRequest {
   preferredLanguage?: Locale;
 }
 
+export interface ChangePasswordRequest {
+  oldPassword: string;
+  newPassword: string;
+}
+
 export interface AuthResponse {
   user: User;
   tokens: {

@@ -26,7 +26,7 @@ apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // Debug log in development or if suspected URL issue
     console.log(`[API REQUEST] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-    
+
     // Get token from localStorage
     const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 
@@ -60,10 +60,10 @@ apiClient.interceptors.response.use(
 
     // Response interceptor should handle 401s except for auth endpoints
     const url = originalRequest.url || '';
-    const isAuthEndpoint = url.includes('auth/login') || 
-                          url.includes('auth/signup') || 
-                          url.includes('auth/refresh') ||
-                          url.includes('auth/verify-email');
+    const isAuthEndpoint = url.includes('auth/login') ||
+      url.includes('auth/signup') ||
+      url.includes('auth/refresh') ||
+      url.includes('auth/verify-email');
 
     // If error is 401 and we haven't retried yet and it's not an auth login/signup
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
@@ -80,7 +80,7 @@ apiClient.interceptors.response.use(
 
         // Refresh the token - ensure Slash between BASE_URL and endpoint
         const refreshUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.BASE_URL.endsWith('/') ? '' : '/'}${API_ENDPOINTS.AUTH.REFRESH_TOKEN}`;
-        
+
         const response = await axios.post(
           refreshUrl,
           { refreshToken: refreshToken.replace(/"/g, '') }
@@ -100,13 +100,26 @@ apiClient.interceptors.response.use(
         }
         return apiClient(originalRequest);
       } catch (refreshError) {
-        // If refresh fails, clear tokens and redirect to login
+        // If refresh fails, clear tokens and reset Zustand auth store
         localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER);
-
+        try {
+          // Dynamically import Zustand store and reset state
+          if (typeof window !== 'undefined') {
+            const { useAuthStore } = await import('@/store/auth.store');
+            useAuthStore.getState().setUser(null);
+            useAuthStore.getState().setError(null);
+            useAuthStore.getState().setLoading(false);
+          }
+        } catch (e) {
+          // Ignore if Zustand store can't be reset
+        }
         // Only redirect if specifically a refresh failure, not a random 401 that couldn't refresh
-        if (typeof window !== 'undefined' && !url.includes('auth/me')) {
+        // Also skip if already on login or register page to avoid false 'Session Expired' toasts
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        const isPublicPage = currentPath === '/login' || currentPath === '/register';
+        if (typeof window !== 'undefined' && !url.includes('auth/me') && !isPublicPage) {
           window.location.href = '/login?expired=true';
         }
 
@@ -124,6 +137,11 @@ apiClient.interceptors.response.use(
 export const handleApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<ApiError>;
+
+    // Handle Joi validation errors from backend
+    if (axiosError.response?.data?.errors && Array.isArray(axiosError.response.data.errors) && axiosError.response.data.errors.length > 0) {
+      return axiosError.response.data.errors.map(err => err.message).join('. ');
+    }
 
     if (axiosError.response?.data?.message) {
       return axiosError.response.data.message;

@@ -236,7 +236,7 @@ export default function ReportsDashboard() {
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center space-x-2 px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border ${
               activeTab === tab.id 
-                ? 'bg-shielder-primary text-white border-shielder-primary shadow-lg shadow-shielder-primary/20' 
+                ? 'bg-[#FF6B35] text-white border-[#FF6B35] shadow-lg shadow-[#FF6B35]/20' 
                 : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300'
             }`}
           >

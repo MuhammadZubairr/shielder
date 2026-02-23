@@ -66,13 +66,13 @@ export const GlobalSearch = () => {
   };
 
   return (
-    <div className="relative w-full max-w-xl group" ref={searchRef}>
+    <div className="relative w-full" ref={searchRef}>
       <div className={clsx(
         "relative flex items-center transition-all duration-300",
-        isOpen ? "scale-105" : ""
+        isOpen ? "scale-100 lg:scale-105" : ""
       )}>
         <Search className={clsx(
-          "absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200",
+          "absolute left-4 lg:left-4 top-1/2 -translate-y-1/2 transition-colors duration-200",
           isOpen ? "text-shielder-primary" : "text-gray-400"
         )} size={20} />
         
@@ -84,12 +84,26 @@ export const GlobalSearch = () => {
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          placeholder="Search orders, products, users..."
+          placeholder="Search..."
           className={clsx(
-            "w-full pl-12 pr-12 py-3 bg-gray-100/50 border-0 rounded-2xl focus:ring-2 focus:ring-shielder-primary/20 focus:bg-white transition-all text-sm font-medium",
-            isOpen ? "shadow-lg bg-white" : "hover:bg-gray-100"
+            "w-full pl-10 lg:pl-12 pr-10 lg:pr-12 py-2 lg:py-3 bg-gray-100/50 border-0 rounded-xl lg:rounded-2xl focus:ring-2 focus:ring-shielder-primary/20 focus:bg-white transition-all text-sm font-medium",
+            isOpen ? "shadow-lg bg-white" : "hover:bg-gray-100",
+            !isOpen ? "lg:w-full w-10 overflow-hidden cursor-pointer" : "w-full"
           )}
         />
+
+        {isOpen && (
+          <button 
+            onClick={() => {
+              setQuery('');
+              setResults([]);
+              setIsOpen(false);
+            }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full transition-colors lg:hidden"
+          >
+            <X size={16} className="text-gray-400" />
+          </button>
+        )}
 
         {query && (
           <button 
@@ -97,7 +111,7 @@ export const GlobalSearch = () => {
               setQuery('');
               setResults([]);
             }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full transition-colors"
+            className="absolute right-4 lg:right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full transition-colors hidden lg:block"
           >
             <X size={16} className="text-gray-400" />
           </button>
@@ -105,7 +119,7 @@ export const GlobalSearch = () => {
       </div>
 
       {isOpen && (query || isLoading) && (
-        <div className="absolute top-full left-0 right-0 mt-3 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+        <div className="absolute top-full left-0 right-0 lg:left-0 lg:right-0 mt-3 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 w-[calc(100vw-2rem)] lg:w-full -ml-[calc((100vw-100%-2rem)/2)] lg:ml-0">
           {isLoading ? (
             <div className="p-8 flex items-center justify-center space-x-3 text-gray-500">
               <Loader2 className="animate-spin text-shielder-primary" size={20} />

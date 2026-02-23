@@ -9,10 +9,14 @@ import multer from 'multer';
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Public routes
+// Public routes (order matters: specific paths before dynamic /:id)
 router.get('/', validate(productValidation.list, 'query'), productController.list);
 router.get('/summary', authenticate, requireAdmin, productController.getSummary);
 router.get('/management', authenticate, requireAdmin, productController.listForManagement);
+router.get('/template', authenticate, requireAdmin, productController.downloadTemplate);
+router.get('/pending', authenticate, requireAdmin, productController.getPending);
+
+// Dynamic public routes (after all specific GET paths)
 router.get('/:id', productController.getById);
 router.get('/:id/attachments', productController.listAttachments);
 
@@ -20,9 +24,6 @@ router.get('/:id/attachments', productController.listAttachments);
 router.use(authenticate, requireAdmin);
 
 router.post('/bulk-upload', upload.single('file'), productController.bulkUpload);
-router.get('/template', productController.downloadTemplate);
-
-router.get('/pending', productController.getPending);
 router.patch('/:id/approve', productController.approve);
 router.patch('/:id/reject', productController.reject);
 

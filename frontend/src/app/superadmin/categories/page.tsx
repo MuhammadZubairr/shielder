@@ -26,6 +26,10 @@ interface Category {
   id: string;
   name: string;
   description: string;
+  nameEn?: string;
+  descriptionEn?: string;
+  nameAr?: string;
+  descriptionAr?: string;
   image: string | null;
   isActive: boolean;
   createdAt: string;
@@ -85,8 +89,10 @@ export default function CategoryManagementPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
+    nameEn: '',
+    descriptionEn: '',
+    nameAr: '',
+    descriptionAr: '',
     isActive: true,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -150,12 +156,14 @@ export default function CategoryManagementPage() {
 
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.description) return toast.error('Name and Description are required');
+    if (!formData.nameEn) return toast.error('English name is required');
     if (!imageFile) return toast.error('Category Image is required');
 
     const data = new FormData();
-    data.append('name', formData.name);
-    data.append('description', formData.description);
+    data.append('nameEn', formData.nameEn);
+    data.append('descriptionEn', formData.descriptionEn);
+    if (formData.nameAr) data.append('nameAr', formData.nameAr);
+    if (formData.descriptionAr) data.append('descriptionAr', formData.descriptionAr);
     data.append('isActive', String(formData.isActive));
     data.append('image', imageFile);
 
@@ -178,8 +186,10 @@ export default function CategoryManagementPage() {
     if (!selectedCategory) return;
 
     const data = new FormData();
-    if (formData.name) data.append('name', formData.name);
-    if (formData.description) data.append('description', formData.description);
+    if (formData.nameEn) data.append('nameEn', formData.nameEn);
+    if (formData.descriptionEn) data.append('descriptionEn', formData.descriptionEn);
+    if (formData.nameAr) data.append('nameAr', formData.nameAr);
+    if (formData.descriptionAr) data.append('descriptionAr', formData.descriptionAr);
     data.append('isActive', String(formData.isActive));
     if (imageFile) data.append('image', imageFile);
 
@@ -220,8 +230,10 @@ export default function CategoryManagementPage() {
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      description: '',
+      nameEn: '',
+      descriptionEn: '',
+      nameAr: '',
+      descriptionAr: '',
       isActive: true
     });
     setImageFile(null);
@@ -232,8 +244,10 @@ export default function CategoryManagementPage() {
   const openEditModal = (cat: Category) => {
     setSelectedCategory(cat);
     setFormData({
-      name: cat.name,
-      description: cat.description,
+      nameEn: cat.nameEn || cat.name || '',
+      descriptionEn: cat.descriptionEn || cat.description || '',
+      nameAr: cat.nameAr || '',
+      descriptionAr: cat.descriptionAr || '',
       isActive: cat.isActive
     });
     setImagePreview(cat.image ? (cat.image.startsWith('http') ? cat.image : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001'}${cat.image}`) : null);
@@ -262,7 +276,7 @@ export default function CategoryManagementPage() {
         </div>
         <button 
           onClick={() => { resetForm(); setShowAddModal(true); }}
-          className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#0205A6] text-white rounded-[10px] hover:bg-[#045870] transition-all font-semibold shadow-md active:scale-95"
+          className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#FF6B35] text-white rounded-[10px] hover:bg-[#FF5722] transition-all font-semibold shadow-md active:scale-95"
         >
           <Plus size={18} />
           Add Category
@@ -314,8 +328,8 @@ export default function CategoryManagementPage() {
             </select>
           </div>
           <button 
-            onClick={() => { setSearch(''); setStatusFilter(''); }}
-            className="p-2.5 text-gray-400 hover:text-[#0205A6] hover:bg-[#0205A6]/5 rounded-lg transition-colors border border-gray-200"
+            onClick={() => { setSearch('');setStatusFilter(''); }}
+            className="p-2.5 text-gray-400 hover:text-[#FF6B35] hover:bg-[#FF6B35]/5 rounded-lg transition-colors border border-gray-200"
             title="Refresh"
           >
             <RefreshCcw size={18} className={refreshing ? 'animate-spin' : ''} />
@@ -376,7 +390,7 @@ export default function CategoryManagementPage() {
                     <div className="flex items-center justify-end gap-2">
                       <button 
                         onClick={() => openEditModal(cat)}
-                        className="p-2 text-gray-400 hover:text-[#0205A6] hover:bg-[#0205A6]/5 rounded-lg transition-all"
+                        className="p-2 text-gray-400 hover:text-[#FF6B35] hover:bg-[#FF6B35]/5 rounded-lg transition-all"
                         title="Edit"
                       >
                         <Edit2 size={16} />
@@ -431,10 +445,10 @@ export default function CategoryManagementPage() {
       {/* 5. ADD/EDIT MODAL */}
       {(showAddModal || showEditModal) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A1E36]/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 text-[#0A1E36]">
+          <div className="bg-white w-full max-w-lg max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 text-[#0A1E36] flex-shrink-0">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${showAddModal ? 'bg-[#0205A6]' : 'bg-[#045870]'} text-white`}>
+                <div className={`p-2 rounded-lg bg-[#FF6B35] text-white`}>
                   {showAddModal ? <Plus size={20} /> : <Edit2 size={20} />}
                 </div>
                 <div>
@@ -450,7 +464,8 @@ export default function CategoryManagementPage() {
               </button>
             </div>
             
-            <form onSubmit={showAddModal ? handleCreateCategory : handleUpdateCategory} className="p-6 space-y-5">
+            <form onSubmit={showAddModal ? handleCreateCategory : handleUpdateCategory} className="flex-1 overflow-y-auto">
+              <div className="p-6 space-y-5">
               {/* Image Upload */}
               <div className="flex flex-col items-center">
                 <div 
@@ -484,27 +499,57 @@ export default function CategoryManagementPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Category Name <span className="text-[#DC2626]">*</span></label>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Category Name — English <span className="text-[#DC2626]">*</span></label>
                 <input
                   type="text"
                   required
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0205A6] focus:bg-white focus:outline-none transition-all text-sm font-medium"
                   placeholder="e.g. Earthmoving Equipment"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  value={formData.nameEn}
+                  onChange={(e) => setFormData({...formData, nameEn: e.target.value})}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Description <span className="text-[#DC2626]">*</span></label>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Description — English <span className="text-[#DC2626]">*</span></label>
                 <textarea
                   required
-                  rows={3}
+                  rows={2}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0205A6] focus:bg-white focus:outline-none transition-all text-sm font-medium resize-none"
-                  placeholder="Provide a professional description for this category..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  placeholder="English description..."
+                  value={formData.descriptionEn}
+                  onChange={(e) => setFormData({...formData, descriptionEn: e.target.value})}
                 />
+              </div>
+
+              {/* Arabic fields */}
+              <div className="border-t border-dashed border-gray-200 pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Arabic (عربي)</span>
+                  <span className="h-px flex-1 bg-gray-200" />
+                </div>
+                <div className="space-y-4" dir="rtl">
+                  <div>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 text-right">اسم الفئة</label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF6B35] focus:bg-white focus:outline-none transition-all text-sm font-medium"
+                      placeholder="مثال: معدات الحفر"
+                      value={formData.nameAr}
+                      onChange={(e) => setFormData({...formData, nameAr: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5 text-right">الوصف</label>
+                    <textarea
+                      rows={2}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF6B35] focus:bg-white focus:outline-none transition-all text-sm font-medium resize-none"
+                      placeholder="وصف الفئة بالعربية..."
+                      value={formData.descriptionAr}
+                      onChange={(e) => setFormData({...formData, descriptionAr: e.target.value})}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100">
@@ -520,8 +565,9 @@ export default function CategoryManagementPage() {
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.isActive ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
+              </div>
 
-              <div className="pt-4 flex gap-3">
+              <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex gap-3 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => { setShowAddModal(false); setShowEditModal(false); resetForm(); }}
@@ -532,7 +578,7 @@ export default function CategoryManagementPage() {
                 <button
                   type="submit"
                   disabled={formLoading}
-                  className={`flex-1 px-4 py-3 text-white rounded-xl transition-all font-black text-[10px] uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg ${showAddModal ? 'bg-[#0205A6] hover:bg-[#0A1E36]' : 'bg-[#045870] hover:bg-[#0A1E36]'}`}
+                  className={`flex-1 px-4 py-3 text-white rounded-xl transition-all font-black text-[10px] uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg ${showAddModal ? 'bg-[#FF6B35] hover:bg-[#FF5722]' : 'bg-[#FF6B35] hover:bg-[#FF5722]'}`}
                 >
                   {formLoading ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
                   {showAddModal ? 'Create Category' : 'Save Changes'}

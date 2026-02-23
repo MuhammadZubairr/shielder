@@ -63,4 +63,32 @@ export class ProfileService {
       throw error;
     }
   }
+
+  /**
+   * Update user general preferences (theme, etc)
+   */
+  static async updatePreferences(userId: string, preferences: any) {
+    try {
+      const currentProfile = await prisma.userProfile.findUnique({
+        where: { userId },
+        select: { preferences: true }
+      });
+
+      const updatedPreferences = {
+        ...(currentProfile?.preferences as any || {}),
+        ...preferences
+      };
+
+      const profile = await prisma.userProfile.update({
+        where: { userId },
+        data: { preferences: updatedPreferences },
+      });
+
+      logger.info(`Preferences updated for user: ${userId}`);
+      return profile;
+    } catch (error) {
+      logger.error(`Error updating preferences for user ${userId}:`, error);
+      throw error;
+    }
+  }
 }

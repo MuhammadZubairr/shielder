@@ -31,10 +31,13 @@ import {
 import Link from 'next/link';
 
 interface DashboardSummary {
-  totalUsers: number;
   totalProducts: number;
-  totalOrders: number;
+  totalStock: number;
+  inventoryValue: number;
   totalRevenue: number;
+  totalCategories: number;
+  totalOrders: number;
+  totalUsers: number;
 }
 
 interface LowStockProduct {
@@ -104,11 +107,11 @@ export default function SuperAdminDashboard() {
         <div className="bg-red-50 p-4 rounded-full mb-4">
           <BadgeAlert className="text-red-500" size={48} />
         </div>
-        <h3 className="text-xl font-bold text-[#0A1E36]">Data Fetch Error</h3>
+        <h3 className="text-xl font-bold" style={{color:'var(--color-tertiary)'}}>Data Fetch Error</h3>
         <p className="text-gray-500 mt-2 text-center max-w-md">{error}</p>
         <button 
           onClick={fetchData}
-          className="mt-6 flex items-center gap-2 px-6 py-3 bg-[#0205A6] text-white rounded-xl hover:bg-[#0A1E36] transition-colors font-semibold"
+          className="mt-6 flex items-center gap-2 px-6 py-3 btn-secondary rounded-xl font-semibold"
         >
           <RefreshCcw size={18} />
           Retry Connection
@@ -121,7 +124,7 @@ export default function SuperAdminDashboard() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-extrabold text-[#0A1E36] tracking-tight">Dashboard</h1>
+          <h1 className="text-3xl font-extrabold text-gray-800">Overview</h1>
           <p className="text-gray-500 mt-1">Real-time status of Shielder marketplace</p>
         </div>
         <button 
@@ -136,12 +139,12 @@ export default function SuperAdminDashboard() {
       {/* 3. LOW STOCK ALERT CARD */}
       <section>
         {lowStock.length > 0 ? (
-          <div className="bg-[#FFF1F2] border-l-[6px] border-[#DC2626] rounded-2xl p-6 shadow-sm">
+          <div className="bg-red-50 border-l-[6px] border-red-500 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-[#DC2626] p-2 rounded-lg text-white">
                 <AlertTriangle size={24} />
               </div>
-              <h2 className="text-xl font-bold text-[#0A1E36]">Low Stock Alerts</h2>
+              <h2 className="text-xl font-bold text-gray-800">Low Stock Alerts</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -149,15 +152,15 @@ export default function SuperAdminDashboard() {
                 <div key={product.id} className="bg-white p-4 rounded-xl border border-red-100 flex flex-col justify-between">
                   <div>
                     <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-bold text-[#0A1E36] line-clamp-1">{product.translations?.[0]?.name}</h4>
+                      <h4 className="font-bold line-clamp-1 text-gray-800">{product.translations?.[0]?.name}</h4>
                       {product.stock <= 2 ? (
-                        <span className="px-2 py-1 bg-[#FEE2E2] text-[#DC2626] text-[10px] font-black rounded uppercase">CRITICAL</span>
+                        <span className="px-2 py-1 bg-red-100 text-red-500 text-[10px] font-black rounded uppercase">CRITICAL</span>
                       ) : (
-                        <span className="px-2 py-1 bg-[#FEF9C3] text-[#A16207] text-[10px] font-black rounded uppercase">LOW</span>
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-[10px] font-black rounded uppercase">LOW</span>
                       )}
                     </div>
                     <p className="text-xs text-gray-500 mb-1">Supplier: <span className="text-gray-700 font-medium">{product.brand?.name || 'N/A'}</span></p>
-                    <p className="text-sm font-semibold">Stock: <span className={product.stock <= 2 ? 'text-[#DC2626]' : 'text-[#A16207]'}>{product.stock} units</span></p>
+                    <p className="text-sm font-semibold">Stock: <span className={product.stock <= 2 ? 'text-red-500' : 'text-yellow-700'}>{product.stock} units</span></p>
                   </div>
                 </div>
               ))}
@@ -179,38 +182,44 @@ export default function SuperAdminDashboard() {
               <CheckCircle2 size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-[#0A1E36]">Healthy Inventory</h2>
-              <p className="text-gray-600">All inventory levels are healthy and within thresholds.</p>
+              <h2 className="text-xl font-bold text-[#DC2626]">Low Stock Alert</h2>
+              <p className="text-gray-600">This area shows products that are low in stock and need attention.</p>
             </div>
           </div>
         )}
       </section>
 
       {/* 4. DASHBOARD STATISTICS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard 
-          label="Total Users" 
-          value={summary?.totalUsers.toLocaleString() || '0'} 
-          icon={Users}
-          color="#0205A6"
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatsCard 
           label="Total Products" 
-          value={summary?.totalProducts.toLocaleString() || '0'} 
+          value={(summary?.totalProducts ?? 0).toLocaleString()} 
           icon={Package}
-          color="#0205A6"
+          bgColor="#5B5FC7"
         />
         <StatsCard 
-          label="Total Orders" 
-          value={summary?.totalOrders.toLocaleString() || '0'} 
-          icon={ShoppingCart}
-          color="#0205A6"
+          label="Total Stock" 
+          value={(summary?.totalStock ?? 0).toLocaleString()} 
+          icon={Layers}
+          bgColor="#374151"
+        />
+        <StatsCard 
+          label="Inventory Value" 
+          value={`${(summary?.inventoryValue ?? 0).toLocaleString()} SAR`} 
+          icon={TrendingUp}
+          bgColor="#FF6B35"
         />
         <StatsCard 
           label="Total Revenue" 
-          value={`${summary?.totalRevenue.toLocaleString() || '0'} SAR`} 
-          icon={TrendingUp}
-          color="#0205A6"
+          value={`${(summary?.totalRevenue ?? 0).toLocaleString()} SAR`} 
+          icon={ShoppingCart}
+          bgColor="#5B5FC7"
+        />
+        <StatsCard 
+          label="Total Categories" 
+          value={(summary?.totalCategories ?? 0).toLocaleString()} 
+          icon={ActivityIcon}
+          bgColor="#374151"
         />
       </div>
 
@@ -218,10 +227,10 @@ export default function SuperAdminDashboard() {
         {/* 5. ANALYTICS SECTION */}
         <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[450px]">
           <div className="flex items-center gap-2 mb-6">
-            <div className="bg-blue-50 p-2 rounded-lg text-[#0205A6]">
+            <div className="bg-blue-50 p-2 rounded-lg text-[#5B5FC7]">
               <TrendingUp size={20} />
             </div>
-            <h3 className="font-bold text-[#0A1E36] text-lg">Revenue Analytics</h3>
+            <h3 className="font-bold text-gray-800 text-lg">Sales Graph</h3>
           </div>
           <div className="flex-1 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -236,10 +245,18 @@ export default function SuperAdminDashboard() {
                 <Line 
                   type="monotone" 
                   dataKey="revenue" 
-                  stroke="#0205A6" 
-                  strokeWidth={4} 
-                  dot={{ r: 6, fill: '#0205A6', strokeWidth: 2, stroke: '#FFF' }}
-                  activeDot={{ r: 8 }}
+                  stroke="#5B5FC7" 
+                  strokeWidth={3} 
+                  dot={{ r: 5, fill: '#5B5FC7', strokeWidth: 2, stroke: '#FFF' }}
+                  activeDot={{ r: 7 }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="orders" 
+                  stroke="#FF6B35" 
+                  strokeWidth={3} 
+                  dot={{ r: 5, fill: '#FF6B35', strokeWidth: 2, stroke: '#FFF' }}
+                  activeDot={{ r: 7 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -248,10 +265,10 @@ export default function SuperAdminDashboard() {
 
         <section className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[450px]">
           <div className="flex items-center gap-2 mb-6">
-            <div className="bg-blue-50 p-2 rounded-lg text-[#045870]">
+            <div className="bg-blue-50 p-2 rounded-lg text-[#5B5FC7]">
               <Layers size={20} />
             </div>
-            <h3 className="font-bold text-[#0A1E36] text-lg">Orders Overview</h3>
+            <h3 className="font-bold text-gray-800 text-lg">Order Trend</h3>
           </div>
           <div className="flex-1 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -262,7 +279,7 @@ export default function SuperAdminDashboard() {
                 <Tooltip 
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                 />
-                <Bar dataKey="orders" fill="#045870" radius={[6, 6, 0, 0]} barSize={40} />
+                <Bar dataKey="orders" fill="#5B5FC7" radius={[8, 8, 0, 0]} barSize={30} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -272,10 +289,10 @@ export default function SuperAdminDashboard() {
       {/* 6. RECENT ACTIVITY SECTION */}
       <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-10">
         <div className="flex items-center gap-2 mb-8">
-          <div className="bg-gray-50 p-2 rounded-lg text-[#0A1E36]">
+          <div className="bg-gray-50 p-2 rounded-lg text-gray-700">
             <ActivityIcon size={20} />
           </div>
-          <h3 className="font-bold text-[#0A1E36] text-lg">Monitoring Log</h3>
+          <h3 className="font-bold text-gray-800 text-lg">Monitoring Log</h3>
         </div>
         
         <div className="space-y-4">
@@ -288,7 +305,7 @@ export default function SuperAdminDashboard() {
                   'bg-[#DC2626]'
                 }`} />
                 <div>
-                  <p className="font-bold text-[#0A1E36]">{activity.action}</p>
+                  <p className="font-bold text-gray-800">{activity.action}</p>
                   <p className="text-sm text-gray-500">{activity.user}</p>
                 </div>
               </div>
@@ -309,16 +326,16 @@ export default function SuperAdminDashboard() {
   );
 }
 
-function StatsCard({ label, value, icon: Icon, color }: { label: string, value: string, icon: any, color: string }) {
+function StatsCard({ label, value, icon: Icon, bgColor }: { label: string, value: string, icon: any, bgColor: string }) {
   return (
-    <div className="bg-white p-6 rounded-[16px] shadow-sm border-t-[5px] hover:-translate-y-2 transition-all duration-300 group cursor-default" style={{ borderTopColor: color }}>
-      <div className="flex justify-between items-start mb-4">
-        <div className="bg-gray-50 p-3 rounded-xl group-hover:bg-blue-50 transition-colors">
-          <Icon className="text-gray-400 group-hover:text-[#0205A6]" size={24} />
+    <div className="rounded-2xl p-6 hover:-translate-y-1 transition-all duration-300 group cursor-default shadow-sm" style={{ backgroundColor: bgColor }}>
+      <div className="flex justify-between items-start mb-6">
+        <div className="bg-white/10 p-3 rounded-xl backdrop-blur-sm">
+          <Icon className="text-white" size={24} />
         </div>
       </div>
-      <p className="text-gray-500 font-medium text-sm mb-1">{label}</p>
-      <h3 className="text-2xl font-black text-[#0A1E36] tracking-tight">{value}</h3>
+      <p className="text-white/80 font-medium text-sm mb-2">{label}</p>
+      <h3 className="text-3xl font-black text-white tracking-tight">{value}</h3>
     </div>
   );
 }
