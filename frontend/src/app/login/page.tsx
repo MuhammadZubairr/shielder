@@ -25,6 +25,10 @@ export default function LoginPage() {
     useEffect(() => {
       const params = new URLSearchParams(window.location.search);
       if (params.get('expired')) {
+        sessionStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        sessionStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+        sessionStorage.removeItem(STORAGE_KEYS.USER);
+        // Also clear legacy localStorage tokens
         localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER);

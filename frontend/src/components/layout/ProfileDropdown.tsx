@@ -7,18 +7,26 @@ import {
   Lock, 
   LogOut, 
   ChevronDown,
-  ShieldCheck
+  ShieldCheck,
+  Camera,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import { ROUTES } from '@/utils/constants';
 import { getImageUrl } from '@/utils/helpers';
+import profileService from '@/services/profile.service';
+import { useAuthStore } from '@/store/auth.store';
+import { toast } from 'react-hot-toast';
 
 export const ProfileDropdown = () => {
   const { user, logout } = useAuth();
+  const { setUser } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -54,24 +62,62 @@ export const ProfileDropdown = () => {
     return '/profile/security';
   };
 
+  const getSettingsLink = () => {
+    if (user?.role === 'SUPER_ADMIN') return '/superadmin/settings';
+    if (user?.role === 'ADMIN') return '/admin/settings';
+    return null;
+  };
+
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Photo must be smaller than 2 MB');
+      return;
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Only JPEG, PNG or WebP images are allowed');
+      return;
+    }
+    setIsUploadingPhoto(true);
+    try {
+      const data = await profileService.uploadProfileImage(file);
+      // Merge the new profileImage into the stored user
+      const updatedUser = {
+        ...user!,
+        profile: { ...user!.profile, profileImage: data?.profileImage ?? data?.data?.profileImage ?? user!.profile?.profileImage },
+      };
+      setUser(updatedUser as any);
+      toast.success('Profile photo updated');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'Failed to upload photo');
+    } finally {
+      setIsUploadingPhoto(false);
+      // Reset so same file can be re-selected
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 md:space-x-3 cursor-pointer group hover:bg-secondary/10 p-1 px-2 rounded-xl transition-all"
+        className="flex items-center gap-2 md:gap-3 cursor-pointer group hover:bg-secondary/10 p-1 px-2 rounded-xl transition-all rtl:flex-row-reverse"
       >
-        <div className="flex flex-col items-end mr-1 hidden sm:flex">
-          <span className="text-sm font-bold text-tertiary line-clamp-1">
+        <div className="flex flex-col hidden sm:flex ltr:items-end rtl:items-start">
+          <span className="text-sm font-bold text-tertiary line-clamp-1 max-w-[120px]">
             {user?.profile?.fullName || 'Super Admin'}
           </span>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-primary font-bold tracking-wider bg-primary/10 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] text-primary font-bold tracking-wider bg-primary/10 px-1.5 py-0.5 rounded whitespace-nowrap">
               {user?.role === 'SUPER_ADMIN' ? '(Super Admin)' : (user?.role ? `(${user.role.charAt(0) + user.role.slice(1).toLowerCase().replace('_', ' ')})` : '')}
             </span>
           </div>
         </div>
-        <div className="w-10 h-10 rounded-xl bg-dark flex items-center justify-center text-white shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all">
-          {user?.profile?.profileImage ? (
+        <div className="relative w-10 h-10 rounded-xl bg-dark flex items-center justify-center text-white shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all">
+          {isUploadingPhoto ? (
+            <Loader2 size={18} className="animate-spin" />
+          ) : user?.profile?.profileImage ? (
             <img 
               src={getImageUrl(user.profile.profileImage) || ''} 
               alt="Profile" 
@@ -87,14 +133,44 @@ export const ProfileDropdown = () => {
         />
       </button>
 
+      {/* Hidden file input for photo upload */}
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={handlePhotoChange}
+      />
+
       {isOpen && (
-        <div className="absolute right-0 mt-3 w-72 md:w-64 bg-white rounded-2xl shadow-2xl border border-secondary/10 z-50 overflow-hidden transform origin-top-right animate-in fade-in slide-in-from-top-1 fixed md:absolute left-4 right-4 md:left-auto md:right-0">
-          {/* Header */}
+        <div className="absolute mt-3 w-72 md:w-64 bg-white rounded-2xl shadow-2xl border border-secondary/10 z-50 overflow-hidden transform origin-top-right animate-in fade-in slide-in-from-top-1 fixed md:absolute left-4 right-4 md:left-auto ltr:md:right-0 rtl:md:left-0 rtl:md:right-auto">
+          {/* Header with avatar + change photo */}
           <div className="p-4 bg-secondary/5 border-b border-secondary/10">
-            <p className="text-sm font-medium text-secondary">Logged in as</p>
-            <p className="text-base font-bold text-tertiary truncate">{user?.email}</p>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="relative flex-shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-dark flex items-center justify-center text-white overflow-hidden">
+                  {user?.profile?.profileImage ? (
+                    <img src={getImageUrl(user.profile.profileImage) || ''} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User size={22} />
+                  )}
+                </div>
+                <button
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={isUploadingPhoto}
+                  title="Change profile photo"
+                  className="absolute -bottom-1 -right-1 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center shadow hover:bg-primary/80 transition-colors disabled:opacity-60"
+                >
+                  {isUploadingPhoto ? <Loader2 size={10} className="animate-spin" /> : <Camera size={10} />}
+                </button>
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-tertiary truncate">{user?.profile?.fullName || user?.email}</p>
+                <p className="text-[10px] text-gray-500 truncate">{user?.email}</p>
+              </div>
+            </div>
             {user?.role === 'SUPER_ADMIN' && (
-              <p className="text-[10px] text-primary font-bold mt-1">(Super Admin)</p>
+              <p className="text-[10px] text-primary font-bold">(Super Admin)</p>
             )}
           </div>
 
@@ -122,9 +198,9 @@ export const ProfileDropdown = () => {
               <span className="font-semibold">Change Password</span>
             </Link>
 
-            {user?.role === 'SUPER_ADMIN' && (
+            {getSettingsLink() && (
               <Link 
-                href="/superadmin/settings" 
+                href={getSettingsLink()!} 
                 onClick={() => setIsOpen(false)}
                 className="flex items-center space-x-3 p-3 rounded-xl text-secondary hover:bg-secondary/10 hover:text-primary transition-colors group"
               >

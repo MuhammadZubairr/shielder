@@ -80,6 +80,66 @@ class AdminService {
   }
 
   /**
+   * Admin → User Management  (ADMIN role, endpoint: /api/admin/users)
+   * Backend restricts these to USER-role accounts only.
+   */
+  async getAdminManagedUsers(params: {
+    search?: string;
+    status?: string;
+    isActive?: boolean;
+    page?: number;
+    limit?: number;
+  }) {
+    const response = await apiClient.get(API_ENDPOINTS.ADMIN_USERS.BASE, { params });
+    return response.data;
+  }
+
+  async getAdminManagedUserById(id: string) {
+    const response = await apiClient.get(API_ENDPOINTS.ADMIN_USERS.BY_ID(id));
+    return response.data;
+  }
+
+  async createAdminManagedUser(data: {
+    email: string;
+    password: string;
+    fullName?: string;
+    phoneNumber?: string;
+    companyName?: string;
+  }) {
+    const response = await apiClient.post(API_ENDPOINTS.ADMIN_USERS.BASE, data);
+    return response.data;
+  }
+
+  async updateAdminManagedUser(
+    id: string,
+    data: {
+      email?: string;
+      fullName?: string;
+      phoneNumber?: string;
+      companyName?: string;
+      status?: string;
+    }
+  ) {
+    const response = await apiClient.put(API_ENDPOINTS.ADMIN_USERS.BY_ID(id), data);
+    return response.data;
+  }
+
+  async updateAdminManagedUserStatus(id: string, isActive: boolean) {
+    const response = await apiClient.patch(API_ENDPOINTS.ADMIN_USERS.STATUS(id), { isActive });
+    return response.data;
+  }
+
+  async resetAdminManagedUserPassword(id: string, password: string) {
+    const response = await apiClient.patch(API_ENDPOINTS.ADMIN_USERS.RESET_PASSWORD(id), { password });
+    return response.data;
+  }
+
+  async deleteAdminManagedUser(id: string) {
+    const response = await apiClient.delete(API_ENDPOINTS.ADMIN_USERS.BY_ID(id));
+    return response.data;
+  }
+
+  /**
    * Admin Management (Legacy - still used in some places)
    */
   async getAdmins(params: { search?: string; role?: string; status?: string; page?: number; limit?: number }) {
@@ -228,6 +288,14 @@ class AdminService {
 
   async deleteProduct(id: string) {
     return apiClient.delete(`inventory/products/${id}`);
+  }
+
+  async uploadProductImage(id: string, file: File) {
+    const formData = new FormData();
+    formData.append('productImage', file);
+    return apiClient.post(`inventory/products/${id}/images`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   }
 
   async approveProduct(id: string) {

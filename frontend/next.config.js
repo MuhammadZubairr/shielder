@@ -19,6 +19,24 @@ const nextConfig = {
     domains: ['localhost'],
     remotePatterns: [
       {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5000',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5001',
+        pathname: '/**',
+      },
+      {
         protocol: 'https',
         hostname: '**',
       },

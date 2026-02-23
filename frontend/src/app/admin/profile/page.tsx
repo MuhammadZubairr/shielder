@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
+import { useSearchParams } from 'next/navigation';
 import { 
   User, 
   Mail, 
@@ -15,17 +16,27 @@ import {
   EyeOff,
   AlertCircle,
   CheckCircle2,
-  Loader2
+  Loader2,
+  Camera
 } from 'lucide-react';
 import authService from '@/services/auth.service';
+import profileService from '@/services/profile.service';
 import { handleApiError } from '@/services/api.service';
 import { toast } from 'react-hot-toast';
+import { useAuthStore } from '@/store/auth.store';
+import { getImageUrl } from '@/utils/helpers';
 
 type TabType = 'overview' | 'security';
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const { setUser } = useAuthStore();
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<TabType>(() =>
+    searchParams.get('tab') === 'security' ? 'security' : 'overview'
+  );
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Password change state
   const [showPassword, setShowPassword] = useState(false);
@@ -34,16 +45,42 @@ export default function ProfilePage() {
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
 
+  // Sync tab when URL param changes (e.g. navigating from navbar)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const tab = params.get('tab') as TabType;
-      if (tab === 'security') setActiveTab('security');
+    const tab = searchParams.get('tab');
+    if (tab === 'security') setActiveTab('security');
+    else if (!tab) setActiveTab('overview');
+  }, [searchParams]);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be smaller than 2 MB');
+      return;
     }
-  }, []);
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast.error('Only JPEG, PNG or WebP files are allowed');
+      return;
+    }
+    setIsUploadingPhoto(true);
+    try {
+      const data = await profileService.uploadProfileImage(file);
+      const newImg = data?.profileImage ?? data?.data?.profileImage ?? data?.user?.profile?.profileImage;
+      if (user && newImg) {
+        setUser({ ...user, profile: { ...user.profile, profileImage: newImg } } as any);
+      }
+      toast.success('Profile photo updated');
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? 'Failed to upload photo');
+    } finally {
+      setIsUploadingPhoto(false);
+      if (photoInputRef.current) photoInputRef.current.value = '';
+    }
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,12 +132,33 @@ export default function ProfilePage() {
             <div className="w-24 h-24 rounded-2xl bg-white p-1 shadow-lg">
               <div className="w-full h-full rounded-xl bg-gray-100 flex items-center justify-center text-shielder-dark relative">
                 {user?.profile?.profileImage ? (
-                  <Image src={user.profile.profileImage} alt="Profile" className="rounded-xl object-cover" fill />
+                  <Image src={getImageUrl(user.profile.profileImage) || user.profile.profileImage} alt="Profile" className="rounded-xl object-cover" fill unoptimized />
                 ) : (
                   <User size={40} />
                 )}
+                {/* Upload overlay */}
+                <button
+                  type="button"
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={isUploadingPhoto}
+                  title="Change profile photo"
+                  className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 opacity-0 hover:opacity-100 transition-opacity disabled:cursor-not-allowed"
+                >
+                  {isUploadingPhoto
+                    ? <Loader2 size={22} className="animate-spin text-white" />
+                    : <Camera size={22} className="text-white" />
+                  }
+                </button>
               </div>
             </div>
+            {/* Hidden file input */}
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handlePhotoUpload}
+            />
           </div>
         </div>
 

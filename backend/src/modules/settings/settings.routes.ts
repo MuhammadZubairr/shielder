@@ -9,53 +9,53 @@ import { UserRole } from '@/common/constants/roles';
 
 const router = Router();
 
-// All settings routes require Super Admin
-router.use(authenticate, requireRoles(UserRole.SUPER_ADMIN));
+// All settings routes require authentication
+router.use(authenticate);
 
 /**
  * @route   POST /api/settings/logo
- * @desc    Upload and update company logo
+ * @desc    Upload and update company logo (Admin + Super Admin)
  */
-router.post('/logo', SettingsController.uploadCompanyLogo);
+router.post('/logo', requireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN), SettingsController.uploadCompanyLogo);
 
 /**
  * @route   GET /api/settings
- * @desc    Get all system settings
+ * @desc    Get all system settings (Admin + Super Admin)
  */
-router.get('/', SettingsController.getSettings);
+router.get('/', requireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN), SettingsController.getSettings);
 
 /**
  * @route   GET /api/settings/logs
- * @desc    Get settings change logs
+ * @desc    Get settings change logs (Super Admin only)
  */
-router.get('/logs', SettingsController.getLogs);
+router.get('/logs', requireRoles(UserRole.SUPER_ADMIN), SettingsController.getLogs);
 
 /**
  * @route   GET /api/settings/snapshots
- * @desc    Get config snapshots
+ * @desc    Get config snapshots (Super Admin only)
  */
-router.get('/snapshots', SettingsController.getSnapshots);
+router.get('/snapshots', requireRoles(UserRole.SUPER_ADMIN), SettingsController.getSnapshots);
 
 /**
  * @route   POST /api/settings/verify
  * @desc    Verify admin password for sensitive actions
  */
-router.post('/verify', validate(settingsValidation.verifyPassword), SettingsController.verifySensitiveAction);
+router.post('/verify', requireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate(settingsValidation.verifyPassword), SettingsController.verifySensitiveAction);
 
 /**
  * @route   POST /api/settings/backup
- * @desc    Manual backup trigger
+ * @desc    Manual backup trigger (Super Admin only)
  */
-router.post('/backup', SettingsController.triggerBackup);
+router.post('/backup', requireRoles(UserRole.SUPER_ADMIN), SettingsController.triggerBackup);
 
 /**
  * @route   PUT /api/settings/:section
- * @desc    Update specific settings section
+ * @desc    Update specific settings sections
  */
-router.put('/general', validate(settingsValidation.updateGeneral), SettingsController.updateSettings);
-router.put('/order', validate(settingsValidation.updateOrder), SettingsController.updateSettings);
-router.put('/payment', validate(settingsValidation.updatePayment), SettingsController.updateSettings);
-router.put('/notification', validate(settingsValidation.updateNotification), SettingsController.updateSettings);
-router.put('/security', validate(settingsValidation.updateSecurity), SettingsController.updateSettings);
+router.put('/general',      requireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate(settingsValidation.updateGeneral),      SettingsController.updateSettings);
+router.put('/notification',  requireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate(settingsValidation.updateNotification), SettingsController.updateSettings);
+router.put('/security',     requireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN), validate(settingsValidation.updateSecurity),     SettingsController.updateSettings);
+router.put('/order',        requireRoles(UserRole.SUPER_ADMIN), validate(settingsValidation.updateOrder),        SettingsController.updateSettings);
+router.put('/payment',      requireRoles(UserRole.SUPER_ADMIN), validate(settingsValidation.updatePayment),       SettingsController.updateSettings);
 
 export default router;

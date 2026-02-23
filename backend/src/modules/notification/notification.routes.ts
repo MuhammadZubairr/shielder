@@ -15,6 +15,12 @@ const router = Router();
 router.use(authenticate);
 
 /**
+ * @route   POST /api/notifications
+ * @desc    Admin creates a manual notification (broadcast to role or specific user)
+ */
+router.post('/', requireRoles(UserRole.ADMIN, UserRole.SUPER_ADMIN), notificationController.createManualNotification);
+
+/**
  * @route   GET /api/notifications/preferences
  * @desc    Get user notification preferences
  */

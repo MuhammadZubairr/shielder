@@ -106,25 +106,25 @@ export const AdminNavbar = () => {
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const [ordersRes, productsRes, usersRes] = await Promise.allSettled([
+        const [productsRes, usersRes, categoriesRes] = await Promise.allSettled([
           adminService.getProductsForManagement({ search: searchQuery, limit: 3 }),
           adminService.getAllUsers({ search: searchQuery, limit: 3 }),
           adminService.getCategories({ search: searchQuery, limit: 3 }),
         ]);
         const results: any[] = [];
-        if (ordersRes.status === 'fulfilled') {
-          (ordersRes.value?.data?.products || []).forEach((p: any) => 
+        if (productsRes.status === 'fulfilled') {
+          (productsRes.value?.data?.products || []).forEach((p: any) => 
             results.push({ type: 'Product', label: p.translations?.[0]?.name || p.name || 'Product', href: '/admin/products' })
           );
         }
-        if (productsRes.status === 'fulfilled') {
-          (productsRes.value?.data || []).forEach((u: any) =>
+        if (usersRes.status === 'fulfilled') {
+          (usersRes.value?.data || []).forEach((u: any) =>
             results.push({ type: 'User', label: u.profile?.fullName || u.email, href: '/admin/users' })
           );
         }
-        if (ordersRes.status === 'fulfilled') {
-          (ordersRes.value?.data?.categories || []).forEach((c: any) =>
-            results.push({ type: 'Category', label: c.name, href: '/admin/categories' })
+        if (categoriesRes.status === 'fulfilled') {
+          (categoriesRes.value?.data?.categories || categoriesRes.value?.data || []).forEach((c: any) =>
+            results.push({ type: 'Category', label: c.name || c.translations?.[0]?.name, href: '/admin/categories' })
           );
         }
         setSearchResults(results.slice(0, 6));

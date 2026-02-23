@@ -33,12 +33,21 @@ export const useAuthStore = create<AuthStore>((set) => ({
   error: null,
 
   // Actions
-  setUser: (user) =>
+  setUser: (user) => {
+    // Keep sessionStorage in sync so profile picture persists within the session
+    if (typeof window !== 'undefined') {
+      if (user) {
+        sessionStorage.setItem('shielder_user', JSON.stringify(user));
+      } else {
+        sessionStorage.removeItem('shielder_user');
+      }
+    }
     set({
       user,
       isAuthenticated: !!user,
       isLoading: false,
-    }),
+    });
+  },
 
   setLoading: (loading) =>
     set({

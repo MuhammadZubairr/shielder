@@ -88,6 +88,13 @@ export const API_ENDPOINTS = {
     BY_ID: (id: string) => `orders/${id}`,
     UPDATE_STATUS: (id: string) => `orders/${id}/status`,
   },
+  // Admin User Management
+  ADMIN_USERS: {
+    BASE: 'admin/users',
+    BY_ID: (id: string) => `admin/users/${id}`,
+    STATUS: (id: string) => `admin/users/${id}/status`,
+    RESET_PASSWORD: (id: string) => `admin/users/${id}/reset-password`,
+  },
 } as const;
 
 /**

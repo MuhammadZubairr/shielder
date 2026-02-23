@@ -16,6 +16,8 @@ const storage = multer.diskStorage({
       folder = path.join(uploadDir, 'categories');
     } else if (file.fieldname === 'profileImage') {
       folder = path.join(uploadDir, 'profile');
+    } else if (file.fieldname === 'productImage') {
+      folder = path.join(uploadDir, 'products');
     }
     
     if (!fs.existsSync(folder)) {

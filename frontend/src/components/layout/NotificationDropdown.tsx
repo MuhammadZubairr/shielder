@@ -5,8 +5,10 @@ import { Bell, Check, Loader2, Trash2, ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import notificationService, { Notification } from '@/services/notification.service';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
 
 export const NotificationDropdown = () => {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -62,7 +64,7 @@ export const NotificationDropdown = () => {
     e.stopPropagation();
     try {
       await notificationService.markAsRead(id);
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, readAt: new Date().toISOString() } : n));
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
       console.error('Failed to mark as read');
@@ -72,12 +74,26 @@ export const NotificationDropdown = () => {
   const handleMarkAllRead = async () => {
     try {
       await notificationService.markAllAsRead();
-      setNotifications(prev => prev.map(n => ({ ...n, readAt: new Date().toISOString() })));
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (err) {
       console.error('Failed to mark all as read');
     }
   };
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await notificationService.deleteNotification(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      const deleted = notifications.find(n => n.id === id);
+      if (deleted && !deleted.isRead) setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Failed to delete notification');
+    }
+  };
+
+  const notificationsLink = user?.role === 'ADMIN' ? '/admin/notifications' : '/superadmin/notifications';
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -132,7 +148,7 @@ export const NotificationDropdown = () => {
                     }}
                   >
                     <div className="flex items-start justify-between space-x-3">
-                      <div className={`mt-1 p-1.5 rounded-lg ${
+                      <div className={`mt-1 p-1.5 rounded-lg flex-shrink-0 ${
                         notification.type === 'LOW_STOCK' ? 'bg-red-100 text-red-600' :
                         notification.type.startsWith('ORDER') ? 'bg-blue-100 text-blue-600' :
                         'bg-gray-100 text-gray-600'
@@ -150,9 +166,18 @@ export const NotificationDropdown = () => {
                           {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                         </p>
                       </div>
-                      {!notification.isRead && (
-                        <div className="w-2 h-2 rounded-full bg-shielder-primary mt-2"></div>
-                      )}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        {!notification.isRead && (
+                          <div className="w-2 h-2 rounded-full bg-shielder-primary mt-2" />
+                        )}
+                        <button
+                          onClick={(e) => handleDelete(notification.id, e)}
+                          className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-500 transition-all rounded"
+                          title="Delete"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -161,7 +186,7 @@ export const NotificationDropdown = () => {
           </div>
 
           <Link 
-            href="/superadmin/notifications" 
+            href={notificationsLink}
             onClick={() => setIsOpen(false)}
             className="block p-3 text-center text-sm font-bold text-gray-600 hover:bg-gray-50 border-t border-gray-50 transition-colors bg-gray-50/20"
           >

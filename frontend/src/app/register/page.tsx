@@ -126,15 +126,15 @@ export default function RegisterPage() {
     try {
       const result = await register({ ...formData, preferredLanguage: locale });
       // Debug: Check localStorage and Zustand state
-      const accessToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-      const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-      const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+      const accessToken = sessionStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+      const refreshToken = sessionStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+      const userStr = sessionStorage.getItem(STORAGE_KEYS.USER);
       console.log('Registration result:', result);
       console.log('AccessToken:', accessToken);
       console.log('RefreshToken:', refreshToken);
       console.log('User:', userStr);
       if (!accessToken || !refreshToken || !userStr) {
-        alert('Registration succeeded but authentication data is missing. Please check backend response and localStorage logic.');
+        alert('Registration succeeded but authentication data is missing. Please check backend response and sessionStorage logic.');
       }
     } catch (error) {
       console.error('Registration error:', error);

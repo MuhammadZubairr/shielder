@@ -1,255 +1,276 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Search, 
-  Eye, 
-  CheckCircle2, 
-  Clock, 
-  XCircle, 
-  RefreshCcw, 
-  TrendingUp, 
-  Package, 
-  ChevronRight,
-  ChevronLeft
+import {
+  Search,
+  RefreshCcw,
+  TrendingUp,
+  Package,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Plus,
+  Filter,
+  Calendar,
 } from 'lucide-react';
-import { orderService } from '@/services/order.service';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { format } from 'date-fns';
+import { toast } from 'react-hot-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuthStore } from '@/store/auth.store';
+import { orderService } from '@/services/order.service';
+import OrdersTable from './OrdersTable';
+import type { Order, OrderSummary, Pagination } from './types';
 
-export default function OrdersPage() {
-  const [orders, setOrders] = useState([]);
-  const [summary, setSummary] = useState({
+const TAX_RATE = 0.1;
+
+type Filters = {
+  search: string;
+  status: string;
+  paymentStatus: string;
+  dateFrom: string;
+  dateTo: string;
+};
+
+export default function AdminOrdersPage() {
+  const { t, isRTL, locale } = useLanguage();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
+  const router = useRouter();
+
+  // ── Auth guard ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) { router.replace('/login'); return; }
+    if (user?.role === 'SUPER_ADMIN') { router.replace('/superadmin/dashboard'); return; }
+    if (user?.role !== 'ADMIN') { router.replace('/login'); }
+  }, [authLoading, isAuthenticated, user, router]);
+
+  // ── State ──────────────────────────────────────────────────────────────────
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [summary, setSummary] = useState<OrderSummary>({
     totalOrders: 0,
     pendingOrders: 0,
     completedOrders: 0,
-    cancelledOrders: 0
+    cancelledOrders: 0,
   });
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, limit: 10, total: 0, pages: 1 });
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 1
-  });
-  const [filters, setFilters] = useState({
+  const [refreshing, setRefreshing] = useState(false);
+  const [filters, setFilters] = useState<Filters>({
     search: '',
     status: '',
     paymentStatus: '',
     dateFrom: '',
     dateTo: '',
-    sortBy: 'createdAt',
-    sortOrder: 'desc'
   });
 
+  // ── Fetch orders ───────────────────────────────────────────────────────────
   const fetchOrders = useCallback(async () => {
+    setRefreshing(true);
     try {
-      setLoading(true);
       const params = {
         page: pagination.page,
         limit: pagination.limit,
-        ...filters
+        ...(filters.search ? { search: filters.search } : {}),
+        ...(filters.status ? { status: filters.status } : {}),
+        ...(filters.paymentStatus ? { paymentStatus: filters.paymentStatus } : {}),
+        ...(filters.dateFrom ? { dateFrom: filters.dateFrom } : {}),
+        ...(filters.dateTo ? { dateTo: filters.dateTo } : {}),
       };
-      const response = await orderService.getOrders(params);
-      setOrders(response.orders);
-      setPagination(response.pagination);
-    } catch (error) {
-      console.error('Failed to fetch orders:', error);
+      const res = await orderService.getOrders(params);
+      setOrders(res.orders || []);
+      setPagination((p) => ({
+        ...p,
+        total: res.pagination?.total ?? 0,
+        pages: res.pagination?.pages ?? 1,
+      }));
+    } catch (err: any) {
+      if (err?.response?.status !== 401) {
+        toast.error(err?.response?.data?.message || t('fetchOrdersFailed'));
+      }
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [pagination.page, pagination.limit, filters]);
+  }, [pagination.page, pagination.limit, filters, t]);
 
-  const fetchSummary = async () => {
+  const fetchSummary = useCallback(async () => {
     try {
-      const response = await orderService.getOrderSummary();
-      setSummary(response.data);
-    } catch (error) {
-      console.error('Failed to fetch order summary:', error);
-    }
-  };
+      const res = await orderService.getOrderSummary();
+      const d = res.data || res;
+      setSummary({
+        totalOrders:     d.totalOrders     ?? d.total     ?? 0,
+        pendingOrders:   d.pendingOrders   ?? d.pending   ?? 0,
+        completedOrders: d.completedOrders ?? d.completed ?? 0,
+        cancelledOrders: d.cancelledOrders ?? d.cancelled ?? 0,
+      });
+    } catch {/* silent */}
+  }, []);
 
   useEffect(() => {
-    fetchOrders();
-    fetchSummary();
-  }, [fetchOrders]);
+    if (!authLoading && isAuthenticated && user?.role === 'ADMIN') {
+      fetchOrders();
+      fetchSummary();
+    }
+  }, [fetchOrders, fetchSummary, authLoading, isAuthenticated, user]);
+
+  // Reset page on filter change
+  useEffect(() => {
+    setPagination((p) => ({ ...p, page: 1 }));
+  }, [filters]);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  const statusColors: any = {
-    PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    CONFIRMED: 'bg-blue-100 text-blue-800 border-blue-200',
-    PROCESSING: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-    SHIPPED: 'bg-purple-100 text-purple-800 border-purple-200',
-    DELIVERED: 'bg-green-100 text-green-800 border-green-200',
-    CANCELLED: 'bg-red-100 text-red-800 border-red-200'
-  };
+  const refresh = () => { fetchOrders(); fetchSummary(); };
+
+  const fmt = (n: number) =>
+    new Intl.NumberFormat(locale === 'ar' ? 'ar-SA' : 'en-US').format(n);
+
+  // ── Summary cards ──────────────────────────────────────────────────────────
+  const cards = [
+    { label: t('totalOrders'),     value: summary.totalOrders,     Icon: TrendingUp,  color: '#5B5FC7' },
+    { label: t('pendingOrders'),   value: summary.pendingOrders,   Icon: Clock,       color: '#D97706' },
+    { label: t('completedOrders'), value: summary.completedOrders, Icon: CheckCircle2,color: '#16A34A' },
+    { label: t('cancelledOrders'), value: summary.cancelledOrders, Icon: XCircle,     color: '#DC2626' },
+  ];
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-4 border-[#5B5FC7] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <main className="space-y-6 pb-6" dir={isRTL ? 'rtl' : 'ltr'} aria-label={t('ordersTitle')}>
+
+      {/* ── Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">Order Management</h1>
-          <p className="text-gray-500 text-sm font-medium">Monitor and process industrial transactions.</p>
+          <h1 className="text-2xl font-extrabold text-gray-800">{t('ordersTitle')}</h1>
+          <p className="text-gray-400 text-sm mt-0.5">{t('ordersSubtitle')}</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <button 
-            onClick={() => { fetchOrders(); fetchSummary(); }}
-            className="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200"
+        <div className="flex items-center gap-2">
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            className="p-2.5 border border-gray-200 text-gray-400 hover:text-[#FF6B35] hover:bg-[#FF6B35]/5 rounded-xl transition-colors disabled:opacity-40"
+            title={t('refresh')}
           >
-            <RefreshCcw size={18} />
+            <RefreshCcw size={17} className={refreshing ? 'animate-spin' : ''} />
           </button>
+          <Link
+            href="/admin/orders/create"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#FF6B35] hover:bg-[#FF5722] text-white rounded-xl font-semibold text-sm shadow-md transition-all active:scale-95"
+          >
+            <Plus size={16} />
+            {t('createOrder')}
+          </Link>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <SummaryCard title="Total Orders" value={summary.totalOrders} icon={<TrendingUp size={24} />} color="bg-shielder-dark" description="Cumulative system volume" />
-        <SummaryCard title="Pending Review" value={summary.pendingOrders} icon={<Clock size={24} />} color="bg-shielder-secondary" description="Awaiting processing" />
-        <SummaryCard title="Completed" value={summary.completedOrders} icon={<CheckCircle2 size={24} />} color="bg-green-500" description="Successfully fulfilled" />
-        <SummaryCard title="Cancelled/Lost" value={summary.cancelledOrders} icon={<XCircle size={24} />} color="bg-red-500" description="Voided transactions" />
+      {/* ── Summary Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {cards.map((card, i) => (
+          <div
+            key={i}
+            className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow"
+          >
+            <div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{card.label}</p>
+              <h3 className="text-3xl font-black text-gray-800 mt-1">{fmt(card.value)}</h3>
+            </div>
+            <div className="p-3 rounded-2xl" style={{ backgroundColor: `${card.color}18` }}>
+              <card.Icon size={22} style={{ color: card.color }} />
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Filters */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            <input type="text" name="search" placeholder="Search by Order ID or Customer..." className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF6B35]/20 focus:outline-none text-sm font-medium transition-all" value={filters.search} onChange={handleFilterChange} />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <select name="status" className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF6B35]/20 focus:outline-none text-sm font-medium appearance-none" value={filters.status} onChange={handleFilterChange}>
-              <option value="">All Statuses</option>
-              <option value="PENDING">Pending</option>
-              <option value="PROCESSING">Processing</option>
-              <option value="SHIPPED">Shipped</option>
-              <option value="DELIVERED">Delivered</option>
-              <option value="CANCELLED">Cancelled</option>
+      {/* ── Filters ── */}
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col lg:flex-row gap-3">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search
+            size={15}
+            className={`absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none ${isRTL ? 'right-3' : 'left-3'}`}
+          />
+          <input
+            type="text"
+            name="search"
+            value={filters.search}
+            onChange={handleFilterChange}
+            placeholder={t('searchOrders')}
+            className={`w-full py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#5B5FC7] ${isRTL ? 'pr-9 pl-4' : 'pl-9 pr-4'}`}
+          />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {/* Order status filter */}
+          <div className="relative">
+            <Filter size={13} className={`absolute top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none ${isRTL ? 'right-3' : 'left-3'}`} />
+            <select
+              name="status"
+              value={filters.status}
+              onChange={handleFilterChange}
+              className={`py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#5B5FC7] ${isRTL ? 'pr-9 pl-4' : 'pl-9 pr-8'}`}
+            >
+              <option value="">{t('allStatuses')}</option>
+              <option value="PENDING">{t('orderPending')}</option>
+              <option value="PROCESSING">{t('orderProcessing')}</option>
+              <option value="SHIPPED">{t('orderShipped')}</option>
+              <option value="DELIVERED">{t('orderDelivered')}</option>
+              <option value="CANCELLED">{t('orderCancelled')}</option>
             </select>
-            <select name="paymentStatus" className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FF6B35]/20 focus:outline-none text-sm font-medium appearance-none" value={filters.paymentStatus} onChange={handleFilterChange}>
-              <option value="">All Payment</option>
-              <option value="PAID">Paid</option>
-              <option value="UNPAID">Unpaid</option>
-              <option value="REFUNDED">Refunded</option>
-            </select>
-            <input type="date" name="dateFrom" className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold" value={filters.dateFrom} onChange={handleFilterChange} />
-            <input type="date" name="dateTo" className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold" value={filters.dateTo} onChange={handleFilterChange} />
+          </div>
+
+          {/* Payment status filter */}
+          <select
+            name="paymentStatus"
+            value={filters.paymentStatus}
+            onChange={handleFilterChange}
+            className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-[#5B5FC7]"
+          >
+            <option value="">{t('allPaymentStatuses')}</option>
+            <option value="PAID">{t('payPaid')}</option>
+            <option value="UNPAID">{t('payUnpaid')}</option>
+            <option value="PARTIAL">{t('payPartial')}</option>
+            <option value="REFUNDED">{t('payRefunded')}</option>
+          </select>
+
+          {/* Date range */}
+          <div className={`flex items-center gap-1.5 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <Calendar size={14} className="text-gray-400 flex-shrink-0" />
+            <input
+              type="date"
+              name="dateFrom"
+              value={filters.dateFrom}
+              onChange={handleFilterChange}
+              className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#5B5FC7]"
+            />
+            <span className="text-gray-400 text-xs">–</span>
+            <input
+              type="date"
+              name="dateTo"
+              value={filters.dateTo}
+              onChange={handleFilterChange}
+              className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#5B5FC7]"
+            />
           </div>
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100">
-                {['Order ID', 'Customer', 'Items', 'Order Total', 'Payment Status', 'Order Status', 'Actions'].map(h => (
-                  <th key={h} className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="animate-pulse"><td colSpan={7} className="px-6 py-4"><div className="h-10 bg-gray-50 rounded-lg w-full" /></td></tr>
-                ))
-              ) : orders.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-12 text-center text-gray-400 font-medium">No orders found matching your criteria.</td></tr>
-              ) : (
-                orders.map((order: any) => (
-                  <tr key={order.id} className="hover:bg-gray-50/50 transition-colors group">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-black text-shielder-dark tracking-tighter">#{order.orderNumber}</span>
-                        <span className="text-[10px] text-gray-400 font-medium">{format(new Date(order.createdAt), 'MMM dd, yyyy HH:mm')}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-shielder-dark text-xs font-black">
-                          {order.customerName?.charAt(0) || 'U'}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-gray-700">{order.customerName || 'Guest User'}</span>
-                          <span className="text-[10px] text-gray-500">{order.user?.email || 'No email'}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-1.5">
-                        <Package size={14} className="text-gray-400" />
-                        <span className="text-xs font-bold text-gray-600">{order._count?.items || 0} Products</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-xs font-black text-shielder-dark">
-                      ${Number(order.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter border ${
-                        order.paymentStatus === 'PAID' ? 'bg-green-50 text-green-700 border-green-100' : 
-                        order.paymentStatus === 'REFUNDED' ? 'bg-gray-100 text-gray-700 border-gray-200' :
-                        'bg-yellow-50 text-yellow-700 border-yellow-100'
-                      }`}>
-                        {order.paymentStatus}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter border ${statusColors[order.status]}`}>
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <Link
-                        href={`/admin/orders/${order.id}`}
-                        className="p-2 text-gray-400 hover:text-[#FF6B35] hover:bg-[#FF6B35]/5 rounded-lg transition-all inline-flex items-center"
-                      >
-                        <Eye size={18} />
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        {/* Pagination */}
-        <div className="px-6 py-4 bg-gray-50/50 flex items-center justify-between border-t border-gray-100">
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-            Page {pagination.page} of {pagination.pages}
-          </span>
-          <div className="flex items-center space-x-2">
-            <button disabled={pagination.page <= 1} onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))} className="p-2 bg-white border border-gray-200 rounded-lg text-gray-400 disabled:opacity-30 hover:bg-gray-50 transition-colors">
-              <ChevronLeft size={16} />
-            </button>
-            <button disabled={pagination.page >= pagination.pages} onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))} className="p-2 bg-white border border-gray-200 rounded-lg text-gray-400 disabled:opacity-30 hover:bg-gray-50 transition-colors">
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SummaryCard({ title, value, icon, color, description }: any) {
-  return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 group hover:border-[#FF6B35]/30 transition-all">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`w-12 h-12 ${color} text-white rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform`}>
-          {icon}
-        </div>
-      </div>
-      <div className="flex flex-col">
-        <span className="text-3xl font-black text-shielder-dark tracking-tighter">{(value || 0).toLocaleString()}</span>
-        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{title}</span>
-        <p className="text-[10px] text-gray-400 mt-2 font-medium opacity-0 group-hover:opacity-100 transition-opacity">{description}</p>
-      </div>
-    </div>
+      {/* ── Table ── */}
+      <OrdersTable
+        orders={orders}
+        loading={loading || refreshing}
+        pagination={pagination}
+        onPageChange={(page) => setPagination((p) => ({ ...p, page }))}
+      />
+    </main>
   );
 }

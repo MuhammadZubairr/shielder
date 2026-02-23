@@ -13,9 +13,10 @@ export const getImageUrl = (imagePath: string | null | undefined): string | null
     return imagePath;
   }
   
-  // Get backend URL from API_CONFIG and remove /api suffix
+  // Get backend base URL — strip everything from /api onwards
+  // Handles both "http://host:port/api" and "http://host:port/api/v1"
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
-  const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+  const baseUrl = apiUrl.replace(/\/api(\/.*)?$/, '');
   
   // Ensure imagePath starts with /
   const path = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;

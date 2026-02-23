@@ -28,7 +28,7 @@ apiClient.interceptors.request.use(
     console.log(`[API REQUEST] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
 
     // Get token from localStorage
-    const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    const token = sessionStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -71,7 +71,7 @@ apiClient.interceptors.response.use(
 
       try {
         // Get refresh token
-        const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+        const refreshToken = sessionStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
 
         if (!refreshToken) {
           console.warn('[API] No refresh token found during 401 recovery');
@@ -89,9 +89,9 @@ apiClient.interceptors.response.use(
         const { accessToken, refreshToken: newRefreshToken } = response.data.data;
 
         // Store new tokens
-        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+        sessionStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
         if (newRefreshToken) {
-          localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
+          sessionStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
         }
 
         // Retry original request with new token
@@ -101,6 +101,10 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         // If refresh fails, clear tokens and reset Zustand auth store
+        sessionStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        sessionStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+        sessionStorage.removeItem(STORAGE_KEYS.USER);
+        // Also clear any legacy localStorage tokens
         localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER);

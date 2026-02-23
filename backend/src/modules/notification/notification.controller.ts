@@ -10,6 +10,40 @@ import { AuthRequest } from '@/types/global';
 
 class NotificationController {
   /**
+   * POST /api/notifications
+   * Admin creates a manual broadcast notification
+   */
+  createManualNotification = asyncHandler(async (req: AuthRequest, res: Response) => {
+    const adminId = req.user?.id;
+    const adminName = req.user?.email ?? 'Admin';
+    if (!adminId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+
+    const { title, message, targetRole, targetUserId } = req.body;
+
+    if (!title || !message) {
+      return res.status(400).json({ success: false, message: 'Title and message are required' });
+    }
+
+    await NotificationService.notify({
+      type: 'SYSTEM_ALERT',
+      title,
+      message,
+      module: 'MANUAL',
+      roleTarget: targetRole || undefined,
+      userId: targetUserId || undefined,
+      triggeredById: adminId,
+      triggeredBy: adminName,
+      force: true,
+      sendEmail: false,
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Notification created and sent successfully',
+    });
+  });
+
+  /**
    * GET /api/notifications
    */
   getNotifications = asyncHandler(async (req: AuthRequest, res: Response) => {

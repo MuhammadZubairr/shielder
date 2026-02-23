@@ -66,7 +66,7 @@ class AuthService {
    */
   async logout(): Promise<void> {
     try {
-      const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+      const refreshToken = sessionStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
       await apiClient.post(API_ENDPOINTS.AUTH.LOGOUT, { refreshToken });
     } catch (error) {
       console.error('Logout error:', error);
@@ -88,9 +88,9 @@ class AuthService {
       const { accessToken, refreshToken: newRefreshToken } = response.data.data!;
 
       // Store new access token
-      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+      sessionStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
       if (newRefreshToken) {
-        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
+        sessionStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken);
       }
 
       return accessToken;
@@ -111,7 +111,7 @@ class AuthService {
       const user = response.data.data!.user;
 
       // Update user in local storage
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+      sessionStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
 
       return user;
     } catch (error) {
@@ -158,15 +158,15 @@ class AuthService {
     }
 
     if (accessToken) {
-      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
+      sessionStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, accessToken);
     }
     
     if (refreshToken) {
-      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
+      sessionStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
     }
     
     if (user) {
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+      sessionStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
     }
   }
 
@@ -174,6 +174,10 @@ class AuthService {
    * Clear authentication data from localStorage
    */
   private clearAuthData(): void {
+    sessionStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    sessionStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    sessionStorage.removeItem(STORAGE_KEYS.USER);
+    // Also clear any legacy localStorage tokens from before this change
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.USER);
@@ -183,14 +187,14 @@ class AuthService {
    * Check if user is authenticated
    */
   isAuthenticated(): boolean {
-    return !!localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    return !!sessionStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
   }
 
   /**
    * Get stored user
    */
   getStoredUser(): User | null {
-    const userStr = localStorage.getItem(STORAGE_KEYS.USER);
+    const userStr = sessionStorage.getItem(STORAGE_KEYS.USER);
     if (!userStr) return null;
 
     try {

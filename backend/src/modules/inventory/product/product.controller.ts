@@ -249,6 +249,28 @@ export class ProductController {
     }
   }
 
+  /**
+   * @swagger
+   * /api/inventory/products/{id}/images:
+   *   post:
+   *     summary: Upload / replace the main product image
+   *     tags: [Inventory - Products]
+   *     security: [{ bearerAuth: [] }]
+   */
+  async uploadImage(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.file) {
+        res.status(400).json({ success: false, message: 'No image file provided' });
+        return;
+      }
+      const imageUrl = `/uploads/products/${req.file.filename}`;
+      const product = await productService.update(String(req.params.id), { mainImage: imageUrl });
+      res.json({ success: true, data: { mainImage: imageUrl, product } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   // Specifications
   async assignSpecifications(req: Request, res: Response, next: NextFunction) {
     try {
