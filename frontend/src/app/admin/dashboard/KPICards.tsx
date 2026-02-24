@@ -58,13 +58,13 @@ const KPICard = ({
       <Icon size={22} className="text-white" aria-hidden="true" />
     </div>
     <div className="min-w-0 flex-1">
-      <p className="text-white/70 text-xs font-bold uppercase tracking-widest leading-tight truncate">
+      <p className="text-white/70 text-xs font-bold uppercase tracking-widest leading-tight break-words">
         {label}
       </p>
       {loading ? (
         <div className="h-7 w-20 bg-white/20 rounded-lg mt-1 animate-pulse" aria-label="Loading" />
       ) : (
-        <h3 className="text-white text-xl font-black leading-tight mt-0.5 truncate">{value}</h3>
+        <h3 className="text-white text-xl font-black leading-tight mt-0.5 break-words">{value}</h3>
       )}
     </div>
   </div>
