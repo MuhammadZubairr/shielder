@@ -24,10 +24,7 @@ const apiClient: AxiosInstance = axios.create({
  */
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Debug log in development or if suspected URL issue
-    console.log(`[API REQUEST] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-
-    // Get token from localStorage
+    // Get token from sessionStorage
     const token = sessionStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 
     if (token) {

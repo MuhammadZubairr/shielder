@@ -1,22 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
-  
-  // Environment variables exposed to the browser
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api',
-  },
 
-  // Image domains
+  // Image domains — allows any HTTPS host (Railway, S3, CDN, etc.)
+  // and localhost for local development
   images: {
-    domains: ['localhost'],
     remotePatterns: [
       {
         protocol: 'http',
