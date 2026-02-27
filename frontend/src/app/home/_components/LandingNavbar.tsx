@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Search, ShoppingCart, Menu, X, MessageCircle } from 'lucide-react';
+import { Search, Menu, X, MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import CartBadge from '@/components/cart/CartBadge';
 
 export default function LandingNavbar() {
   const { t, isRTL } = useLanguage();
@@ -81,10 +82,7 @@ export default function LandingNavbar() {
               className="p-2 text-green-500 hover:bg-green-50 rounded-lg transition-colors">
               <MessageCircle size={20} />
             </a>
-            <Link href="/cart" className="relative p-2 text-gray-700 hover:text-[#F97316] hover:bg-orange-50 rounded-lg transition-colors">
-              <ShoppingCart size={20} />
-              <span className="absolute top-0.5 right-0.5 bg-[#F97316] text-white text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">0</span>
-            </Link>
+            <CartBadge />
             <button className="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-lg" onClick={() => setMobileOpen(v => !v)}>
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>

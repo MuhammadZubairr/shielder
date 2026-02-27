@@ -8,6 +8,7 @@ import LandingNavbar from '@/app/home/_components/LandingNavbar';
 import LandingFooter from '@/app/home/_components/LandingFooter';
 import { useLanguage } from '@/contexts/LanguageContext';
 import apiClient from '@/services/api.service';
+import { useCart } from '@/contexts/CartContext';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Product {
@@ -72,6 +73,20 @@ function ProductCard({ product, tab, t, isRTL }: {
   const image    = product.mainImage ?? product.images?.[0] ?? PLACEHOLDER_IMAGE;
   const original = product.originalPrice ?? product.price * 1.2;
   const isQuotation = tab === 'quotation';
+  const { addItem, loading: cartLoading } = useCart();
+
+  const handleAddToCart = () => {
+    addItem(
+      product.id,
+      1,
+      {
+        id: product.id,
+        name: product.name,
+        thumbnail: product.mainImage ?? product.images?.[0] ?? null,
+      },
+      product.price,
+    );
+  };
   // Shorten category name to uppercase abbreviation for the badge (e.g. 'Air Filters' → 'AIR')
   const badgeLabel = product.categoryName
     ? product.categoryName.replace(/filters?/i, '').trim().toUpperCase() || product.categoryName.toUpperCase()
@@ -125,7 +140,10 @@ function ProductCard({ product, tab, t, isRTL }: {
             {t('productsGetQuotation')}
           </button>
         ) : (
-          <button className="mt-3 w-full bg-[#F97316] hover:bg-[#e8650a] text-white font-semibold text-sm py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+          <button
+            onClick={handleAddToCart}
+            disabled={cartLoading || product.stock === 0}
+            className="mt-3 w-full bg-[#F97316] hover:bg-[#e8650a] text-white font-semibold text-sm py-3 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
             <ShoppingCart size={15} />
             {t('productsAddToCart')}
           </button>

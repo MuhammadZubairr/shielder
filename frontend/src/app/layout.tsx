@@ -4,6 +4,7 @@ import '../styles/globals.css';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { LanguageProvider } from '@/contexts/LanguageContext';
+import { CartProvider } from '@/contexts/CartContext';
 import { NavigationProgress } from '@/components/NavigationProgress';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -29,31 +30,33 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeClientWrapper />
         <LanguageProvider>
           <AuthProvider>
-            {children}
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-                success: {
-                  duration: 3000,
-                  iconTheme: {
-                    primary: '#10b981',
-                    secondary: '#fff',
-                  },
-                },
-                error: {
+            <CartProvider>
+              {children}
+              <Toaster
+                position="top-right"
+                toastOptions={{
                   duration: 4000,
-                  iconTheme: {
-                    primary: '#ef4444',
-                    secondary: '#fff',
+                  style: {
+                    background: '#363636',
+                    color: '#fff',
                   },
-                },
-              }}
-            />
+                  success: {
+                    duration: 3000,
+                    iconTheme: {
+                      primary: '#10b981',
+                      secondary: '#fff',
+                    },
+                  },
+                  error: {
+                    duration: 4000,
+                    iconTheme: {
+                      primary: '#ef4444',
+                      secondary: '#fff',
+                    },
+                  },
+                }}
+              />
+            </CartProvider>
           </AuthProvider>
         </LanguageProvider>
       </body>

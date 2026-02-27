@@ -82,6 +82,15 @@ export const API_ENDPOINTS = {
     BASE: 'inventory/subcategories',
     BY_ID: (id: string) => `inventory/subcategories/${id}`,
   },
+  // Cart
+  CART: {
+    BASE: 'cart',
+    ADD: 'cart/add',
+    UPDATE: 'cart/update',
+    REMOVE: (productId: string) => `cart/remove/${productId}`,
+    CLEAR: 'cart/clear',
+    VALIDATE: 'cart/validate',
+  },
   // Orders
   ORDERS: {
     BASE: 'orders',
