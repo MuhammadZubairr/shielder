@@ -10,6 +10,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import apiClient from '@/services/api.service';
 import { useCart } from '@/contexts/CartContext';
 
+const QUOTATION_SESSION_KEY = 'quotation_products';
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Product {
   id: string;
@@ -74,6 +76,7 @@ function ProductCard({ product, tab, t, isRTL }: {
   const original = product.originalPrice ?? product.price * 1.2;
   const isQuotation = tab === 'quotation';
   const { addItem, loading: cartLoading } = useCart();
+  const router = useRouter();
 
   const handleAddToCart = () => {
     addItem(
@@ -86,6 +89,19 @@ function ProductCard({ product, tab, t, isRTL }: {
       },
       product.price,
     );
+  };
+
+  const handleGetQuotation = () => {
+    const selected = [{
+      productId: product.id,
+      name:      product.name,
+      sku:       product.sku,
+      price:     product.price,
+      quantity:  1,
+      thumbnail: product.mainImage ?? product.images?.[0] ?? null,
+    }];
+    sessionStorage.setItem(QUOTATION_SESSION_KEY, JSON.stringify(selected));
+    router.push('/generate-quotation');
   };
   // Shorten category name to uppercase abbreviation for the badge (e.g. 'Air Filters' → 'AIR')
   const badgeLabel = product.categoryName
@@ -136,7 +152,9 @@ function ProductCard({ product, tab, t, isRTL }: {
 
         {/* Button */}
         {isQuotation ? (
-          <button className="mt-3 w-full bg-[#0D1637] hover:bg-[#0a1128] text-white font-semibold text-sm py-3 rounded-xl transition-colors">
+          <button
+            onClick={handleGetQuotation}
+            className="mt-3 w-full bg-[#0D1637] hover:bg-[#0a1128] text-white font-semibold text-sm py-3 rounded-xl transition-colors">
             {t('productsGetQuotation')}
           </button>
         ) : (

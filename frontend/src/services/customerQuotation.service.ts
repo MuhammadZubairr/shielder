@@ -1,0 +1,101 @@
+/**
+ * Customer Quotation Service
+ * Self-service, instant quotation generation for customers.
+ */
+
+import apiClient from '@/services/api.service';
+import { API_ENDPOINTS, API_CONFIG } from '@/utils/constants';
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+export interface QuotationProduct {
+  productId: string;
+  name: string;
+  sku?: string;
+  price: number;
+  quantity: number;
+  thumbnail?: string | null;
+}
+
+export interface GenerateQuotationPayload {
+  companyName: string;
+  vatNumber: string;
+  address: string;
+  products: QuotationProduct[];
+}
+
+export interface QuotationItemResult {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  thumbnail?: string | null;
+}
+
+export interface QuotationResult {
+  id: string;
+  quotationNumber: string;
+  companyName: string;
+  customerAddress: string;
+  customerEmail: string;
+  vatNumber: string;
+  subtotal: number;
+  shipping: number;
+  total: number;
+  quotationDate: string;
+  expiryDate: string;
+  items: QuotationItemResult[];
+}
+
+// ── Service ───────────────────────────────────────────────────────────────────
+
+const customerQuotationService = {
+  /**
+   * Generate a quotation — sends form data + product list to backend.
+   */
+  async generate(payload: GenerateQuotationPayload): Promise<QuotationResult> {
+    const res = await apiClient.post(API_ENDPOINTS.CUSTOMER_QUOTATIONS.GENERATE, payload);
+    return res.data.data as QuotationResult;
+  },
+
+  /**
+   * Fetch a single quotation by ID.
+   */
+  async getById(id: string): Promise<QuotationResult> {
+    const res = await apiClient.get(API_ENDPOINTS.CUSTOMER_QUOTATIONS.BY_ID(id));
+    return res.data.data as QuotationResult;
+  },
+
+  /**
+   * Trigger browser download of the PDF.
+   * We fetch the binary from the API and create a local object URL.
+   */
+  async downloadPDF(id: string, filename: string): Promise<void> {
+    const token = sessionStorage.getItem('shielder_access_token');
+    const url   = `${API_CONFIG.BASE_URL}/${API_ENDPOINTS.CUSTOMER_QUOTATIONS.PDF(id)}`;
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to download PDF');
+    }
+
+    const blob   = await response.blob();
+    const objUrl = URL.createObjectURL(blob);
+    const a      = document.createElement('a');
+    a.href       = objUrl;
+    a.download   = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(objUrl);
+  },
+};
+
+export default customerQuotationService;

@@ -91,6 +91,12 @@ export const API_ENDPOINTS = {
     CLEAR: 'cart/clear',
     VALIDATE: 'cart/validate',
   },
+  // Customer self-service quotations
+  CUSTOMER_QUOTATIONS: {
+    GENERATE: 'customer-quotations/generate',
+    BY_ID:    (id: string) => `customer-quotations/${id}`,
+    PDF:      (id: string) => `customer-quotations/${id}/pdf`,
+  },
   // Orders
   ORDERS: {
     BASE: 'orders',

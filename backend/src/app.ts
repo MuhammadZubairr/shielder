@@ -30,6 +30,7 @@ import paymentRoutes from './modules/payment/payment.routes';
 import reportsRoutes from './modules/reports/reports.routes';
 import settingsRoutes from './modules/settings/settings.routes';
 import quotationRoutes from './modules/quotation/quotation.routes';
+import customerQuotationRoutes from './modules/customer-quotation/customer-quotation.routes';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJsdoc from 'swagger-jsdoc';
 import { swaggerConfig } from './config/swagger';
@@ -137,6 +138,7 @@ export const createApp = (): Application => {
     app.use(`${prefix}/reports`, reportsRoutes);
     app.use(`${prefix}/settings`, settingsRoutes);
     app.use(`${prefix}/quotations`, quotationRoutes);
+    app.use(`${prefix}/customer-quotations`, customerQuotationRoutes);
   };
 
   mountRoutes(apiPrefix);
