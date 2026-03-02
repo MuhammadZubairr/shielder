@@ -26,11 +26,13 @@ export const useAuth = () => {
       setIsSubmitting(true);
       setError(null);
 
+      router.prefetch(ROUTES.CUSTOMER_DASHBOARD);
+
       const response = await authService.register(data);
       setUser(response.user);
 
       toast.success(SUCCESS_MESSAGES.REGISTER_SUCCESS);
-      router.push(ROUTES.CUSTOMER_DASHBOARD);
+      router.replace(ROUTES.CUSTOMER_DASHBOARD);
 
       return response;
     } catch (error) {
@@ -51,6 +53,13 @@ export const useAuth = () => {
       setIsSubmitting(true);
       setError(null);
 
+      // Prefetch all possible destination routes BEFORE the API call so
+      // Next.js starts downloading their JS chunks while the network request
+      // is in-flight. This cuts the perceived redirect delay significantly.
+      router.prefetch(ROUTES.SUPER_ADMIN_DASHBOARD);
+      router.prefetch('/admin/dashboard');
+      router.prefetch(ROUTES.CUSTOMER_DASHBOARD);
+
       const response = await authService.login(data);
       setUser(response.user);
 
@@ -58,11 +67,11 @@ export const useAuth = () => {
 
       // Redirect based on role
       if (response.user.role === 'SUPER_ADMIN') {
-        router.push(ROUTES.SUPER_ADMIN_DASHBOARD);
+        router.replace(ROUTES.SUPER_ADMIN_DASHBOARD);
       } else if (response.user.role === 'ADMIN') {
-        router.push('/admin/dashboard');
+        router.replace('/admin/dashboard');
       } else {
-        router.push(ROUTES.CUSTOMER_DASHBOARD);
+        router.replace(ROUTES.CUSTOMER_DASHBOARD);
       }
 
       return response;
