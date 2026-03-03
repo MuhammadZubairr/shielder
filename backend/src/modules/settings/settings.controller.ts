@@ -9,10 +9,27 @@ import { AuthRequest } from '@/types/global';
 import { upload } from '@/common/middleware/upload.middleware';
 
 class SettingsController {
-    /**
-     * POST /api/settings/logo
-     * Upload and update company logo
-     */
+  /**
+   * @swagger
+   * /api/settings/logo:
+   *   post:
+   *     summary: Upload and update company logo (Admin/SuperAdmin)
+   *     tags: [Settings]
+   *     security: [{ bearerAuth: [] }]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         multipart/form-data:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               logo:
+   *                 type: string
+   *                 format: binary
+   *     responses:
+   *       200:
+   *         description: Logo updated
+   */
     uploadCompanyLogo = [
       upload.single('logo'),
       asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -33,7 +50,15 @@ class SettingsController {
       })
     ];
   /**
-   * GET /api/settings
+   * @swagger
+   * /api/settings:
+   *   get:
+   *     summary: Get all system settings (Admin/SuperAdmin)
+   *     tags: [Settings]
+   *     security: [{ bearerAuth: [] }]
+   *     responses:
+   *       200:
+   *         description: Current system settings
    */
   getSettings = asyncHandler(async (_req: Request, res: Response) => {
     const data = await SettingsService.getSettings();
@@ -41,7 +66,21 @@ class SettingsController {
   });
 
   /**
-   * PUT /api/settings/:section
+   * @swagger
+   * /api/settings/general:
+   *   put:
+   *     summary: Update a specific settings section (general/notification/security/order/payment)
+   *     tags: [Settings]
+   *     security: [{ bearerAuth: [] }]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *     responses:
+   *       200:
+   *         description: Settings updated
    */
   updateSettings = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = (req.user?.id as string) || '';
@@ -54,7 +93,25 @@ class SettingsController {
   });
 
   /**
-   * GET /api/settings/logs
+   * @swagger
+   * /api/settings/logs:
+   *   get:
+   *     summary: Get settings change audit logs (Super Admin only)
+   *     tags: [Settings]
+   *     security: [{ bearerAuth: [] }]
+   *     parameters:
+   *       - in: query
+   *         name: page
+   *         schema: { type: integer, default: 1 }
+   *       - in: query
+   *         name: limit
+   *         schema: { type: integer, default: 20 }
+   *       - in: query
+   *         name: module
+   *         schema: { type: string }
+   *     responses:
+   *       200:
+   *         description: Settings audit log entries
    */
   getLogs = asyncHandler(async (req: Request, res: Response) => {
     const filters = {
@@ -70,7 +127,26 @@ class SettingsController {
   });
 
   /**
-   * POST /api/settings/verify
+   * @swagger
+   * /api/settings/verify:
+   *   post:
+   *     summary: Verify admin password for sensitive actions
+   *     tags: [Settings]
+   *     security: [{ bearerAuth: [] }]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [password]
+   *             properties:
+   *               password: { type: string }
+   *     responses:
+   *       200:
+   *         description: Identity verified
+   *       401:
+   *         description: Invalid password
    */
   verifySensitiveAction = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id!;
@@ -81,7 +157,15 @@ class SettingsController {
   });
 
   /**
-   * POST /api/settings/backup
+   * @swagger
+   * /api/settings/backup:
+   *   post:
+   *     summary: Trigger a manual system backup (Super Admin only)
+   *     tags: [Settings]
+   *     security: [{ bearerAuth: [] }]
+   *     responses:
+   *       200:
+   *         description: Backup triggered
    */
   triggerBackup = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id!;
@@ -90,7 +174,15 @@ class SettingsController {
   });
 
   /**
-   * GET /api/settings/snapshots
+   * @swagger
+   * /api/settings/snapshots:
+   *   get:
+   *     summary: Get configuration snapshots (Super Admin only)
+   *     tags: [Settings]
+   *     security: [{ bearerAuth: [] }]
+   *     responses:
+   *       200:
+   *         description: Config snapshots
    */
   getSnapshots = asyncHandler(async (_req: Request, res: Response) => {
     const data = await SettingsService.getSnapshots();

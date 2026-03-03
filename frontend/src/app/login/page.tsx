@@ -5,7 +5,7 @@ import settingsService from '@/services/settings.service';
  * User login form with Arabic/English support
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, ChevronLeft, Shield, Eye, EyeOff } from 'lucide-react';
@@ -45,6 +45,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, isRTL, locale, setLocale } = useLanguage();
+  const redirectHandled = useRef(false);
 
   const expired = searchParams.get('expired');
 
@@ -60,6 +61,7 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
+      if (redirectHandled.current) return;
       if (user.role === 'SUPER_ADMIN') {
         router.push(ROUTES.SUPER_ADMIN_DASHBOARD);
       } else if (user.role === 'ADMIN') {
@@ -105,9 +107,11 @@ export default function LoginPage() {
 
     if (!validate()) return;
 
+    redirectHandled.current = true;
     try {
       await login(formData);
     } catch (error) {
+      redirectHandled.current = false;
       console.error('Login error:', error);
     }
   };

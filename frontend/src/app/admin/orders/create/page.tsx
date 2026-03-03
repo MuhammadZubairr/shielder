@@ -22,6 +22,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuthStore } from '@/store/auth.store';
 import { orderService } from '@/services/order.service';
 import adminService from '@/services/admin.service';
+import { getImageUrl } from '@/utils/helpers';
 import type { OrderFormItem, CustomerOption, ProductOption } from '../types';
 
 const TAX_RATE = 0.1;
@@ -506,7 +507,7 @@ export default function CreateOrderPage() {
                               <div className="w-9 h-9 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
                                 {p.mainImage ? (
                                   <img
-                                    src={`${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001'}/${p.mainImage}`}
+                                    src={getImageUrl(p.mainImage) || ''}
                                     alt=""
                                     className="w-full h-full object-contain"
                                     onError={(e) => {

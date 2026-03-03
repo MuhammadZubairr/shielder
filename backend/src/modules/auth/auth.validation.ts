@@ -50,11 +50,11 @@ export const authValidation = {
       'any.required': 'Full name is required',
     }),
     phoneNumber: Joi.string()
-      .pattern(/^\+?[1-9]\d{1,14}$/)
+      .pattern(/^\+?[\d\s\-\(\)]{7,20}$|^(\+?966|0)5[0-9]{8}$/)
       .required()
       .messages({
         'any.required': 'Phone number is required',
-        'string.pattern.base': 'Please provide a valid phone number in international format',
+        'string.pattern.base': 'Please provide a valid phone number (e.g. 05XXXXXXXX or +966 5X XXX XXXX)',
       }),
     address: Joi.string().trim().max(255).required().messages({
       'any.required': 'Address is required',

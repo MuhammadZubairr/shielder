@@ -203,7 +203,8 @@ export const VALIDATION_RULES = {
   EMAIL_REGEX: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   PASSWORD_REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{8,}$/,
   PASSWORD_MIN_LENGTH: 8,
-  PHONE_REGEX: /^\+?[1-9]\d{1,14}$/,
+  // Accepts: 05XXXXXXXX | +966XXXXXXXXX | +966 5X XXX XXXX | spaces and dashes allowed
+  PHONE_REGEX: /^\+?[\d\s\-\(\)]{7,20}$|^(\+?966|0)5[0-9]{8}$/,
 } as const;
 
 /**

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { paymentService, Payment } from '@/services/payment.service';
 import { format } from 'date-fns';
+import SARSymbol from '@/components/SARSymbol';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
@@ -262,7 +263,7 @@ export default function PaymentDetailsPage() {
             </div>
             
             <p className="text-gray-600 text-sm font-medium mb-6">
-              You are about to issue a refund for <span className="font-bold text-shielder-dark">${Number(payment.amount).toFixed(2)}</span>. This will update the order status and sales reports.
+              You are about to issue a refund for <span className="font-bold text-shielder-dark inline-flex items-center gap-0.5"><SARSymbol />{Number(payment.amount).toFixed(2)}</span>. This will update the order status and sales reports.
             </p>
 
             <div className="space-y-4 mb-8">

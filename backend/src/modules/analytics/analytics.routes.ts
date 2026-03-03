@@ -13,7 +13,7 @@ const router = Router();
 
 // Global middleware for all analytics routes
 router.use(authenticate);
-router.use(requireRoles(UserRole.SUPER_ADMIN));
+router.use(requireRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN));
 
 /**
  * GET /api/analytics/overview

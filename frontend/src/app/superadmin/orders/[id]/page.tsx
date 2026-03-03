@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import SARSymbol from '@/components/SARSymbol';
 import { 
   ArrowLeft, 
   Printer, 
@@ -166,9 +167,9 @@ export default function OrderDetailPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-5 font-bold text-gray-700">${parseFloat(item.unitPrice).toFixed(2)}</td>
+                      <td className="px-6 py-5 font-bold text-gray-700"><span className="inline-flex items-center gap-0.5"><SARSymbol />{parseFloat(item.unitPrice).toFixed(2)}</span></td>
                       <td className="px-6 py-5 text-center font-black text-gray-900">×{item.quantity}</td>
-                      <td className="px-6 py-5 text-right font-black text-gray-900">${parseFloat(item.totalPrice).toFixed(2)}</td>
+                      <td className="px-6 py-5 text-right font-black text-gray-900"><span className="inline-flex items-center gap-0.5"><SARSymbol />{parseFloat(item.totalPrice).toFixed(2)}</span></td>
                     </tr>
                   ))}
                 </tbody>
@@ -179,15 +180,15 @@ export default function OrderDetailPage() {
               <div className="w-full md:w-64 space-y-3">
                 <div className="flex justify-between text-sm font-bold text-gray-500">
                   <span>Subtotal</span>
-                  <span>${subtotal.toFixed(2)}</span>
+                  <span className="inline-flex items-center gap-0.5"><SARSymbol />{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-bold text-gray-500">
                   <span>Tax (Estimated)</span>
-                  <span>${tax.toFixed(2)}</span>
+                  <span className="inline-flex items-center gap-0.5"><SARSymbol />{tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-t border-gray-200 mt-2">
                   <span className="text-lg font-black text-gray-900 italic">Grand Total</span>
-                  <span className="text-2xl font-black text-shielder-primary">${total.toFixed(2)}</span>
+                  <span className="text-2xl font-black text-shielder-primary inline-flex items-center gap-0.5"><SARSymbol />{total.toFixed(2)}</span>
                 </div>
               </div>
             </div>

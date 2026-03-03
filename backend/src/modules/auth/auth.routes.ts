@@ -21,7 +21,11 @@ const router = Router();
  */
 router.post(
   '/signup',
-  rateLimitAuth({ maxRequests: 5, windowMinutes: 60 }),
+  rateLimitAuth({
+    maxRequests: 5,
+    windowMinutes: 2,
+    identifierFn: (req) => (req.body?.email as string)?.toLowerCase() || req.ip || 'unknown',
+  }),
   validate(authValidation.register),
   authController.signup
 );

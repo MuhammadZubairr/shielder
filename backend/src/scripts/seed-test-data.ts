@@ -27,16 +27,17 @@ const CATEGORY_IMAGES = [
 ];
 
 const PRODUCT_IMAGES = [
-  'images/UserEnd images/filter category demoy images.jpg',
-  'images/UserEnd images/filter category deomy image.jpg',
-  'images/UserEnd images/filter catogory deomy image 2.jpg',
-  'images/UserEnd images/filter category deomy image 3.jpg',
-  'images/UserEnd images/StockCake-Robotic_Assembly_Line-503452-medium 1.png',
-  'images/image.png',
-  'images/image (1).png',
-  'images/image (2).png',
-  'images/image (3).png',
-  'images/image (4).png',
+  'images/products images/Aluminium grear.jpeg',
+  'images/products images/Exaavator spare parts.jpeg',
+  'images/products images/Exaavator.jpeg',
+  'images/products images/Haky parts.jpeg',
+  'images/products images/UMGS PARTS.jpeg',
+  'images/products images/filter category demoy images.jpg',
+  'images/products images/filter category deomy image 3.jpg',
+  'images/products images/filter category deomy image.jpg',
+  'images/products images/filter catogory deomy image 2.jpg',
+  'images/products images/saprepartss.jpeg',
+  'images/products images/spare parts.jpeg',
 ];
 
 const USER_IMAGES = [

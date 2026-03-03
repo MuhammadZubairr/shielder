@@ -19,6 +19,10 @@ export class CartService {
             product: {
               include: {
                 translations: true,
+                attachments: {
+                  where: { type: 'IMAGE' },
+                  take: 1,
+                },
               },
             },
           },
@@ -38,6 +42,10 @@ export class CartService {
               product: {
                 include: {
                   translations: true,
+                  attachments: {
+                    where: { type: 'IMAGE' },
+                    take: 1,
+                  },
                 },
               },
             },

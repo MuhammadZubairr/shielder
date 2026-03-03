@@ -21,6 +21,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuthStore } from '@/store/auth.store';
 import { useCart } from '@/contexts/CartContext';
 import customerQuotationService, { QuotationProduct } from '@/services/customerQuotation.service';
+import { getImageUrl } from '@/utils/helpers';
+import SARSymbol from '@/components/SARSymbol';
 
 const PLACEHOLDER = '/images/landing/factory-1.png';
 const SESSION_KEY = 'quotation_products';
@@ -240,7 +242,7 @@ export default function GenerateQuotationPage() {
                       <div key={i} className={`flex items-center gap-3 px-4 py-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                         <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0">
                           <Image
-                            src={p.thumbnail ?? PLACEHOLDER}
+                            src={getImageUrl(p.thumbnail) ?? PLACEHOLDER}
                             alt={p.name}
                             fill
                             className="object-cover"
@@ -258,8 +260,8 @@ export default function GenerateQuotationPage() {
                           )}
                         </div>
                         <div className={`shrink-0 text-right ${isRTL ? 'text-left' : ''}`}>
-                          <p className="text-sm font-bold text-[#0D1637]">
-                            SAR {(p.price * p.quantity).toFixed(2)}
+                          <p className="text-sm font-bold text-[#0D1637] flex items-center gap-0.5">
+                            <SARSymbol />{(Number(p.price) * p.quantity).toFixed(2)}
                           </p>
                           <p className="text-xs text-gray-400">
                             {t('quot.qty')}: {p.quantity}

@@ -75,7 +75,7 @@ export const Navbar = () => {
   };
 
   return (
-    <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-40 px-4 md:px-8 flex items-center justify-between transition-all duration-300">
+    <header className="h-20 bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-40 px-4 md:px-8 flex items-center justify-between transition-all duration-300 w-full min-w-0">
       <div className="flex items-center space-x-4 md:space-x-6">
         {/* Toggle Button (Hamburger) */}
         <button 

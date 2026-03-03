@@ -23,9 +23,7 @@ import OrderStatusBadge from '../OrderStatusBadge';
 import PaymentStatusBadge from '../PaymentStatusBadge';
 import StatusUpdateModal from '../StatusUpdateModal';
 import type { Order, OrderStatus } from '../types';
-
-const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001') + '/';
+import { getImageUrl } from '@/utils/helpers';
 
 function formatCurrency(value: number | string, locale: string): string {
   const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -217,7 +215,7 @@ export default function AdminOrderDetailPage() {
                           <div className="w-14 h-14 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
                             {item.product?.mainImage ? (
                               <img
-                                src={`${API_BASE}${item.product.mainImage}`}
+                                src={getImageUrl(item.product.mainImage) || ''}
                                 alt="Product"
                                 className="w-full h-full object-contain"
                                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}

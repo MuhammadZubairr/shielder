@@ -23,6 +23,7 @@ import { paymentService, Payment } from '@/services/payment.service';
 import { orderService } from '@/services/order.service';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import SARSymbol from '@/components/SARSymbol';
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -324,7 +325,7 @@ export default function PaymentsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="text-sm font-black text-shielder-dark">${Number(payment.amount).toFixed(2)}</span>
+                      <span className="text-sm font-black text-shielder-dark inline-flex items-center gap-0.5"><SARSymbol />{Number(payment.amount).toFixed(2)}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getStatusColor(payment.status)}`}>
@@ -405,7 +406,7 @@ export default function PaymentsPage() {
                     <option value="">Choose an order...</option>
                     {orders.map(order => (
                       <option key={order.id} value={order.id}>
-                        {order.orderNumber} - {order.customerName} (${Number(order.total).toFixed(2)})
+                        {order.orderNumber} - {order.customerName} (<span className="inline-flex items-center gap-0.5"><SARSymbol />{Number(order.total).toFixed(2)}</span>)
                       </option>
                     ))}
                   </select>

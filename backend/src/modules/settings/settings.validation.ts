@@ -6,15 +6,15 @@ import Joi from 'joi';
 
 export const settingsValidation = {
   updateGeneral: Joi.object({
-    systemName: Joi.string().required(),
+    systemName: Joi.string().optional(),          // optional — CompanySettingsForm doesn't own this field
     companyName: Joi.string().required(),
     companyLogo: Joi.string().allow(null, ''),
     companyEmail: Joi.string().email().allow(null, '').optional(),
     companyPhone: Joi.string().allow(null, '').optional(),
     companyAddress: Joi.string().allow(null, '').optional(),
-    currency: Joi.string().required(),
-    timezone: Joi.string().required(),
-    dateFormat: Joi.string().required(),
+    currency: Joi.string().optional(),            // optional — GeneralSettingsForm owns this
+    timezone: Joi.string().optional(),            // optional — GeneralSettingsForm owns this
+    dateFormat: Joi.string().optional(),          // optional — GeneralSettingsForm owns this
     language: Joi.string().optional(),
   }),
 

@@ -61,7 +61,7 @@ export class CartController {
               id: item.product.id,
               name: translation?.name || 'Unknown',
               description: translation?.description,
-              thumbnail: item.product.attachments?.find((a: any) => a.type === 'IMAGE')?.fileUrl || null,
+              thumbnail: item.product.attachments?.[0]?.fileUrl || (item.product as any).mainImage || null,
               isActive: item.product.isActive,
             }
           };

@@ -12,6 +12,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import SARSymbol from '@/components/SARSymbol';
+import { getImageUrl } from '@/utils/helpers';
 import {
   ArrowLeft, ArrowRight, Download, FileText,
   Building2, MapPin, Hash, Calendar,
@@ -117,8 +119,9 @@ export default function MyQuotationPage() {
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
-  const fmt = (n: number | string | undefined) =>
-    `SAR ${Number(n ?? 0).toFixed(2)}`;
+  const fmt = (n: number | string | undefined) => (
+    <span className="inline-flex items-center gap-0.5"><SARSymbol />{Number(n ?? 0).toFixed(2)}</span>
+  );
 
   const fmtDate = (d: string) =>
     new Date(d).toLocaleDateString(isRTL ? 'ar-SA' : 'en-GB');
@@ -217,7 +220,7 @@ export default function MyQuotationPage() {
                       <div className={`col-span-12 sm:col-span-5 flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                         <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 shrink-0">
                           <Image
-                            src={item.thumbnail ?? PLACEHOLDER}
+                            src={getImageUrl(item.thumbnail) ?? PLACEHOLDER}
                             alt={item.productName}
                             fill
                             className="object-cover"

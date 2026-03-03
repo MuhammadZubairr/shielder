@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import adminService from '@/services/admin.service';
 import { toast } from 'react-hot-toast';
+import { getImageUrl } from '@/utils/helpers';
 
 // --- Types ---
 interface Category {
@@ -250,11 +251,9 @@ export default function CategoryManagementPage() {
       descriptionAr: cat.descriptionAr || '',
       isActive: cat.isActive
     });
-    setImagePreview(cat.image ? (cat.image.startsWith('http') ? cat.image : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001'}${cat.image}`) : null);
+    setImagePreview(getImageUrl(cat.image));
     setShowEditModal(true);
   };
-
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
 
   // --- Render ---
 
@@ -360,7 +359,7 @@ export default function CategoryManagementPage() {
                       <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 flex items-center justify-center">
                         {cat.image ? (
                           <img 
-                            src={cat.image.startsWith('http') ? cat.image : `${API_BASE_URL}${cat.image}`} 
+                            src={getImageUrl(cat.image) || ''}
                             alt={cat.name} 
                             className="w-full h-full object-cover"
                           />

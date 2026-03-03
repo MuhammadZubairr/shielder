@@ -8,8 +8,9 @@
 export const getImageUrl = (imagePath: string | null | undefined): string | null => {
   if (!imagePath) return null;
   
-  // If it's already a full URL, return as is
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+  // If it's already a full URL (http, https, blob, data), return as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://') ||
+      imagePath.startsWith('blob:') || imagePath.startsWith('data:')) {
     return imagePath;
   }
   

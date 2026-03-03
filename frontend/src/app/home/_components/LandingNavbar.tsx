@@ -7,6 +7,8 @@ import { Search, Menu, X, MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import CartBadge from '@/components/cart/CartBadge';
+import QuotationBadge from '@/components/cart/QuotationBadge';
+import QuotationDrawer from '@/components/cart/QuotationDrawer';
 
 export default function LandingNavbar() {
   const { t, isRTL } = useLanguage();
@@ -33,6 +35,7 @@ export default function LandingNavbar() {
   ];
 
   return (
+    <>
     <header
       className={`fixed top-0 inset-x-0 z-50 bg-white transition-all duration-300 ${
         scrolled ? 'shadow-lg' : 'shadow-sm border-b border-gray-100'
@@ -83,6 +86,7 @@ export default function LandingNavbar() {
               <MessageCircle size={20} />
             </a>
             <CartBadge />
+            <QuotationBadge />
             <button className="md:hidden p-2 text-gray-700 hover:bg-gray-100 rounded-lg" onClick={() => setMobileOpen(v => !v)}>
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
@@ -111,6 +115,10 @@ export default function LandingNavbar() {
           ))}
         </div>
       )}
+
+      {/* Quotation basket drawer — outside header to avoid stacking context */}
     </header>
+    <QuotationDrawer />
+    </>
   );
 }

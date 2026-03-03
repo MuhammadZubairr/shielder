@@ -1,24 +1,26 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
-import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Filter, ShoppingCart, ChevronLeft, ChevronRight, Search, X, Check } from 'lucide-react';
+import { Filter, ShoppingCart, ChevronLeft, ChevronRight, Search, X, Check, Plus, Minus, Download } from 'lucide-react';
+import toast from 'react-hot-toast';
 import LandingNavbar from '@/app/home/_components/LandingNavbar';
 import LandingFooter from '@/app/home/_components/LandingFooter';
 import { useLanguage } from '@/contexts/LanguageContext';
 import apiClient from '@/services/api.service';
 import { useCart } from '@/contexts/CartContext';
-
-const QUOTATION_SESSION_KEY = 'quotation_products';
+import { useQuotation } from '@/contexts/QuotationContext';
+import { getImageUrl } from '@/utils/helpers';
+import SARSymbol from '@/components/SARSymbol';
+import { useAuthStore } from '@/store/auth.store';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Product {
   id: string;
   name: string;
   description: string;
-  price: number;
-  originalPrice?: number;
+  price: number | string;
+  originalPrice?: number | string;
   mainImage?: string;
   images?: string[];
   category?: { name: string };
@@ -72,13 +74,22 @@ function buildQuery(filters: ActiveFilters, page: number, tab: Tab, locale: stri
 function ProductCard({ product, tab, t, isRTL }: {
   product: Product; tab: Tab; t: (k: string) => string; isRTL: boolean;
 }) {
-  const image    = product.mainImage ?? product.images?.[0] ?? PLACEHOLDER_IMAGE;
-  const original = product.originalPrice ?? product.price * 1.2;
+  const rawImage = product.mainImage ?? product.images?.[0] ?? null;
+  const image     = getImageUrl(rawImage) ?? PLACEHOLDER_IMAGE;
+  const price     = Number(product.price);
+  const original = Number(product.originalPrice ?? price * 1.2);
   const isQuotation = tab === 'quotation';
   const { addItem, loading: cartLoading } = useCart();
+  const { isAuthenticated } = useAuthStore();
   const router = useRouter();
 
   const handleAddToCart = () => {
+    if (!isAuthenticated) {
+      // Save current page so login can redirect back
+      sessionStorage.setItem('post_login_redirect', typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/products');
+      router.push('/login');
+      return;
+    }
     addItem(
       product.id,
       1,
@@ -87,21 +98,35 @@ function ProductCard({ product, tab, t, isRTL }: {
         name: product.name,
         thumbnail: product.mainImage ?? product.images?.[0] ?? null,
       },
-      product.price,
+      price,
     );
   };
 
+  const [quotationModalOpen, setQuotationModalOpen] = useState(false);
+  const [quotationQty, setQuotationQty]             = useState(1);
+  const { addItem: addToQuotation } = useQuotation();
+
   const handleGetQuotation = () => {
-    const selected = [{
+    if (!isAuthenticated) {
+      sessionStorage.setItem('post_login_redirect', typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/products');
+      router.push('/login');
+      return;
+    }
+    setQuotationQty(1);
+    setQuotationModalOpen(true);
+  };
+
+  const handleAddToQuotationBasket = () => {
+    addToQuotation({
       productId: product.id,
       name:      product.name,
       sku:       product.sku,
-      price:     product.price,
-      quantity:  1,
+      price,
+      quantity:  quotationQty,
       thumbnail: product.mainImage ?? product.images?.[0] ?? null,
-    }];
-    sessionStorage.setItem(QUOTATION_SESSION_KEY, JSON.stringify(selected));
-    router.push('/generate-quotation');
+    });
+    setQuotationModalOpen(false);
+    toast.success(`"${product.name}" added to quotation basket!`);
   };
   // Shorten category name to uppercase abbreviation for the badge (e.g. 'Air Filters' → 'AIR')
   const badgeLabel = product.categoryName
@@ -112,8 +137,13 @@ function ProductCard({ product, tab, t, isRTL }: {
     <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col">
       {/* Image */}
       <div className="relative h-52 overflow-hidden bg-gray-50">
-        <Image src={image} alt={product.name} fill className="object-cover"
-          sizes="(max-width:640px) 100vw,(max-width:1024px) 50vw,33vw" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={image}
+          alt={product.name}
+          className="w-full h-full object-cover"
+          onError={(e) => { (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE; }}
+        />
         {product.stock === 0 && (
           <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
             {t('productsOutOfStock')}
@@ -140,13 +170,13 @@ function ProductCard({ product, tab, t, isRTL }: {
 
         {/* Price */}
         {isQuotation ? (
-          <p className="text-[#0205A6] font-bold text-base mt-1">
-            {product.price.toFixed(2)} SAR
+          <p className="text-[#0205A6] font-bold text-base mt-1 flex items-center gap-1">
+            <SARSymbol />{price.toFixed(2)}
           </p>
         ) : (
           <div className={`flex items-center gap-2 mt-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <span className="text-gray-400 line-through text-sm">₼{original.toFixed(2)}</span>
-            <span className="text-[#0205A6] font-bold text-base">₼{product.price.toFixed(2)}</span>
+            <span className="text-gray-400 line-through text-sm flex items-center gap-0.5"><SARSymbol />{original.toFixed(2)}</span>
+            <span className="text-[#0205A6] font-bold text-base flex items-center gap-0.5"><SARSymbol />{price.toFixed(2)}</span>
           </div>
         )}
 
@@ -167,6 +197,111 @@ function ProductCard({ product, tab, t, isRTL }: {
           </button>
         )}
       </div>
+
+      {/* ── Quotation quick-add modal ── */}
+      {quotationModalOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 z-[80] backdrop-blur-sm"
+            onClick={() => setQuotationModalOpen(false)}
+          />
+          {/* Modal */}
+          <div className="fixed inset-0 z-[90] flex items-center justify-center px-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+              dir={isRTL ? 'rtl' : 'ltr'}>
+              {/* Header */}
+              <div className="bg-[#0D1637] px-6 py-5 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-[#F97316] flex items-center justify-center shrink-0">
+                    <Download size={13} className="text-white" />
+                  </div>
+                  <span className="text-white font-bold text-sm">Add to Quotation</span>
+                </div>
+                <button
+                  onClick={() => setQuotationModalOpen(false)}
+                  className="p-1 rounded-full hover:bg-white/10 transition-colors">
+                  <X size={16} className="text-white" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="px-6 py-5">
+                {/* Product row */}
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={image}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE; }}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm truncate">{product.name}</p>
+                    {product.sku && (
+                      <p className="text-xs text-gray-400">{product.sku}</p>
+                    )}
+                    <p className="text-sm font-bold text-[#0205A6] flex items-center gap-0.5 mt-0.5">
+                      <SARSymbol />{price.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quantity */}
+                <div className="mb-5">
+                  <label className="block text-xs font-semibold text-gray-600 mb-2">Quantity</label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setQuotationQty(q => Math.max(1, q - 1))}
+                      disabled={quotationQty <= 1}
+                      className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-40 transition-colors">
+                      <Minus size={14} />
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      value={quotationQty}
+                      onChange={e => setQuotationQty(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-16 text-center border border-gray-200 rounded-xl py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#0D1637]/20 focus:border-[#0D1637]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setQuotationQty(q => q + 1)}
+                      className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+                      <Plus size={14} />
+                    </button>
+                    <span className="text-xs text-gray-400 ml-1">
+                      Total: <span className="font-bold text-gray-700">
+                        <SARSymbol className="inline" />{(price * quotationQty).toFixed(2)}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleAddToQuotationBasket}
+                    className="flex-1 bg-[#F97316] hover:bg-[#e8650a] text-white font-semibold py-3 rounded-2xl transition-colors text-sm flex items-center justify-center gap-2">
+                    <Download size={14} />
+                    Add to Basket
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQuotationModalOpen(false)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 rounded-2xl transition-colors text-sm">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -273,8 +408,19 @@ function FilterPanel({ open, onClose, categories, draft, setDraft, onApply, onCl
   t: (k: string) => string; isRTL: boolean;
 }) {
   useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    if (open) {
+      // Compensate for scrollbar disappearing to prevent layout shift
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
   }, [open]);
 
   if (!open) return null;

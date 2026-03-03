@@ -12,6 +12,8 @@ import { Minus, Plus, Trash2 } from 'lucide-react';
 import { CartItem as CartItemType } from '@/services/cart.service';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
+import { getImageUrl } from '@/utils/helpers';
+import SARSymbol from '@/components/SARSymbol';
 
 const PLACEHOLDER = '/images/landing/factory-1.png';
 
@@ -24,7 +26,7 @@ export default function CartItem({ item, isLast }: CartItemProps) {
   const { t, isRTL } = useLanguage();
   const { updateItem, removeItem, loading } = useCart();
 
-  const image = item.product.thumbnail ?? PLACEHOLDER;
+  const image = getImageUrl(item.product.thumbnail) ?? PLACEHOLDER;
 
   const handleDecrease = () => {
     if (item.quantity <= 1) {
@@ -87,8 +89,8 @@ export default function CartItem({ item, isLast }: CartItemProps) {
 
         {/* Price + remove */}
         <div className={`flex flex-col items-end gap-2 shrink-0 ${isRTL ? 'items-start' : ''}`}>
-          <span className="text-sm font-bold text-[#0D1637]">
-            ₼{item.subtotal.toFixed(2)}
+          <span className="text-sm font-bold text-[#0D1637] flex items-center gap-0.5">
+            <SARSymbol />{item.subtotal.toFixed(2)}
           </span>
           <button
             onClick={() => removeItem(item.productId)}

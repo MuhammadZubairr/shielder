@@ -32,7 +32,14 @@ export const useAuth = () => {
       setUser(response.user);
 
       toast.success(SUCCESS_MESSAGES.REGISTER_SUCCESS);
-      router.replace(ROUTES.CUSTOMER_DASHBOARD);
+
+      const redirectTo = typeof window !== 'undefined' ? sessionStorage.getItem('post_login_redirect') : null;
+      if (redirectTo) {
+        sessionStorage.removeItem('post_login_redirect');
+        router.replace(redirectTo);
+      } else {
+        router.replace(ROUTES.CUSTOMER_DASHBOARD);
+      }
 
       return response;
     } catch (error) {
@@ -71,7 +78,13 @@ export const useAuth = () => {
       } else if (response.user.role === 'ADMIN') {
         router.replace('/admin/dashboard');
       } else {
-        router.replace(ROUTES.CUSTOMER_DASHBOARD);
+        const redirectTo = typeof window !== 'undefined' ? sessionStorage.getItem('post_login_redirect') : null;
+        if (redirectTo) {
+          sessionStorage.removeItem('post_login_redirect');
+          router.replace(redirectTo);
+        } else {
+          router.replace(ROUTES.CUSTOMER_DASHBOARD);
+        }
       }
 
       return response;

@@ -5,9 +5,12 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/components/providers/AuthProvider';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { CartProvider } from '@/contexts/CartContext';
+import { QuotationProvider } from '@/contexts/QuotationContext';
 import { NavigationProgress } from '@/components/NavigationProgress';
 import { ThemeClientWrapper } from '@/components/layout/ThemeClientWrapper';
 import { DirSync } from '@/components/DirSync';
+import SessionTimeoutWatcher from '@/components/providers/SessionTimeoutWatcher';
+import { CurrencyProvider } from '@/contexts/CurrencyContext';
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' });
 const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo', display: 'swap' });
@@ -46,25 +49,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeClientWrapper />
         <LanguageProvider>
           <AuthProvider>
+            <SessionTimeoutWatcher />
+            <CurrencyProvider>
             <CartProvider>
+              <QuotationProvider>
               {children}
               <Toaster
                 position="top-right"
                 toastOptions={{
-                  duration: 4000,
+                  duration: 1000,
                   style: {
                     background: '#363636',
                     color: '#fff',
                   },
                   success: {
-                    duration: 3000,
+                    duration: 1000,
                     iconTheme: {
                       primary: '#10b981',
                       secondary: '#fff',
                     },
                   },
                   error: {
-                    duration: 4000,
+                    duration: 1000,
                     iconTheme: {
                       primary: '#ef4444',
                       secondary: '#fff',
@@ -72,7 +78,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   },
                 }}
               />
+              </QuotationProvider>
             </CartProvider>
+            </CurrencyProvider>
           </AuthProvider>
         </LanguageProvider>
       </body>

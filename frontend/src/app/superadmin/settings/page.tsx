@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import settingsService, { SystemSettings } from '@/services/settings.service';
 import { toast } from 'react-hot-toast';
+import { getImageUrl } from '@/utils/helpers';
 import { format } from 'date-fns';
 import { ApiErrorResponse } from '@/types';
 
@@ -376,7 +377,7 @@ function renderGeneralTab(
             <div className="w-24 h-24 bg-white rounded-2xl shadow-sm mx-auto mb-4 flex items-center justify-center overflow-hidden border border-gray-100 relative">
                {data.companyLogo ? (
                  <Image 
-                   src={data.companyLogo.startsWith('http') ? data.companyLogo : `http://localhost:5001${data.companyLogo}`}
+                   src={getImageUrl(data.companyLogo) || ''}
                    alt="Logo"
                    className="object-contain p-2"
                    fill
@@ -606,6 +607,18 @@ function renderPaymentTab(data: SystemSettings, onChange: OnChangeType) {
           <div className="space-y-4">
              <div className="bg-gray-50 p-6 rounded-3xl flex items-center justify-between">
                 <div>
+                   <h4 className="text-xs font-black text-shielder-dark uppercase tracking-tight">Online Payments Enabled</h4>
+                   <p className="text-[10px] text-gray-500 font-medium">Accept payments through the online gateway.</p>
+                </div>
+                <button 
+                  onClick={() => onChange('onlinePaymentEnabled', !data.onlinePaymentEnabled)}
+                  className={`w-12 h-6 rounded-full transition-all relative ${data.onlinePaymentEnabled ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
+                >
+                  <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data.onlinePaymentEnabled ? 'translate-x-6' : ''}`} />
+                </button>
+             </div>
+             <div className="bg-gray-50 p-6 rounded-3xl flex items-center justify-between">
+                <div>
                    <h4 className="text-xs font-black text-shielder-dark uppercase tracking-tight">Live Production Mode</h4>
                    <p className="text-[10px] text-gray-500 font-medium">Toggle off for Sandbox/Test environment.</p>
                 </div>
@@ -715,7 +728,7 @@ function renderNotificationTab(data: SystemSettings, onChange: OnChangeType) {
 function renderSecurityTab(data: SystemSettings, onChange: OnChangeType) {
   return (
     <div className="space-y-10">
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
              <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">Password Complexity</label>
              <div className="flex items-center justify-between mb-2">
@@ -754,6 +767,20 @@ function renderSecurityTab(data: SystemSettings, onChange: OnChangeType) {
                type="range" min="5" max="480" 
                value={data.sessionTimeoutMinutes}
                onChange={(e) => onChange('sessionTimeoutMinutes', parseInt(e.target.value))}
+               className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-shielder-primary"
+             />
+          </div>
+
+          <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
+             <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">Account Lock Duration</label>
+             <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-gray-500">Lock Time (Mins)</span>
+                <span className="text-sm font-black text-shielder-dark">{data.accountLockDurationMinutes} min</span>
+             </div>
+             <input 
+               type="range" min="1" max="60" 
+               value={data.accountLockDurationMinutes}
+               onChange={(e) => onChange('accountLockDurationMinutes', parseInt(e.target.value))}
                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-shielder-primary"
              />
           </div>

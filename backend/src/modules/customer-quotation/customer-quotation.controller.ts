@@ -30,8 +30,35 @@ function validateVAT(vat: string): boolean {
 export class CustomerQuotationController {
 
   /**
-   * POST /api/customer-quotations/generate
-   * Generate a quotation instantly from cart or selected product(s).
+   * @swagger
+   * /api/customer-quotations/generate:
+   *   post:
+   *     summary: Instantly generate a quotation from selected products
+   *     tags: [Customer Quotations]
+   *     security: [{ bearerAuth: [] }]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [companyName, vatNumber, address, products]
+   *             properties:
+   *               companyName: { type: string }
+   *               vatNumber: { type: string, description: 10-20 digit Saudi VAT number }
+   *               address: { type: string }
+   *               products:
+   *                 type: array
+   *                 items:
+   *                   type: object
+   *                   properties:
+   *                     productId: { type: string }
+   *                     quantity: { type: integer, minimum: 1 }
+   *     responses:
+   *       201:
+   *         description: Quotation generated successfully
+   *       400:
+   *         description: Validation error
    */
   static async generate(req: AuthRequest, res: Response, next: NextFunction) {
     try {
@@ -166,8 +193,22 @@ export class CustomerQuotationController {
   }
 
   /**
-   * GET /api/customer-quotations/:id
-   * Fetch a quotation (must belong to the requesting user).
+   * @swagger
+   * /api/customer-quotations/{id}:
+   *   get:
+   *     summary: Get a customer quotation by ID (owner only)
+   *     tags: [Customer Quotations]
+   *     security: [{ bearerAuth: [] }]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema: { type: string }
+   *     responses:
+   *       200:
+   *         description: Quotation details
+   *       404:
+   *         description: Not found
    */
   static async getById(req: AuthRequest, res: Response, next: NextFunction) {
     try {
@@ -224,8 +265,27 @@ export class CustomerQuotationController {
   }
 
   /**
-   * GET /api/customer-quotations/:id/pdf
-   * Stream a pdfkit-generated PDF for the quotation.
+   * @swagger
+   * /api/customer-quotations/{id}/pdf:
+   *   get:
+   *     summary: Download quotation as PDF (owner only)
+   *     tags: [Customer Quotations]
+   *     security: [{ bearerAuth: [] }]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema: { type: string }
+   *     responses:
+   *       200:
+   *         description: PDF file stream
+   *         content:
+   *           application/pdf:
+   *             schema:
+   *               type: string
+   *               format: binary
+   *       404:
+   *         description: Not found
    */
   static async downloadPDF(req: AuthRequest, res: Response, next: NextFunction) {
     try {

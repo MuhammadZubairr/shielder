@@ -605,7 +605,7 @@
 
   "fieldRequired": "This field is required",
   "invalidEmail": "Please enter a valid email address",
-  "invalidPhone": "Please enter a valid phone number",
+  "invalidPhone": "Please enter a valid phone number. Accepted formats: 05XXXXXXXX or +966 5X XXX XXXX",
   "confirm": "Confirm",
   "creating": "Creating...",
   "refresh": "Refresh",

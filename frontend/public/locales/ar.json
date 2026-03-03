@@ -605,7 +605,7 @@
 
   "fieldRequired": "هذا الحقل مطلوب",
   "invalidEmail": "يرجى إدخال بريد إلكتروني صحيح",
-  "invalidPhone": "يرجى إدخال رقم هاتف صحيح",
+  "invalidPhone": "يرجى إدخال رقم هاتف صحيح. الصيغ المقبولة: 05XXXXXXXX أو 966+ 5X XXX XXXX",
   "confirm": "تأكيد",
   "creating": "جارٍ الإنشاء...",
   "refresh": "تحديث",

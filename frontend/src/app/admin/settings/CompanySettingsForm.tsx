@@ -88,18 +88,27 @@ export default function CompanySettingsForm({ settings, onSaved }: Props) {
   const handleSave = async () => {
     if (!validate()) return;
     setSaving(true);
+    // Will hold the server-side path returned by the upload endpoint
+    let uploadedLogoPath: string | null = null;
     try {
-      // Upload logo first if changed
+      // Upload logo first if changed; the backend already persists it to DB.
+      // We capture the server path so the subsequent updateSettings call
+      // uses the real path instead of a transient blob:// URL.
       if (logoFile) {
         const res = await settingsService.uploadCompanyLogo(logoFile);
-        const url = res.data?.data?.url ?? res.data?.url;
-        if (url) setForm((p) => ({ ...p, companyLogo: url }));
+        // Backend returns: { data: { companyLogo: '/uploads/...' } }
+        uploadedLogoPath = res.data?.data?.companyLogo ?? res.data?.data?.url ?? null;
+        if (uploadedLogoPath) setForm((p) => ({ ...p, companyLogo: uploadedLogoPath }));
       }
       await settingsService.updateSettings('general', {
+        // Merge required general fields from existing settings so backend validation passes
+        systemName: settings?.systemName || 'Shielder',
+        currency: settings?.currency || 'USD',
+        timezone: settings?.timezone || 'UTC',
+        dateFormat: settings?.dateFormat || 'MM/DD/YYYY',
         ...form,
-        companyLogo: logoFile
-          ? (logoPreview ?? form.companyLogo)
-          : form.companyLogo,
+        // Use the actual server path (not blob:// preview URL)
+        companyLogo: uploadedLogoPath ?? form.companyLogo,
       });
       setOrig(form);
       setLogoFile(null);

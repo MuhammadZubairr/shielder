@@ -4,10 +4,8 @@ import React from 'react';
 import { Edit2, Trash2, ChevronLeft, ChevronRight, PackageSearch, Package } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import StockStatusBadge from './StockStatusBadge';
+import { getImageUrl } from '@/utils/helpers';
 import type { Product } from './types';
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
 
 interface Pagination {
   page: number;
@@ -142,7 +140,7 @@ export default function ProductsTable({
                   <td className="px-4 py-3">
                     {p.mainImage ? (
                       <img
-                        src={p.mainImage.startsWith('http') ? p.mainImage : `${API_BASE}${p.mainImage}`}
+                        src={getImageUrl(p.mainImage) || ''}
                         alt={productName(p)}
                         className="w-10 h-10 rounded-lg object-cover border border-gray-100 shadow-sm"
                       />

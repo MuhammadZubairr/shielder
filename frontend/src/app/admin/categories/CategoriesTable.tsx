@@ -3,10 +3,8 @@
 import React from 'react';
 import { Edit2, Trash2, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getImageUrl } from '@/utils/helpers';
 import type { Category } from './types';
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
 
 interface Props {
   categories: Category[];
@@ -114,11 +112,7 @@ export default function CategoriesTable({
                       <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 flex items-center justify-center">
                         {cat.image ? (
                           <img
-                            src={
-                              cat.image.startsWith('http')
-                                ? cat.image
-                                : `${API_BASE_URL}${cat.image}`
-                            }
+                            src={getImageUrl(cat.image) || ''}
                             alt={displayName(cat)}
                             className="w-full h-full object-cover"
                           />

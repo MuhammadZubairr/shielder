@@ -10,8 +10,27 @@ import { AuthRequest } from '@/types/global';
 
 class NotificationController {
   /**
-   * POST /api/notifications
-   * Admin creates a manual broadcast notification
+   * @swagger
+   * /api/notifications:
+   *   post:
+   *     summary: Manually create and broadcast a notification (Admin/SuperAdmin)
+   *     tags: [Notifications]
+   *     security: [{ bearerAuth: [] }]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [title, message]
+   *             properties:
+   *               title: { type: string }
+   *               message: { type: string }
+   *               targetRole: { type: string, enum: [USER, ADMIN, SUPER_ADMIN, STAFF] }
+   *               targetUserId: { type: string }
+   *     responses:
+   *       201:
+   *         description: Notification sent
    */
   createManualNotification = asyncHandler(async (req: AuthRequest, res: Response) => {
     const adminId = req.user?.id;
@@ -44,7 +63,29 @@ class NotificationController {
   });
 
   /**
-   * GET /api/notifications
+   * @swagger
+   * /api/notifications:
+   *   get:
+   *     summary: Get paginated notifications for current user
+   *     tags: [Notifications]
+   *     security: [{ bearerAuth: [] }]
+   *     parameters:
+   *       - in: query
+   *         name: page
+   *         schema: { type: integer, default: 1 }
+   *       - in: query
+   *         name: limit
+   *         schema: { type: integer, default: 20 }
+   *       - in: query
+   *         name: read
+   *         schema: { type: boolean }
+   *       - in: query
+   *         name: global
+   *         schema: { type: boolean }
+   *         description: Super Admin only — view all notifications
+   *     responses:
+   *       200:
+   *         description: Paginated notification list
    */
   getNotifications = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
@@ -81,7 +122,15 @@ class NotificationController {
   });
 
   /**
-   * GET /api/notifications/stats
+   * @swagger
+   * /api/notifications/stats:
+   *   get:
+   *     summary: Get holistic notification stats (Super Admin only)
+   *     tags: [Notifications]
+   *     security: [{ bearerAuth: [] }]
+   *     responses:
+   *       200:
+   *         description: Notification statistics
    */
   getNotificationStats = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userRole = req.user?.role;
@@ -98,7 +147,19 @@ class NotificationController {
   });
 
   /**
-   * GET /api/notifications/latest
+   * @swagger
+   * /api/notifications/latest:
+   *   get:
+   *     summary: Get latest 5 notifications for current user
+   *     tags: [Notifications]
+   *     security: [{ bearerAuth: [] }]
+   *     parameters:
+   *       - in: query
+   *         name: limit
+   *         schema: { type: integer, default: 5 }
+   *     responses:
+   *       200:
+   *         description: Latest notifications
    */
   getLatest = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
@@ -114,7 +175,15 @@ class NotificationController {
   });
 
   /**
-   * GET /api/notifications/unread-count
+   * @swagger
+   * /api/notifications/unread-count:
+   *   get:
+   *     summary: Get count of unread notifications for current user
+   *     tags: [Notifications]
+   *     security: [{ bearerAuth: [] }]
+   *     responses:
+   *       200:
+   *         description: Unread count
    */
   getUnreadCount = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
@@ -130,7 +199,20 @@ class NotificationController {
   });
 
   /**
-   * PATCH /api/notifications/:id/read
+   * @swagger
+   * /api/notifications/{id}/read:
+   *   patch:
+   *     summary: Mark a specific notification as read
+   *     tags: [Notifications]
+   *     security: [{ bearerAuth: [] }]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema: { type: string }
+   *     responses:
+   *       200:
+   *         description: Notification marked as read
    */
   markAsRead = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
@@ -147,7 +229,15 @@ class NotificationController {
   });
 
   /**
-   * PATCH /api/notifications/read-all
+   * @swagger
+   * /api/notifications/read-all:
+   *   patch:
+   *     summary: Mark all notifications as read
+   *     tags: [Notifications]
+   *     security: [{ bearerAuth: [] }]
+   *     responses:
+   *       200:
+   *         description: All notifications marked as read
    */
   markAllAsRead = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
@@ -162,7 +252,20 @@ class NotificationController {
   });
 
   /**
-   * DELETE /api/notifications/:id
+   * @swagger
+   * /api/notifications/{id}:
+   *   delete:
+   *     summary: Soft delete a notification
+   *     tags: [Notifications]
+   *     security: [{ bearerAuth: [] }]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema: { type: string }
+   *     responses:
+   *       200:
+   *         description: Notification deleted
    */
   deleteNotification = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
@@ -178,7 +281,28 @@ class NotificationController {
   });
 
   /**
-   * Preferences
+   * @swagger
+   * /api/notifications/preferences:
+   *   get:
+   *     summary: Get notification preferences for current user
+   *     tags: [Notifications]
+   *     security: [{ bearerAuth: [] }]
+   *     responses:
+   *       200:
+   *         description: Notification preferences
+   *   put:
+   *     summary: Update notification preferences
+   *     tags: [Notifications]
+   *     security: [{ bearerAuth: [] }]
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *     responses:
+   *       200:
+   *         description: Preferences updated
    */
   getPreferences = asyncHandler(async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;

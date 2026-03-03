@@ -7,6 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import adminService from '@/services/admin.service';
 import type { Product, ProductFormData, DropdownOption } from './types';
 import { EMPTY_PRODUCT_FORM } from './types';
+import { getImageUrl } from '@/utils/helpers';
 
 interface Props {
   mode: 'create' | 'edit';
@@ -104,10 +105,7 @@ export default function ProductFormModal({ mode, product, onClose, onSuccess }: 
           isActive: p.isActive,
         });
         if (p.mainImage) {
-          const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
-          setImagePreview(
-            p.mainImage.startsWith('http') ? p.mainImage : `${API_BASE}${p.mainImage}`
-          );
+          setImagePreview(getImageUrl(p.mainImage));
         }
       })
       .catch(() => {

@@ -23,11 +23,13 @@ import {
   Image as ImageIcon,
   DollarSign,
   Layers,
-  User as UserIcon
+  User as UserIcon,
 } from 'lucide-react';
+import SARSymbol from '@/components/SARSymbol';
 import Image from 'next/image';
 import adminService from '@/services/admin.service';
 import { toast } from 'react-hot-toast';
+import { getImageUrl } from '@/utils/helpers';
 import { ApiErrorResponse } from '@/types';
 
 // --- Types ---
@@ -154,8 +156,6 @@ const ProductManagement = () => {
     specifications: [],
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
 
   // Fetch Data
   const fetchData = useCallback(async () => {
@@ -590,7 +590,7 @@ const ProductManagement = () => {
                       <div className="w-14 h-14 rounded-xl bg-gray-100 overflow-hidden border border-gray-200 flex items-center justify-center shadow-sm relative">
                         {prod.mainImage ? (
                           <Image 
-                            src={prod.mainImage.startsWith('http') ? prod.mainImage : `${API_BASE_URL}${prod.mainImage}`} 
+                            src={getImageUrl(prod.mainImage) || ''}
                             alt={prod.name} 
                             className="object-cover"
                             fill
@@ -920,7 +920,7 @@ const ProductManagement = () => {
                   <div className="relative group">
                     <div className="w-44 h-44 rounded-[32px] bg-slate-50 border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden transition-all duration-300 group-hover:border-orange-500 group-hover:bg-orange-50/30 relative">
                       {imagePreview ? (
-                        <Image src={imagePreview} className="object-cover transition-transform duration-500 group-hover:scale-105" alt="Preview" fill />
+                        <Image src={getImageUrl(imagePreview) || imagePreview} className="object-cover transition-transform duration-500 group-hover:scale-105" alt="Preview" fill />
                       ) : (
                         <div className="flex flex-col items-center text-slate-400">
                           <ImageIcon className="mb-3 opacity-40" size={48} strokeWidth={1.5} />
@@ -1212,7 +1212,7 @@ const ProductManagement = () => {
               <div className="md:w-1/2 bg-gray-100 relative">
                   {selectedProduct.mainImage ? (
                     <Image 
-                      src={selectedProduct.mainImage.startsWith('http') ? selectedProduct.mainImage : `${API_BASE_URL}${selectedProduct.mainImage}`} 
+                      src={getImageUrl(selectedProduct.mainImage) || ''}
                       alt={selectedProduct.name}
                       className="object-cover" 
                       fill
@@ -1247,7 +1247,7 @@ const ProductManagement = () => {
                   <div className="grid grid-cols-2 gap-8">
                       <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">List Price</p>
-                        <p className="text-xl font-black text-[#0205A6]">SAR {parseFloat(selectedProduct.price).toLocaleString()}</p>
+                        <p className="text-xl font-black text-[#0205A6] inline-flex items-center gap-0.5"><SARSymbol />{parseFloat(selectedProduct.price).toLocaleString()}</p>
                       </div>
                       <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Inventory Status</p>

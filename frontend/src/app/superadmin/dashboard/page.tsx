@@ -337,7 +337,7 @@ function StatsCard({ label, value, icon: Icon, bgColor }: { label: string, value
         </div>
       </div>
       <p className="text-white/80 font-medium text-sm mb-2">{label}</p>
-      <h3 className="text-3xl font-black text-white tracking-tight">{value}</h3>
+      <h3 className="text-2xl font-black text-white tracking-tight leading-tight break-words">{value}</h3>
     </div>
   );
 }

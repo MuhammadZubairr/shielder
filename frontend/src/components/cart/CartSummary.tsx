@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
 import { useAuthStore } from '@/store/auth.store';
+import SARSymbol from '@/components/SARSymbol';
 
 // Static shipping cost — replace with dynamic value from settings if needed
 const SHIPPING_COST: number = 0; // free shipping; set to a number if applicable
@@ -52,14 +53,14 @@ export default function CartSummary({ onCheckout }: CartSummaryProps) {
       {/* Subtotal row */}
       <div className={`flex items-center justify-between py-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
         <span className="text-sm text-gray-600">{t('cart.subtotal')}</span>
-        <span className="text-sm font-semibold text-[#0D1637]">₼{subtotal.toFixed(2)}</span>
+        <span className="text-sm font-semibold text-[#0D1637] flex items-center gap-0.5"><SARSymbol />{subtotal.toFixed(2)}</span>
       </div>
 
       {/* Shipping row */}
       <div className={`flex items-center justify-between py-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
         <span className="text-sm text-gray-600">{t('cart.shipping')}</span>
         <span className="text-sm font-semibold text-[#0D1637]">
-          {shipping === 0 ? t('cart.free') : `₼${shipping.toFixed(2)}`}
+          {shipping === 0 ? t('cart.free') : <span className="flex items-center gap-0.5"><SARSymbol />{shipping.toFixed(2)}</span>}
         </span>
       </div>
 
@@ -69,7 +70,7 @@ export default function CartSummary({ onCheckout }: CartSummaryProps) {
       {/* Total row */}
       <div className={`flex items-center justify-between py-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
         <span className="text-base font-bold text-gray-900">{t('cart.total')}</span>
-        <span className="text-base font-bold text-[#0D1637]">₼{total.toFixed(2)}</span>
+        <span className="text-base font-bold text-[#0D1637] flex items-center gap-0.5"><SARSymbol />{total.toFixed(2)}</span>
       </div>
 
       {/* Checkout button */}

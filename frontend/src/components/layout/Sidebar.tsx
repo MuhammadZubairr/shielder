@@ -30,6 +30,7 @@ import {
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useDashboard } from '@/contexts/DashboardContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import apiService from '@/services/api.service';
 
@@ -81,6 +82,7 @@ const adminMenuItems: MenuItem[] = [
 
 export const Sidebar = () => {
   const { sidebarCollapsed: collapsed, toggleSidebar, isMobileOpen, setIsMobileOpen } = useDashboard();
+  const { isRTL } = useLanguage();
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -311,7 +313,8 @@ export const Sidebar = () => {
       {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "hidden lg:flex fixed left-0 top-0 h-screen bg-white text-gray-700 z-50 flex-col shadow-[2px_0_8px_rgba(0,0,0,0.08)] transition-all duration-300 border-r border-gray-100",
+          "hidden lg:flex fixed top-0 h-screen bg-white text-gray-700 z-50 flex-col shadow-[2px_0_8px_rgba(0,0,0,0.08)] transition-all duration-300 border-r border-gray-100",
+          isRTL ? "right-0 border-l border-r-0" : "left-0",
           collapsed ? "w-[72px]" : "w-[260px]"
         )}
       >
@@ -335,8 +338,10 @@ export const Sidebar = () => {
         {/* Drawer */}
         <aside
           className={cn(
-            "absolute left-0 top-0 h-full w-[260px] bg-white shadow-2xl transition-transform duration-300 border-r border-gray-100",
-            isMobileOpen ? "translate-x-0" : "-translate-x-full"
+            "absolute top-0 h-full w-[260px] bg-white shadow-2xl transition-transform duration-300 border-r border-gray-100",
+            isRTL
+              ? cn("right-0 border-l border-r-0", isMobileOpen ? "translate-x-0" : "translate-x-full")
+              : cn("left-0", isMobileOpen ? "translate-x-0" : "-translate-x-full")
           )}
         >
           <button

@@ -110,7 +110,7 @@ export const NotificationDropdown = () => {
       </button>
 
       {isOpen && (
-        <div className="fixed md:absolute left-4 right-4 md:left-auto md:right-0 mt-2 w-auto md:w-96 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 overflow-hidden transform origin-top-right transition-all">
+        <div className="fixed md:absolute left-4 right-4 md:left-auto md:right-0 mt-2 w-auto md:w-96 bg-white rounded-xl shadow-2xl border border-gray-100 z-[200] overflow-hidden transform origin-top-right transition-all">
           <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
             <h3 className="font-bold text-gray-800">Notifications</h3>
             {unreadCount > 0 && (

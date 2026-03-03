@@ -128,11 +128,15 @@ apiClient.interceptors.response.use(
         } catch (e) {
           // Ignore if Zustand store can't be reset
         }
-        // Only redirect if specifically a refresh failure, not a random 401 that couldn't refresh
-        // Also skip if already on login or register page to avoid false 'Session Expired' toasts
+        // Only redirect to login with 'expired' flag when the original
+        // request actually carried an Authorization token — meaning a real
+        // session existed and has now expired. If there was never a token
+        // (unauthenticated request that simply got 401), skip the redirect
+        // so public pages don't get wrongly bounced to the login screen.
+        const hadToken = !!(originalRequest?.headers?.Authorization);
         const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
         const isPublicPage = currentPath === '/login' || currentPath === '/register';
-        if (typeof window !== 'undefined' && !url.includes('auth/me') && !isPublicPage) {
+        if (typeof window !== 'undefined' && hadToken && !url.includes('auth/me') && !isPublicPage) {
           window.location.href = '/login?expired=true';
         }
 

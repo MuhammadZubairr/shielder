@@ -4,7 +4,7 @@
  * User registration form with Arabic/English support
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, ChevronLeft, Shield, User, Phone, Building2, MapPin, Eye, EyeOff } from 'lucide-react';
@@ -24,11 +24,14 @@ export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t, isRTL, locale, setLocale } = useLanguage();
+  const redirectHandled = useRef(false);
 
   // Only redirect if authenticated, do not redirect unauthenticated users
   useEffect(() => {
     // Only run redirect logic after loading is complete
     if (isLoading) return;
+    // Skip if useAuth.register() already handled the redirect
+    if (redirectHandled.current) return;
     const pathname = window.location.pathname;
     // If ?expired is present, do not redirect
     const search = window.location.search;
@@ -96,7 +99,7 @@ export default function RegisterPage() {
     if (!formData.password) {
       newErrors.password = t('passwordRequired');
     } else if (!VALIDATION_RULES.PASSWORD_REGEX.test(formData.password)) {
-      newErrors.password = t('passwordMinLength');
+      newErrors.password = t('passwordHint');
     }
 
     if (confirmPassword !== formData.password) {
@@ -123,6 +126,7 @@ export default function RegisterPage() {
 
     if (!validate()) return;
 
+    redirectHandled.current = true;
     try {
       const result = await register({ ...formData, preferredLanguage: locale });
       // Debug: Check localStorage and Zustand state
@@ -137,6 +141,7 @@ export default function RegisterPage() {
         alert('Registration succeeded but authentication data is missing. Please check backend response and sessionStorage logic.');
       }
     } catch (error) {
+      redirectHandled.current = false;
       console.error('Registration error:', error);
       alert('Registration failed: ' + (typeof error === 'object' && error !== null && 'message' in error ? (error as any).message : String(error)));
     }

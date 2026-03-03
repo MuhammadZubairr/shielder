@@ -102,7 +102,7 @@ export default function LandingFooter() {
             <p>© {year} FilterPro. All rights reserved.</p>
             <div className={`flex items-center gap-5 ${isRTL ? 'flex-row-reverse' : ''}`}>
               {legalLinks.map(l => (
-                <Link key={l.href} href={l.href} className="hover:text-[#F97316] transition-colors">{l.label}</Link>
+                <Link key={l.label} href={l.href} className="hover:text-[#F97316] transition-colors">{l.label}</Link>
               ))}
             </div>
           </div>

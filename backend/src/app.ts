@@ -8,6 +8,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
+import path from 'path';
 import { appConfig } from './config/app.config';
 import { env } from './config/env';
 import { errorHandler, notFoundHandler } from './common/middleware/error.middleware';
@@ -88,6 +89,11 @@ export const createApp = (): Application => {
 
   // Static files (served with long-lived cache in production)
   app.use('/uploads', express.static('uploads', {
+    maxAge: env.isProduction ? '7d' : 0,
+  }));
+
+  // Serve root-level images folder (used by seed data / demo images)
+  app.use('/images', express.static(path.join(__dirname, '..', '..', 'images'), {
     maxAge: env.isProduction ? '7d' : 0,
   }));
 

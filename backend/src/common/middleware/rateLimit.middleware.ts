@@ -10,6 +10,7 @@ import { logger } from '@/common/logger/logger';
 interface RateLimitConfig {
   maxRequests: number;
   windowMinutes: number;
+  identifierFn?: (req: Request) => string;
 }
 
 // In-memory store for rate limiting
@@ -34,7 +35,9 @@ setInterval(() => {
 export const rateLimitAuth = (config: RateLimitConfig) => {
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
-      const identifier = req.ip || req.connection.remoteAddress || 'unknown';
+      const identifier = config.identifierFn
+        ? config.identifierFn(req)
+        : req.ip || req.connection.remoteAddress || 'unknown';
       const key = `ratelimit:${req.path}:${identifier}`;
       const now = Date.now();
       const windowMs = config.windowMinutes * 60 * 1000;

@@ -8,10 +8,41 @@ import { StockAlertService } from '../inventory/stock-alert/stock-alert.service'
 
 export class OrderService {
   /**
+   * Load order-related system settings from DB (with safe defaults)
+   */
+  private async getOrderSettings() {
+    try {
+      const s = await (prisma as any).systemSettings.findUnique({ where: { id: 'CURRENT' } });
+      return {
+        defaultOrderStatus: (s?.defaultOrderStatus as OrderStatus) ?? OrderStatus.PENDING,
+        allowOrderCancellation: s?.allowOrderCancellation ?? true,
+        autoCompleteOrderAfterPayment: s?.autoCompleteOrderAfterPayment ?? true,
+        paymentMethodsEnabled: Array.isArray(s?.paymentMethodsEnabled) ? s.paymentMethodsEnabled as string[] : null,
+      };
+    } catch {
+      return {
+        defaultOrderStatus: OrderStatus.PENDING,
+        allowOrderCancellation: true,
+        autoCompleteOrderAfterPayment: true,
+        paymentMethodsEnabled: null,
+      };
+    }
+  }
+
+  /**
    * Create a new order with stock deduction
    */
   async createOrder(data: any) {
     const { userId, items, ...orderData } = data;
+
+    // Read configured default order status
+    const { defaultOrderStatus, paymentMethodsEnabled } = await this.getOrderSettings();
+
+    // Validate payment method is enabled
+    const chosenMethod = orderData.paymentMethod || 'CASH';
+    if (paymentMethodsEnabled && paymentMethodsEnabled.length > 0 && !paymentMethodsEnabled.includes(chosenMethod)) {
+      throw new BadRequestError(`Payment method "${chosenMethod}" is not currently enabled. Allowed: ${paymentMethodsEnabled.join(', ')}`);
+    }
 
     // Generate a human-readable order number
     const orderNumber = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -66,7 +97,7 @@ export class OrderService {
           shippingAddress: orderData.shippingAddress,
           paymentMethod: orderData.paymentMethod || 'CASH',
           paymentStatus: orderData.paymentStatus || PaymentStatus.PENDING,
-          status: orderData.status || OrderStatus.PENDING,
+          status: orderData.status || defaultOrderStatus,
           notes: orderData.notes,
           orderItems: {
             create: orderItemsData
@@ -216,6 +247,24 @@ export class OrderService {
 
     if (!order) {
       throw new NotFoundError('Order not found');
+    }
+
+    // Enforce order settings from system configuration
+    const { allowOrderCancellation, autoCompleteOrderAfterPayment } = await this.getOrderSettings();
+
+    // Block cancellation if the setting is disabled
+    if (data.status === OrderStatus.CANCELLED && !allowOrderCancellation) {
+      throw new BadRequestError('Order cancellation is currently disabled by your administrator.');
+    }
+
+    // Auto-complete order when payment is received (if setting is enabled)
+    if (
+      data.paymentStatus === PaymentStatus.PAID &&
+      autoCompleteOrderAfterPayment &&
+      order.status !== OrderStatus.DELIVERED &&
+      order.status !== OrderStatus.CANCELLED
+    ) {
+      data.status = OrderStatus.DELIVERED;
     }
 
     const previousStatus = order.status;

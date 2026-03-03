@@ -3,6 +3,7 @@
 import React from 'react';
 import { Edit2, Trash2, ChevronLeft, ChevronRight, Shapes } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getImageUrl } from '@/utils/helpers';
 import type { Subcategory } from './types';
 
 interface Pagination {
@@ -114,11 +115,7 @@ export default function SubcategoriesTable({
                     <td className="px-4 py-3.5">
                       {s.image ? (
                         <img
-                          src={
-                            s.image.startsWith('http')
-                              ? s.image
-                              : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001'}${s.image}`
-                          }
+                          src={getImageUrl(s.image) || ''}
                           alt={displayName(s)}
                           className="w-9 h-9 rounded-lg object-cover border border-gray-100"
                         />

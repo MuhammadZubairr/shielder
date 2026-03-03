@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import adminService from '@/services/admin.service';
 import { toast } from 'react-hot-toast';
+import { getImageUrl } from '@/utils/helpers';
 
 // --- Types ---
 interface Subcategory {
@@ -275,11 +276,9 @@ export default function SubcategoryManagementPage() {
       categoryId: sub.categoryId,
       isActive: sub.isActive
     });
-    setImagePreview(sub.image ? (sub.image.startsWith('http') ? sub.image : `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001'}${sub.image}`) : null);
+    setImagePreview(getImageUrl(sub.image));
     setShowEditModal(true);
   };
-
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
 
   // --- Render ---
 
@@ -400,7 +399,7 @@ export default function SubcategoryManagementPage() {
                       <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 flex items-center justify-center">
                         {sub.image ? (
                           <img 
-                            src={sub.image.startsWith('http') ? sub.image : `${API_BASE_URL}${sub.image}`} 
+                            src={getImageUrl(sub.image) || ''}
                             alt={sub.name} 
                             className="w-full h-full object-cover"
                           />

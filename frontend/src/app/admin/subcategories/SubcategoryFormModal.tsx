@@ -6,9 +6,7 @@ import { toast } from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import adminService from '@/services/admin.service';
 import type { Subcategory, SubcategoryFormData, CategoryOption } from './types';
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
+import { getImageUrl } from '@/utils/helpers';
 
 interface Props {
   mode: 'create' | 'edit';
@@ -79,11 +77,7 @@ export default function SubcategoryFormModal({
         isActive: subcategory.isActive,
       });
       if (subcategory.image) {
-        setImagePreview(
-          subcategory.image.startsWith('http')
-            ? subcategory.image
-            : `${API_BASE_URL}${subcategory.image}`
-        );
+        setImagePreview(getImageUrl(subcategory.image));
       }
     }
   }, [mode, subcategory]);

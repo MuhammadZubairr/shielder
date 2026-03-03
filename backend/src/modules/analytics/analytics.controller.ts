@@ -9,7 +9,15 @@ import { asyncHandler } from '@/common/utils/helpers';
 
 class AnalyticsController {
   /**
-   * GET /api/analytics/revenue/monthly
+   * @swagger
+   * /api/analytics/revenue/monthly:
+   *   get:
+   *     summary: Revenue trends for the last 12 months
+   *     tags: [Analytics]
+   *     security: [{ bearerAuth: [] }]
+   *     responses:
+   *       200:
+   *         description: Monthly revenue data
    */
   getRevenueMonthly = asyncHandler(async (_req: Request, res: Response) => {
     const data = await AnalyticsService.getRevenueMonthly();
@@ -20,7 +28,15 @@ class AnalyticsController {
   });
 
   /**
-   * GET /api/analytics/orders/monthly
+   * @swagger
+   * /api/analytics/orders/monthly:
+   *   get:
+   *     summary: Order volume trends for the last 12 months
+   *     tags: [Analytics]
+   *     security: [{ bearerAuth: [] }]
+   *     responses:
+   *       200:
+   *         description: Monthly order count data
    */
   getOrdersMonthly = asyncHandler(async (_req: Request, res: Response) => {
     const data = await AnalyticsService.getOrdersMonthly();
@@ -31,7 +47,15 @@ class AnalyticsController {
   });
 
   /**
-   * GET /api/analytics/products/by-category
+   * @swagger
+   * /api/analytics/products/by-category:
+   *   get:
+   *     summary: Inventory distribution by category
+   *     tags: [Analytics]
+   *     security: [{ bearerAuth: [] }]
+   *     responses:
+   *       200:
+   *         description: Products grouped by category
    */
   getProductsByCategory = asyncHandler(async (_req: Request, res: Response) => {
     const data = await AnalyticsService.getProductsByCategory();
@@ -42,7 +66,15 @@ class AnalyticsController {
   });
 
   /**
-   * GET /api/analytics/users/growth
+   * @swagger
+   * /api/analytics/users/growth:
+   *   get:
+   *     summary: New user acquisition trends
+   *     tags: [Analytics]
+   *     security: [{ bearerAuth: [] }]
+   *     responses:
+   *       200:
+   *         description: User growth data
    */
   getUserGrowth = asyncHandler(async (_req: Request, res: Response) => {
     const data = await AnalyticsService.getUserGrowth();
@@ -53,7 +85,15 @@ class AnalyticsController {
   });
 
   /**
-   * GET /api/analytics/overview
+   * @swagger
+   * /api/analytics/overview:
+   *   get:
+   *     summary: Real-time summary of platform performance
+   *     tags: [Analytics]
+   *     security: [{ bearerAuth: [] }]
+   *     responses:
+   *       200:
+   *         description: Overview metrics
    */
   getOverview = asyncHandler(async (_req: Request, res: Response) => {
     const data = await AnalyticsService.getOverview();

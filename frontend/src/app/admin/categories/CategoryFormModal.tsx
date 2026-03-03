@@ -6,9 +6,7 @@ import { toast } from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import adminService from '@/services/admin.service';
 import type { Category, CategoryFormData } from './types';
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
+import { getImageUrl } from '@/utils/helpers';
 
 interface Props {
   mode: 'create' | 'edit';
@@ -44,11 +42,7 @@ export default function CategoryFormModal({ mode, category, onClose, onSuccess }
         isActive: category.isActive,
       });
       if (category.image) {
-        setImagePreview(
-          category.image.startsWith('http')
-            ? category.image
-            : `${API_BASE_URL}${category.image}`
-        );
+        setImagePreview(getImageUrl(category.image));
       }
     }
   }, [mode, category]);

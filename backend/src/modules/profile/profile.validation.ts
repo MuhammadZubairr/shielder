@@ -4,10 +4,10 @@ export const profileValidation = {
   updateProfile: Joi.object({
     fullName: Joi.string().trim().max(100).optional(),
     phoneNumber: Joi.string()
-      .pattern(/^\+?[1-9]\d{1,14}$/)
+      .pattern(/^\+?[\d\s\-\(\)]{7,20}$|^(\+?966|0)5[0-9]{8}$/)
       .optional()
       .messages({
-        'string.pattern.base': 'Please provide a valid phone number in international format',
+        'string.pattern.base': 'Please provide a valid phone number (e.g. 05XXXXXXXX or +966 5X XXX XXXX)',
       }),
     address: Joi.string().trim().max(255).optional(),
     profileImage: Joi.string().uri().optional(),

@@ -44,6 +44,28 @@ class NotificationService {
       global = false
     } = params;
 
+    // 0. Check global notification settings from DB
+    let globalEmailEnabled = true;
+    let globalLowStockEnabled = true;
+    let globalOrderStatusEnabled = true;
+    let globalPaymentEnabled = true;
+    try {
+      const sysSettings = await (prisma as any).systemSettings.findUnique({ where: { id: 'CURRENT' } });
+      if (sysSettings) {
+        globalEmailEnabled = sysSettings.enableEmailNotifications ?? true;
+        globalLowStockEnabled = sysSettings.enableLowStockAlerts ?? true;
+        globalOrderStatusEnabled = sysSettings.enableOrderStatusNotifications ?? true;
+        globalPaymentEnabled = sysSettings.enablePaymentNotifications ?? true;
+      }
+    } catch { /* silently ignore — fall back to enabled */ }
+
+    // If low stock alerts are globally disabled, skip LOW_STOCK notifications entirely
+    if (type === 'LOW_STOCK' && !globalLowStockEnabled) return;
+    // If order status notifications are globally disabled, skip order-related types
+    if (['ORDER_CREATED', 'ORDER_COMPLETED', 'REFUND_ISSUED'].includes(type) && !globalOrderStatusEnabled) return;
+    // If payment notifications are globally disabled, skip payment-related types
+    if (['PAYMENT_SUCCESSFUL', 'PAYMENT_FAILED'].includes(type) && !globalPaymentEnabled) return;
+
     // 1. Identify Target Users
     let targets: any[] = [];
     if (userId) {
@@ -91,7 +113,7 @@ class NotificationService {
       }
 
       const shouldReceiveInApp = !prefs || prefs.inApp;
-      const shouldReceiveEmail = sendEmail && (!prefs || prefs.email);
+      const shouldReceiveEmail = globalEmailEnabled && sendEmail && (!prefs || prefs.email);
 
       // Verify specific type toggle
       let typeEnabled = true;

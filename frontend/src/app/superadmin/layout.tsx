@@ -37,7 +37,7 @@ function SuperAdminLayoutContent({ children }: { children: React.ReactNode }) {
 
       {/* Main Content Area */}
       <div className={cn(
-        'flex flex-col flex-1 transition-all duration-300 relative',
+        'flex flex-col flex-1 transition-all duration-300 relative overflow-hidden',
         isRTL
           ? (sidebarCollapsed ? 'lg:pr-[72px]' : 'lg:pr-[260px]')
           : (sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[260px]')

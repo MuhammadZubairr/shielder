@@ -30,10 +30,25 @@ import type {
 export class AuthService {
   // Constants
   private static readonly SALT_ROUNDS = 12;
-  private static readonly MAX_FAILED_ATTEMPTS = 5;
-  private static readonly LOCK_DURATION_MINUTES = 30;
   private static readonly RESET_TOKEN_EXPIRY_MINUTES = 15;
   private static readonly VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
+
+  /**
+   * Load security settings from DB (with safe defaults if not configured)
+   */
+  private static async getSecuritySettings() {
+    try {
+      const s = await (prisma as any).systemSettings.findUnique({ where: { id: 'CURRENT' } });
+      return {
+        maxLoginAttempts: s?.maxLoginAttempts ?? 5,
+        lockDurationMinutes: s?.accountLockDurationMinutes ?? 30,
+        passwordMinLength: s?.passwordMinLength ?? 8,
+        forceStrongPasswords: s?.forceStrongPasswords ?? true,
+      };
+    } catch {
+      return { maxLoginAttempts: 5, lockDurationMinutes: 30, passwordMinLength: 8, forceStrongPasswords: true };
+    }
+  }
 
   /**
    * 1️⃣ USER REGISTRATION (SIGNUP)
@@ -52,8 +67,8 @@ export class AuthService {
         throw new ConflictError('User with this email already exists');
       }
 
-      // Validate password strength
-      this.validatePasswordStrength(data.password);
+      // Validate password strength against admin-configured rules
+      await this.validatePasswordWithSettings(data.password);
 
       // Hash password with bcrypt
       const passwordHash = await bcrypt.hash(data.password, this.SALT_ROUNDS);
@@ -379,8 +394,8 @@ export class AuthService {
         throw new BadRequestError('Invalid or expired reset token');
       }
 
-      // Validate new password
-      this.validatePasswordStrength(data.newPassword);
+      // Validate new password against admin-configured rules
+      await this.validatePasswordWithSettings(data.newPassword);
 
       // Hash new password
       const passwordHash = await bcrypt.hash(data.newPassword, this.SALT_ROUNDS);
@@ -436,8 +451,8 @@ export class AuthService {
         throw new BadRequestError('Current password is incorrect');
       }
 
-      // Validate new password
-      this.validatePasswordStrength(data.newPassword);
+      // Validate new password against admin-configured rules
+      await this.validatePasswordWithSettings(data.newPassword);
 
       // Ensure new password is different
       const isSamePassword = await bcrypt.compare(data.newPassword, user.passwordHash);
@@ -575,49 +590,60 @@ export class AuthService {
   // ==================== HELPER METHODS ====================
 
   /**
-   * Validate Password Strength
+   * Validate Password Strength (async — reads settings from DB)
    */
-  private static validatePasswordStrength(password: string): void {
-    const minLength = 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  private static async validatePasswordWithSettings(password: string): Promise<void> {
+    const { passwordMinLength, forceStrongPasswords } = await this.getSecuritySettings();
+    this.validatePasswordStrength(password, passwordMinLength, forceStrongPasswords);
+  }
 
+  /**
+   * Validate Password Strength (sync core — called with explicit settings)
+   */
+  private static validatePasswordStrength(
+    password: string,
+    minLength = 8,
+    forceStrong = true
+  ): void {
     if (password.length < minLength) {
       throw new BadRequestError(`Password must be at least ${minLength} characters long`);
     }
 
-    if (!hasUpperCase) {
-      throw new BadRequestError('Password must contain at least one uppercase letter');
-    }
+    if (forceStrong) {
+      const hasUpperCase = /[A-Z]/.test(password);
+      const hasLowerCase = /[a-z]/.test(password);
+      const hasNumbers = /\d/.test(password);
+      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
-    if (!hasLowerCase) {
-      throw new BadRequestError('Password must contain at least one lowercase letter');
-    }
-
-    if (!hasNumbers) {
-      throw new BadRequestError('Password must contain at least one number');
-    }
-
-    if (!hasSpecialChar) {
-      throw new BadRequestError('Password must contain at least one special character');
+      if (!hasUpperCase) {
+        throw new BadRequestError('Password must contain at least one uppercase letter');
+      }
+      if (!hasLowerCase) {
+        throw new BadRequestError('Password must contain at least one lowercase letter');
+      }
+      if (!hasNumbers) {
+        throw new BadRequestError('Password must contain at least one number');
+      }
+      if (!hasSpecialChar) {
+        throw new BadRequestError('Password must contain at least one special character');
+      }
     }
   }
 
   /**
-   * Handle Failed Login Attempts
+   * Handle Failed Login Attempts (reads maxLoginAttempts + lockDuration from DB)
    */
   private static async handleFailedLogin(
     userId: string,
     currentAttempts: number
   ): Promise<void> {
+    const { maxLoginAttempts, lockDurationMinutes } = await this.getSecuritySettings();
     const newAttempts = currentAttempts + 1;
 
-    if (newAttempts >= this.MAX_FAILED_ATTEMPTS) {
+    if (newAttempts >= maxLoginAttempts) {
       // Lock account
       const lockedUntil = new Date();
-      lockedUntil.setMinutes(lockedUntil.getMinutes() + this.LOCK_DURATION_MINUTES);
+      lockedUntil.setMinutes(lockedUntil.getMinutes() + lockDurationMinutes);
 
       await prisma.user.update({
         where: { id: userId },
