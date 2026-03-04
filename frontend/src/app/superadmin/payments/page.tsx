@@ -9,8 +9,6 @@ import {
   Plus, 
   RefreshCcw, 
   Eye,
-  Filter,
-  Calendar,
   CreditCard,
   Banknote,
   Building2,
@@ -24,8 +22,10 @@ import { orderService } from '@/services/order.service';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import SARSymbol from '@/components/SARSymbol';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function PaymentsPage() {
+  const { t, isRTL } = useLanguage();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [stats, setStats] = useState({
     totalRevenue: 0,
@@ -157,11 +157,11 @@ export default function PaymentsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">Payments</h1>
-          <p className="text-gray-500 text-sm font-medium">View and manage all your payments.</p>
+          <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">{t('paymentsTitle')}</h1>
+          <p className="text-gray-500 text-sm font-medium">{t('paymentsSubtitle')}</p>
         </div>
         <div className="flex items-center space-x-3">
           <button 
@@ -175,30 +175,30 @@ export default function PaymentsPage() {
             className="flex items-center space-x-2 px-5 py-2.5 bg-[#FF6B35] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#FF6B35]/20 hover:scale-105 transition-all active:scale-95"
           >
             <Plus size={18} />
-            <span>Add Payment</span>
+            <span>{t('addPayment')}</span>
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SummaryCard 
-          title="Total Sales" 
-          value={`$${stats.totalRevenue.toLocaleString()}`} 
+          title={t('totalSales')} 
+          value={`SAR ${stats.totalRevenue.toLocaleString()}`} 
           icon={<DollarSign size={24} />} 
           color="bg-shielder-dark" 
           description="Total money made so far"
           onClick={() => setFilters(prev => ({ ...prev, status: 'PAID' }))}
         />
         <SummaryCard 
-          title="Today's Sales" 
-          value={`$${stats.todayRevenue.toLocaleString()}`} 
+          title={t('todaysSales')} 
+          value={`SAR ${stats.todayRevenue.toLocaleString()}`} 
           icon={<Plus size={24} />} 
           color="bg-shielder-secondary" 
           description="Money made today"
           onClick={() => setFilters(prev => ({ ...prev, status: 'PAID' }))}
         />
         <SummaryCard 
-          title="Unpaid" 
+          title={t('unpaidLabel')} 
           value={stats.pendingPayments} 
           icon={<Clock size={24} />} 
           color="bg-orange-500" 
@@ -206,7 +206,7 @@ export default function PaymentsPage() {
           onClick={() => setFilters(prev => ({ ...prev, status: 'PENDING' }))}
         />
         <SummaryCard 
-          title="Failed" 
+          title={t('failedPaymentsLabel')} 
           value={stats.failedPayments} 
           icon={<XCircle size={24} />} 
           color="bg-red-500" 
@@ -222,7 +222,7 @@ export default function PaymentsPage() {
             <input 
               type="text"
               name="search"
-              placeholder="Search Order #, ID, or Customer..."
+              placeholder={t('searchPayments')}
               className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-shielder-primary/20 focus:outline-none text-sm font-medium transition-all"
               value={filters.search}
               onChange={handleFilterChange}
@@ -235,11 +235,11 @@ export default function PaymentsPage() {
               value={filters.status}
               onChange={handleFilterChange}
             >
-              <option value="">All Statuses</option>
-              <option value="PAID">Paid</option>
-              <option value="PENDING">Pending</option>
-              <option value="FAILED">Failed</option>
-              <option value="REFUNDED">Refunded</option>
+              <option value="">{t('allStatuses')}</option>
+              <option value="PAID">{t('payPaid')}</option>
+              <option value="PENDING">{t('pending')}</option>
+              <option value="FAILED">{t('payFailed')}</option>
+              <option value="REFUNDED">{t('payRefunded')}</option>
             </select>
             <select 
               name="method"
@@ -247,11 +247,11 @@ export default function PaymentsPage() {
               value={filters.method}
               onChange={handleFilterChange}
             >
-              <option value="">All Methods</option>
-              <option value="CASH">Cash</option>
-              <option value="BANK_TRANSFER">Bank Transfer</option>
-              <option value="CREDIT_CARD">Credit Card</option>
-              <option value="ONLINE_GATEWAY">Online Gateway</option>
+              <option value="">{t('allMethods')}</option>
+              <option value="CASH">{t('methodCash')}</option>
+              <option value="BANK_TRANSFER">{t('methodBankTransfer')}</option>
+              <option value="CREDIT_CARD">{t('methodCreditCard')}</option>
+              <option value="ONLINE_GATEWAY">{t('methodOnlineGateway')}</option>
             </select>
             <input 
               type="date"
@@ -276,12 +276,12 @@ export default function PaymentsPage() {
           <table className="w-full text-left">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-400">Payment Info</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-400">Order and Customer</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-400">Payment Method</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-400 text-right">Amount</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-400">Status</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-400">Action</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-400">{t('paymentInfoCol')}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-400">{t('orderAndCustomer')}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-400">{t('paymentMethod')}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-400 text-right">{t('amountCol')}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-400">{t('status')}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-wider text-gray-400">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -293,7 +293,7 @@ export default function PaymentsPage() {
                 ))
               ) : payments.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400 font-medium">No payment records found.</td>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400 font-medium">{t('noPaymentsFound')}</td>
                 </tr>
               ) : (
                 payments.map((payment) => (
@@ -301,7 +301,7 @@ export default function PaymentsPage() {
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="text-xs font-black text-shielder-dark uppercase tracking-tight">#{payment.id.slice(0, 8)}</span>
-                        <span className="text-[10px] text-gray-400 font-mono mt-0.5">{payment.transactionId || 'No Transaction ID'}</span>
+                        <span className="text-[10px] text-gray-400 font-mono mt-0.5">{payment.transactionId || t('noTransactionId')}</span>
                         <span className="text-[10px] text-gray-500 font-medium mt-1">{format(new Date(payment.createdAt), 'MMM dd, yyyy HH:mm')}</span>
                       </div>
                     </td>
@@ -349,7 +349,7 @@ export default function PaymentsPage() {
 
         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
           <div className="text-xs text-gray-500 font-medium italic">
-            Showing <span className="font-bold text-shielder-dark">{payments.length}</span> of <span className="font-bold text-shielder-dark">{pagination.total}</span> records
+            {t('showing')} <span className="font-bold text-shielder-dark">{payments.length}</span> {t('of')} <span className="font-bold text-shielder-dark">{pagination.total}</span> {t('records')}
           </div>
           <div className="flex items-center space-x-2">
             <button 
@@ -359,7 +359,7 @@ export default function PaymentsPage() {
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="text-xs font-black text-shielder-dark px-2 uppercase tracking-tighter">PAGE {pagination.page} OF {pagination.totalPages}</span>
+            <span className="text-xs font-black text-shielder-dark px-2 uppercase tracking-tighter">{t('page').toUpperCase()} {pagination.page} {t('of').toUpperCase()} {pagination.totalPages}</span>
             <button 
               disabled={pagination.page === pagination.totalPages}
               onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
@@ -377,7 +377,7 @@ export default function PaymentsPage() {
           <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden">
             <div className="p-6 bg-[#FF6B35] text-white flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-black uppercase tracking-tight">Add New Payment</h2>
+                <h2 className="text-xl font-black uppercase tracking-tight">{t('addNewPayment')}</h2>
                 <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mt-1">Enter payment details below</p>
               </div>
               <button onClick={() => setShowRecordModal(false)} className="text-white/50 hover:text-white transition-colors">
@@ -388,7 +388,7 @@ export default function PaymentsPage() {
             <form onSubmit={handleRecordPayment} className="p-8 space-y-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Choose Order *</label>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{t('chooseOrder')} *</label>
                   <select 
                     required
                     name="orderId"
@@ -403,19 +403,19 @@ export default function PaymentsPage() {
                       }));
                     }}
                   >
-                    <option value="">Choose an order...</option>
+                    <option value="">{t('chooseAnOrder')}</option>
                     {orders.map(order => (
                       <option key={order.id} value={order.id}>
                         {order.orderNumber} - {order.customerName} (<span className="inline-flex items-center gap-0.5"><SARSymbol />{Number(order.total).toFixed(2)}</span>)
                       </option>
                     ))}
                   </select>
-                  {loadingOrders && <p className="text-xs text-gray-400 mt-1 italic">Loading orders...</p>}
+                  {loadingOrders && <p className="text-xs text-gray-400 mt-1 italic">{t('loadingOrdersList')}</p>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Amount ($) *</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{t('amountCol')} *</label>
                     <input 
                       required
                       type="number"
@@ -427,25 +427,25 @@ export default function PaymentsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Method *</label>
+                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{t('paymentMethod')} *</label>
                     <select 
                       required
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-shielder-primary/20 focus:outline-none text-sm font-medium"
                       value={formData.method}
                       onChange={(e) => setFormData(prev => ({ ...prev, method: e.target.value }))}
                     >
-                      <option value="CASH">Cash</option>
-                      <option value="BANK_TRANSFER">Bank Transfer</option>
-                      <option value="CREDIT_CARD">Credit Card</option>
-                      <option value="DEBIT_CARD">Debit Card</option>
-                      <option value="ONLINE_GATEWAY">Online Gateway</option>
-                      <option value="WALLET">Wallet</option>
+                      <option value="CASH">{t('methodCash')}</option>
+                      <option value="BANK_TRANSFER">{t('methodBankTransfer')}</option>
+                      <option value="CREDIT_CARD">{t('methodCreditCard')}</option>
+                      <option value="DEBIT_CARD">{t('methodDebitCard')}</option>
+                      <option value="ONLINE_GATEWAY">{t('methodOnlineGateway')}</option>
+                      <option value="WALLET">{t('methodWallet')}</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Transaction ID (Optional)</label>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{t('transactionIdOptional')}</label>
                   <input 
                     type="text"
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-shielder-primary/20 focus:outline-none text-sm font-mono"
@@ -456,7 +456,7 @@ export default function PaymentsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Notes</label>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">{t('paymentNotes')}</label>
                   <textarea 
                     rows={3}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-shielder-primary/20 focus:outline-none text-sm font-medium"
@@ -473,13 +473,13 @@ export default function PaymentsPage() {
                   onClick={() => setShowRecordModal(false)}
                   className="flex-1 px-6 py-4 border border-gray-200 text-gray-500 font-black text-[10px] uppercase tracking-widest rounded-2xl hover:bg-gray-50 transition-all"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button 
                   type="submit"
                   className="flex-1 px-6 py-4 bg-[#FF6B35] text-white font-black text-[10px] uppercase tracking-widest rounded-2xl shadow-xl shadow-[#FF6B35]/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center space-x-2"
                 >
-                  <span>Confirm Payment</span>
+                  <span>{t('confirmPayment')}</span>
                   <ArrowRight size={14} />
                 </button>
               </div>

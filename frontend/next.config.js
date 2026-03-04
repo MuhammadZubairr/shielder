@@ -10,6 +10,26 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // ── Compiler optimisations ──────────────────────────────────────────────
+  compiler: {
+    // Strip console.* calls in production builds
+    removeConsole: process.env.NODE_ENV === 'production'
+      ? { exclude: ['error', 'warn'] }
+      : false,
+  },
+
+  // ── Barrel-file / package-level tree-shaking ────────────────────────────
+  // These packages export hundreds/thousands of symbols from a single entry
+  // file.  Without this flag Next.js compiles every symbol on every page,
+  // ballooning the module count and compile time.
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',   // ~1 300 icons — biggest offender
+      'recharts',       // many chart primitives
+      'date-fns',       // large utility belt
+    ],
+  },
+
   // Image optimisation — serve modern formats and cache aggressively
   images: {
     formats: ['image/avif', 'image/webp'],

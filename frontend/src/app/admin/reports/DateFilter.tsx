@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Calendar, ChevronDown, RefreshCcw } from 'lucide-react';
+import { Calendar, RefreshCcw } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { ReportDateRange } from './types';
 

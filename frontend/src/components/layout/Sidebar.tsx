@@ -2,10 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   BarChart3,
-  Box,
   Layers,
   Users,
   Bell,
@@ -27,6 +26,7 @@ import {
   AlertCircle,
   PieChart
 } from 'lucide-react';
+import Image from 'next/image';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useDashboard } from '@/contexts/DashboardContext';
@@ -39,63 +39,73 @@ function cn(...inputs: ClassValue[]) {
 }
 
 interface MenuItem {
-  name: string;
+  nameKey: string;
   icon: React.ElementType;
   href?: string;
   badge?: boolean;
-  children?: { name: string; href: string; icon: React.ElementType }[];
+  children?: { nameKey: string; href: string; icon: React.ElementType }[];
 }
 
 const superAdminMenuItems: MenuItem[] = [
-  { name: 'Dashboard', icon: LayoutDashboard, href: '/superadmin/dashboard' },
-  { name: 'Admins', icon: ShieldCheck, href: '/superadmin/admins' },
-  { name: 'Categories', icon: FolderTree, href: '/superadmin/categories' },
-  { name: 'Subcategories', icon: Layers, href: '/superadmin/subcategories' },
-  { name: 'Products', icon: Package, href: '/superadmin/products' },
-  { name: 'Orders', icon: ShoppingCart, href: '/superadmin/orders' },
-  { name: 'Users', icon: Users, href: '/superadmin/users' },
-  { name: 'Payments', icon: Wallet, href: '/superadmin/payments' },
+  { nameKey: 'dashboard',      icon: LayoutDashboard, href: '/superadmin/dashboard' },
+  { nameKey: 'admins',         icon: ShieldCheck,     href: '/superadmin/admins' },
+  { nameKey: 'categories',     icon: FolderTree,      href: '/superadmin/categories' },
+  { nameKey: 'subcategories',  icon: Layers,          href: '/superadmin/subcategories' },
+  { nameKey: 'products',       icon: Package,         href: '/superadmin/products' },
+  { nameKey: 'orders',         icon: ShoppingCart,    href: '/superadmin/orders' },
+  { nameKey: 'users',          icon: Users,           href: '/superadmin/users' },
+  { nameKey: 'payments',       icon: Wallet,          href: '/superadmin/payments' },
   {
-    name: 'Quotations',
+    nameKey: 'quotations',
     icon: FileText,
     children: [
-      { name: 'All Quotations', href: '/superadmin/quotations', icon: FileText },
-      { name: 'Create Quotation', href: '/superadmin/quotations/create', icon: PlusCircle },
-      { name: 'Draft Quotations', href: '/superadmin/quotations/drafts', icon: Clock },
-      { name: 'Expired Quotations', href: '/superadmin/quotations/expired', icon: AlertCircle },
-      { name: 'Quotation Reports', href: '/superadmin/quotations/reports', icon: PieChart },
+      { nameKey: 'allQuotations',    href: '/superadmin/quotations',         icon: FileText },
+      { nameKey: 'createQuotation',  href: '/superadmin/quotations/create',  icon: PlusCircle },
+      { nameKey: 'draftQuotations',  href: '/superadmin/quotations/drafts',  icon: Clock },
+      { nameKey: 'expired',          href: '/superadmin/quotations/expired', icon: AlertCircle },
+      { nameKey: 'quotationReports', href: '/superadmin/quotations/reports', icon: PieChart },
     ]
   },
-  { name: 'Reports', icon: BarChart3, href: '/superadmin/reports' },
-  { name: 'Notifications', icon: Bell, href: '/superadmin/notifications', badge: true },
-  { name: 'Settings', icon: Settings, href: '/superadmin/settings' },
+  { nameKey: 'reports',        icon: BarChart3, href: '/superadmin/reports' },
+  { nameKey: 'notifications',  icon: Bell,      href: '/superadmin/notifications', badge: true },
+  { nameKey: 'settings',       icon: Settings,  href: '/superadmin/settings' },
 ];
 
-const adminMenuItems: MenuItem[] = [
-  { name: 'Dashboard', icon: LayoutDashboard, href: '/admin' },
-  { name: 'Approvals', icon: ShieldCheck, href: '/admin/approvals' },
-  { name: 'Inventory', icon: Box, href: '/admin/categories' },
-  { name: 'Low Stock', icon: Package, href: '/admin/low-stock' },
-  { name: 'Users', icon: Users, href: '/admin/users' },
-  { name: 'Analytics', icon: BarChart3, href: '/admin/analytics' },
+// Admin menu kept for prefetch reference only (admin panel uses AdminSidebar.tsx)
+const adminMenuItemsForPrefetch = [
+  '/admin/dashboard', '/admin/categories', '/admin/subcategories', '/admin/products',
+  '/admin/orders', '/admin/users', '/admin/quotations', '/admin/quotations/create',
+  '/admin/quotations/drafts', '/admin/quotations/expired', '/admin/quotations/reports',
+  '/admin/reports', '/admin/notifications', '/admin/settings',
 ];
 
 export const Sidebar = () => {
   const { sidebarCollapsed: collapsed, toggleSidebar, isMobileOpen, setIsMobileOpen } = useDashboard();
-  const { isRTL } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
   const [expandedMenus, setExpandedMenus] = useState<string[]>(
     // Auto-expand if a quotation path is active
-    pathname.includes('/superadmin/quotations') ? ['Quotations'] : []
+    pathname.includes('/superadmin/quotations') ? ['quotations'] : []
   );
 
-  const menuItems = user?.role === 'SUPER_ADMIN' ? superAdminMenuItems : adminMenuItems;
+  const menuItems = superAdminMenuItems;
 
-  const toggleExpanded = (name: string) => {
+  // Prefetch every sidebar route on mount so clicking any nav item is instant
+  useEffect(() => {
+    const routes: string[] = [...adminMenuItemsForPrefetch];
+    superAdminMenuItems.forEach(item => {
+      if (item.href) routes.push(item.href);
+      item.children?.forEach(c => routes.push(c.href));
+    });
+    routes.forEach(r => router.prefetch(r));
+  }, [router]);
+
+  const toggleExpanded = (nameKey: string) => {
     setExpandedMenus(prev =>
-      prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+      prev.includes(nameKey) ? prev.filter(n => n !== nameKey) : [...prev, nameKey]
     );
   };
 
@@ -126,7 +136,7 @@ export const Sidebar = () => {
   if (user?.role !== 'SUPER_ADMIN' && user?.role !== 'ADMIN') return null;
 
   const handleLogout = async () => {
-    if (window.confirm('Are you sure you want to logout?')) {
+    if (window.confirm(t('logoutConfirm'))) {
       await logout();
     }
   };
@@ -135,35 +145,48 @@ export const Sidebar = () => {
     <div className="flex flex-col h-full">
       {/* Logo Section */}
       <div className={cn(
-        "pt-8 px-6 pb-6 transition-all duration-300",
-        collapsed ? "px-4 flex flex-col items-center" : "px-6"
+        "py-2 transition-all duration-300",
+        collapsed ? "px-2 flex flex-col items-center gap-2" : "px-6"
       )}>
-        <div className="flex items-center justify-between mb-4 w-full">
-          <div className={cn(
-            "flex items-center space-x-2 transition-all duration-300",
-            collapsed ? "opacity-0 invisible w-0" : "opacity-100 visible w-auto"
-          )}>
-            <span className="text-xl font-black text-gray-800 tracking-[0.1em]">
-              SHIELDER
-            </span>
-          </div>
-
-          {/* Desktop Toggle Button */}
-          <button
-            onClick={toggleSidebar}
-            className={cn(
-              "hidden lg:flex p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all duration-300",
-              collapsed ? "mx-auto" : ""
-            )}
-          >
-            {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-          </button>
-        </div>
-        {!collapsed && <div className="h-[1px] w-full bg-gray-200" />}
-        {collapsed && (
-          <div className="w-8 h-8 rounded-lg bg-[#FF6B35] flex items-center justify-center text-white font-black text-xs">
-            S
-          </div>
+        {collapsed ? (
+          <>
+            <div className="flex items-center justify-center w-full">
+              <Image
+                src="/images/shielder collapsed image.png"
+                alt="Shielder"
+                width={44}
+                height={44}
+                className="object-contain"
+                priority
+              />
+            </div>
+            <button
+              onClick={toggleSidebar}
+              className="hidden lg:flex p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all duration-300"
+            >
+              {isRTL ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+            </button>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between w-full">
+              <Image
+                src="/images/Shielder new logo.png"
+                alt="Shielder"
+                width={150}
+                height={50}
+                className="object-contain h-auto"
+                priority
+              />
+              <button
+                onClick={toggleSidebar}
+                className="hidden lg:flex p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all duration-300"
+              >
+                {isRTL ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              </button>
+            </div>
+            <div className="h-[1px] w-full bg-gray-200 mt-2" />
+          </>
         )}
       </div>
 
@@ -175,12 +198,13 @@ export const Sidebar = () => {
         {menuItems.map((item) => {
           // Group item with children
           if (item.children) {
-            const isExpanded = expandedMenus.includes(item.name);
+            const isExpanded = expandedMenus.includes(item.nameKey);
             const isGroupActive = item.children.some(c => pathname === c.href || pathname.startsWith(c.href + '/'));
+            const label = t(item.nameKey);
             return (
-              <div key={item.name}>
+              <div key={item.nameKey}>
                 <button
-                  onClick={() => !collapsed && toggleExpanded(item.name)}
+                  onClick={() => !collapsed && toggleExpanded(item.nameKey)}
                   className={cn(
                     'w-full flex items-center py-3 rounded-lg transition-all duration-300 group relative',
                     collapsed ? 'justify-center px-0' : 'px-4',
@@ -188,17 +212,17 @@ export const Sidebar = () => {
                       ? 'bg-[#FF6B35] text-white shadow-md'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   )}
-                  title={collapsed ? item.name : ''}
+                  title={collapsed ? label : ''}
                 >
                   <item.icon
                     size={20}
                     className={cn('min-w-[20px]', isGroupActive ? 'text-white scale-110' : 'text-gray-500 group-hover:text-gray-900')}
                   />
                   <span className={cn(
-                    'ml-4 font-medium transition-all duration-500 whitespace-nowrap flex-1 text-left',
-                    collapsed ? 'opacity-0 invisible w-0 ml-0 overflow-hidden' : 'opacity-100 visible w-auto'
+                    'ms-4 font-medium transition-all duration-500 whitespace-nowrap flex-1 text-start',
+                    collapsed ? 'opacity-0 invisible w-0 ms-0 overflow-hidden' : 'opacity-100 visible w-auto'
                   )}>
-                    {item.name}
+                    {label}
                   </span>
                   {!collapsed && (
                     <ChevronDown
@@ -209,8 +233,9 @@ export const Sidebar = () => {
                 </button>
                 {/* Sub-items */}
                 {isExpanded && !collapsed && (
-                  <div className="ml-4 mt-1 space-y-1">
+                  <div className={cn('ms-4 mt-1 space-y-1', isRTL ? 'border-r border-gray-200 ps-3' : 'border-l border-gray-200 ps-3')}>
                     {item.children.map(child => {
+                      const childLabel = t(child.nameKey);
                       const isChildActive = pathname === child.href || pathname.startsWith(child.href + '/');
                       return (
                         <Link
@@ -221,12 +246,12 @@ export const Sidebar = () => {
                           className={cn(
                             'flex items-center py-2 px-3 rounded-lg text-sm transition-all duration-200 group',
                             isChildActive
-                              ? 'bg-[#FF6B35]/10 text-[#FF6B35] font-semibold border-l-3 border-[#FF6B35]'
+                              ? 'bg-[#FF6B35]/10 text-[#FF6B35] font-semibold'
                               : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                           )}
                         >
-                          <child.icon size={15} className="min-w-[15px] mr-3" />
-                          <span className="whitespace-nowrap">{child.name}</span>
+                          <child.icon size={15} className="min-w-[15px] me-3" />
+                          <span className="whitespace-nowrap">{childLabel}</span>
                         </Link>
                       );
                     })}
@@ -238,6 +263,7 @@ export const Sidebar = () => {
 
           // Regular item
           const isActive = pathname === item.href;
+          const label = t(item.nameKey);
           return (
             <Link
               key={item.href}
@@ -251,7 +277,7 @@ export const Sidebar = () => {
                   ? 'bg-[#FF6B35] text-white shadow-md'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               )}
-              title={collapsed ? item.name : ''}
+              title={collapsed ? label : ''}
             >
               <item.icon
                 size={20}
@@ -261,19 +287,19 @@ export const Sidebar = () => {
                 )}
               />
               <span className={cn(
-                'ml-4 font-medium transition-all duration-500 whitespace-nowrap',
+                'ms-4 font-medium transition-all duration-500 whitespace-nowrap',
                 isActive ? 'text-white font-bold' : '',
-                collapsed ? 'opacity-0 invisible w-0 ml-0 overflow-hidden' : 'opacity-100 visible w-auto'
+                collapsed ? 'opacity-0 invisible w-0 ms-0 overflow-hidden' : 'opacity-100 visible w-auto'
               )}>
-                {item.name}
+                {label}
               </span>
 
               {item.badge && unreadCount > 0 && (
                 <span className={cn(
                   'absolute bg-red-500 text-white text-[10px] font-bold rounded-full text-center transition-all duration-300',
                   collapsed
-                    ? 'top-2 right-2 w-2 h-2 p-0'
-                    : 'right-4 px-1.5 py-0.5 min-w-[20px]'
+                    ? 'top-2 end-2 w-2 h-2 p-0'
+                    : 'end-4 px-1.5 py-0.5 min-w-[20px]'
                 )}>
                   {collapsed ? '' : (unreadCount > 99 ? '99+' : unreadCount)}
                 </span>
@@ -294,14 +320,14 @@ export const Sidebar = () => {
             "w-full flex items-center rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-300 group",
             collapsed ? "justify-center px-0 py-3" : "px-4 py-3"
           )}
-          title={collapsed ? "Logout" : ""}
+          title={collapsed ? t('logout') : ""}
         >
-          <LogOut size={20} className="group-hover:translate-x-1 transition-transform" />
+          <LogOut size={20} className={cn("transition-transform", isRTL ? "group-hover:-translate-x-1" : "group-hover:translate-x-1")} />
           <span className={cn(
-            "ml-4 font-medium transition-all duration-300",
-            collapsed ? "opacity-0 invisible w-0 ml-0" : "opacity-100 visible w-auto"
+            "ms-4 font-medium transition-all duration-300",
+            collapsed ? "opacity-0 invisible w-0 ms-0" : "opacity-100 visible w-auto"
           )}>
-            Logout
+            {t('logout')}
           </span>
         </button>
       </div>
@@ -314,7 +340,7 @@ export const Sidebar = () => {
       <aside
         className={cn(
           "hidden lg:flex fixed top-0 h-screen bg-white text-gray-700 z-50 flex-col shadow-[2px_0_8px_rgba(0,0,0,0.08)] transition-all duration-300 border-r border-gray-100",
-          isRTL ? "right-0 border-l border-r-0" : "left-0",
+          isRTL ? "right-0 border-l border-r-0 shadow-[-2px_0_8px_rgba(0,0,0,0.08)]" : "left-0",
           collapsed ? "w-[72px]" : "w-[260px]"
         )}
       >

@@ -16,8 +16,10 @@ import {
 import { orderService } from '@/services/order.service';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function OrdersPage() {
+  const { t, isRTL } = useLanguage();
   const [orders, setOrders] = useState([]);
   const [summary, setSummary] = useState({
     totalOrders: 0,
@@ -90,12 +92,12 @@ export default function OrdersPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+      {/* Header */}}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">Order Management</h1>
-          <p className="text-gray-500 text-sm font-medium">Monitor and process industrial transactions across the network.</p>
+          <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">{t('ordersTitle')}</h1>
+          <p className="text-gray-500 text-sm font-medium">{t('ordersSubtitle')}</p>
         </div>
         <div className="flex items-center space-x-3">
           <button 
@@ -110,28 +112,28 @@ export default function OrdersPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SummaryCard 
-          title="Total Orders" 
+          title={t('totalOrders')} 
           value={summary.totalOrders} 
           icon={<TrendingUp size={24} />} 
           color="bg-shielder-dark" 
           description="Cumulative system volume"
         />
         <SummaryCard 
-          title="Pending Review" 
+          title={t('pendingOrders')} 
           value={summary.pendingOrders} 
           icon={<Clock size={24} />} 
           color="bg-shielder-secondary" 
           description="Awaiting processing"
         />
         <SummaryCard 
-          title="Completed" 
+          title={t('completedOrders')} 
           value={summary.completedOrders} 
           icon={<CheckCircle2 size={24} />} 
           color="bg-green-500" 
           description="Successfully fulfilled"
         />
         <SummaryCard 
-          title="Cancelled/Lost" 
+          title={t('cancelledOrders')} 
           value={summary.cancelledOrders} 
           icon={<XCircle size={24} />} 
           color="bg-red-500" 
@@ -147,7 +149,7 @@ export default function OrdersPage() {
             <input 
               type="text"
               name="search"
-              placeholder="Search by Order ID or Customer..."
+              placeholder={t('searchOrders')}
               className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-shielder-primary/20 focus:outline-none text-sm font-medium transition-all"
               value={filters.search}
               onChange={handleFilterChange}
@@ -160,12 +162,12 @@ export default function OrdersPage() {
               value={filters.status}
               onChange={handleFilterChange}
             >
-              <option value="">All Statuses</option>
-              <option value="PENDING">Pending</option>
-              <option value="PROCESSING">Processing</option>
-              <option value="SHIPPED">Shipped</option>
-              <option value="DELIVERED">Delivered</option>
-              <option value="CANCELLED">Cancelled</option>
+              <option value="">{t('allStatuses')}</option>
+              <option value="PENDING">{t('pending')}</option>
+              <option value="PROCESSING">{t('processing')}</option>
+              <option value="SHIPPED">{t('shipped')}</option>
+              <option value="DELIVERED">{t('delivered')}</option>
+              <option value="CANCELLED">{t('cancelled')}</option>
             </select>
             <select 
               name="paymentStatus"
@@ -173,10 +175,10 @@ export default function OrdersPage() {
               value={filters.paymentStatus}
               onChange={handleFilterChange}
             >
-              <option value="">All Payment</option>
-              <option value="PAID">Paid</option>
-              <option value="UNPAID">Unpaid</option>
-              <option value="REFUNDED">Refunded</option>
+              <option value="">{t('allPaymentStatuses')}</option>
+              <option value="PAID">{t('payPaid')}</option>
+              <option value="UNPAID">{t('payUnpaid')}</option>
+              <option value="REFUNDED">{t('payRefunded')}</option>
             </select>
             <input 
               type="date"
@@ -202,13 +204,13 @@ export default function OrdersPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Order ID</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Customer</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Items</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Order Total</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Payment Status</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Order Status</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('orderID')}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('customer')}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('productsLabel')}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('orderTotal')}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('paymentStatus')}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('orderStatus')}</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -217,7 +219,7 @@ export default function OrdersPage() {
               ) : orders.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-gray-400 font-medium">
-                    No orders found matching your criteria.
+                    {t('noOrdersFound')}
                   </td>
                 </tr>
               ) : (
@@ -281,7 +283,7 @@ export default function OrdersPage() {
         {/* Pagination */}
         <div className="px-6 py-4 bg-gray-50/50 flex items-center justify-between border-t border-gray-100">
           <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-            Page {pagination.page} of {pagination.pages}
+            {t('page')} {pagination.page} {t('of')} {pagination.pages}
           </span>
           <div className="flex items-center space-x-2">
             <button 

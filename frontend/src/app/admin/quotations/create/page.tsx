@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Plus, Trash2, Search, Package, Save, Send, Loader2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Search, Package, Save, Send, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import quotationService from '@/services/quotation.service';
 import apiClient from '@/services/api.service';

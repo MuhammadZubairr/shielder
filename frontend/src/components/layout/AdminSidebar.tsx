@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   FolderTree,
@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import Image from 'next/image';
 import { useDashboard } from '@/contexts/DashboardContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -70,12 +71,23 @@ const adminMenuItems: MenuItem[] = [
 export const AdminSidebar = () => {
   const { sidebarCollapsed: collapsed, toggleSidebar, isMobileOpen, setIsMobileOpen } = useDashboard();
   const pathname = usePathname();
+  const router = useRouter();
   const { logout } = useAuth();
   const { t, isRTL } = useLanguage();
   const [unreadCount, setUnreadCount] = useState(0);
   const [expandedMenus, setExpandedMenus] = useState<string[]>(
     pathname.includes('/admin/quotations') ? ['quotations'] : []
   );
+
+  // Prefetch every sidebar route on mount so clicking any nav item is instant
+  useEffect(() => {
+    const routes: string[] = [];
+    adminMenuItems.forEach(item => {
+      if (item.href) routes.push(item.href);
+      item.children?.forEach(c => routes.push(c.href));
+    });
+    routes.forEach(r => router.prefetch(r));
+  }, [router]);
 
   const toggleExpanded = (nameKey: string) => {
     setExpandedMenus(prev =>
@@ -100,62 +112,55 @@ export const AdminSidebar = () => {
   }, []);
 
   const handleLogout = async () => {
-    if (window.confirm('Are you sure you want to logout?')) {
+    if (window.confirm(t('logoutConfirm'))) {
       await logout();
     }
   };
 
   const SidebarContent = (
-    <div className="flex flex-col h-full" style={{ background: 'linear-gradient(180deg, #0C1B33 0%, #112240 100%)' }}>
+    <div className="flex flex-col h-full bg-white text-gray-700">
       {/* Logo Section */}
-      <div className={cn('pt-7 pb-5 transition-all duration-300', collapsed ? 'px-3' : 'px-5')}>
-        <div className="flex items-center justify-between w-full">
-          {/* Logo */}
-          <div className={cn('flex items-center gap-2.5 transition-all duration-300 overflow-hidden', collapsed ? 'w-0 opacity-0 invisible' : 'w-auto opacity-100 visible')}>
-            {/* Shield icon */}
-            <div className="w-8 h-8 rounded-lg bg-[#FF6B35] flex items-center justify-center flex-shrink-0">
-              <svg width="16" height="18" viewBox="0 0 16 18" fill="none">
-                <path d="M8 0L0 3.27273V9.27273C0 13.4545 3.42667 17.3636 8 18C12.5733 17.3636 16 13.4545 16 9.27273V3.27273L8 0Z" fill="white"/>
-              </svg>
+      <div className={cn('py-2 transition-all duration-300', collapsed ? 'px-2 flex flex-col items-center gap-2' : 'px-6')}>
+        {collapsed ? (
+          <>
+            <div className="flex items-center justify-center w-full">
+              <Image
+                src="/images/shielder collapsed image.png"
+                alt="Shielder"
+                width={44}
+                height={44}
+                className="object-contain"
+                priority
+              />
             </div>
-            <div>
-              <span className="text-white font-black text-lg tracking-[0.15em] leading-tight block">SHIELDER</span>
-              <span className="text-[#FF6B35] text-[9px] font-bold uppercase tracking-[0.2em]">Admin Panel</span>
-            </div>
-          </div>
-
-          {/* Collapsed logo */}
-          {collapsed && (
-            <div className="w-9 h-9 rounded-lg bg-[#FF6B35] flex items-center justify-center mx-auto">
-              <svg width="16" height="18" viewBox="0 0 16 18" fill="none">
-                <path d="M8 0L0 3.27273V9.27273C0 13.4545 3.42667 17.3636 8 18C12.5733 17.3636 16 13.4545 16 9.27273V3.27273L8 0Z" fill="white"/>
-              </svg>
-            </div>
-          )}
-
-          {/* Desktop toggle — flip chevron for RTL */}
-          {!collapsed && (
             <button
               onClick={toggleSidebar}
-              className="hidden lg:flex p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all"
-              aria-label="Collapse sidebar"
+              className="hidden lg:flex p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all duration-300"
             >
-              {isRTL ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+              {isRTL ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
             </button>
-          )}
-        </div>
-
-        {collapsed && (
-          <button
-            onClick={toggleSidebar}
-            className="hidden lg:flex mt-4 mx-auto p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/60 hover:text-white transition-all"
-            aria-label="Expand sidebar"
-          >
-            {isRTL ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-          </button>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between w-full">
+              <Image
+                src="/images/Shielder new logo.png"
+                alt="Shielder"
+                width={150}
+                height={50}
+                className="object-contain h-auto"
+                priority
+              />
+              <button
+                onClick={toggleSidebar}
+                className="hidden lg:flex p-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 transition-all duration-300"
+              >
+                {isRTL ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              </button>
+            </div>
+            <div className="h-[1px] w-full bg-gray-200 mt-2" />
+          </>
         )}
-
-        {!collapsed && <div className="mt-5 h-px w-full bg-white/10" />}
       </div>
 
       {/* Navigation */}
@@ -177,13 +182,13 @@ export const AdminSidebar = () => {
                     'w-full flex items-center py-3 rounded-xl transition-all duration-200 group',
                     collapsed ? 'justify-center px-2' : 'px-3',
                     isGroupActive
-                      ? 'bg-[#FF6B35] text-white shadow-lg shadow-[#FF6B35]/30'
-                      : 'text-white/60 hover:bg-white/10 hover:text-white'
+                      ? 'bg-[#FF6B35] text-white shadow-md'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   )}
                   title={collapsed ? label : ''}
                   aria-expanded={isExpanded}
                 >
-                  <item.icon size={19} className={cn('shrink-0', isGroupActive ? 'text-white' : 'text-white/60 group-hover:text-white')} />
+                  <item.icon size={19} className={cn('shrink-0', isGroupActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-900')} />
                   <span className={cn(
                     'ms-3 text-sm font-semibold whitespace-nowrap flex-1 text-start transition-all duration-300',
                     collapsed ? 'opacity-0 invisible w-0 ms-0 overflow-hidden' : 'opacity-100 visible'
@@ -191,11 +196,11 @@ export const AdminSidebar = () => {
                     {label}
                   </span>
                   {!collapsed && (
-                    <ChevronDown size={13} className={cn('text-white/40 transition-transform duration-300', isExpanded ? 'rotate-180' : '')} />
+                    <ChevronDown size={13} className={cn('text-gray-400 transition-transform duration-300', isExpanded ? 'rotate-180' : '')} />
                   )}
                 </button>
                 {isExpanded && !collapsed && (
-                  <div className={cn('ms-3 mt-0.5 space-y-0.5 ps-4', isRTL ? 'border-r border-white/10' : 'border-l border-white/10')}>
+                  <div className={cn('ms-3 mt-0.5 space-y-0.5 ps-4', isRTL ? 'border-r border-gray-200' : 'border-l border-gray-200')}>
                     {item.children.map(child => {
                       const childLabel = t(child.nameKey);
                       const isActive = pathname === child.href || pathname.startsWith(child.href + '/');
@@ -207,8 +212,8 @@ export const AdminSidebar = () => {
                           className={cn(
                             'flex items-center py-2 px-3 rounded-lg text-xs transition-all duration-200',
                             isActive
-                              ? 'bg-white/15 text-white font-semibold'
-                              : 'text-white/50 hover:bg-white/10 hover:text-white'
+                              ? 'bg-[#FF6B35]/10 text-[#FF6B35] font-semibold'
+                              : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                           )}
                         >
                           <child.icon size={13} className="me-2.5 shrink-0" />
@@ -234,15 +239,15 @@ export const AdminSidebar = () => {
                 'flex items-center py-3 rounded-xl transition-all duration-200 group relative',
                 collapsed ? 'justify-center px-2' : 'px-3',
                 isActive
-                  ? 'bg-[#FF6B35] text-white shadow-lg shadow-[#FF6B35]/30'
-                  : 'text-white/60 hover:bg-white/10 hover:text-white'
+                  ? 'bg-[#FF6B35] text-white shadow-md'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               )}
               title={collapsed ? label : ''}
               aria-current={isActive ? 'page' : undefined}
             >
               <item.icon
                 size={19}
-                className={cn('shrink-0 transition-all', isActive ? 'text-white' : 'text-white/60 group-hover:text-white')}
+                className={cn('shrink-0 transition-all', isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-900')}
               />
               <span className={cn(
                 'ms-3 text-sm font-semibold whitespace-nowrap transition-all duration-300',
@@ -265,11 +270,11 @@ export const AdminSidebar = () => {
       </nav>
 
       {/* Logout */}
-      <div className={cn('pb-6 border-t border-white/10 transition-all duration-300', collapsed ? 'px-2 pt-3' : 'px-3 pt-3')}>
+      <div className={cn('bg-gray-50 border-t border-gray-200 transition-all duration-300', collapsed ? 'px-2 pt-3 pb-3' : 'px-3 pt-3 pb-4')}>
         <button
           onClick={handleLogout}
           className={cn(
-            'w-full flex items-center py-3 rounded-xl text-white/50 hover:bg-red-500/20 hover:text-red-400 transition-all group',
+            'w-full flex items-center py-3 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-300 group',
             collapsed ? 'justify-center px-2' : 'px-3'
           )}
           title={collapsed ? t('logout') : ''}
@@ -308,11 +313,11 @@ export const AdminSidebar = () => {
               ? 'translate-x-0'
               : isRTL ? 'translate-x-full' : '-translate-x-full'
           )}
-          style={{ background: 'linear-gradient(180deg, #0C1B33 0%, #112240 100%)' }}
+          className="bg-white"
         >
           <button
             onClick={() => setIsMobileOpen(false)}
-            className="absolute top-6 end-4 text-white/60 hover:text-white p-1.5"
+            className="absolute top-6 end-4 text-gray-500 hover:text-gray-900 p-1.5"
             aria-label="Close menu"
           >
             <X size={22} />

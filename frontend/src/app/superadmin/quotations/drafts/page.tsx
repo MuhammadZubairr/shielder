@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { FileText, Eye, Edit3, Send, Clock, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { FileText, Eye, Edit3, Send, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import quotationService from '@/services/quotation.service';
 import { format } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function DraftQuotationsPage() {
+    const { t, isRTL } = useLanguage();
     const [quotations, setQuotations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -31,11 +33,11 @@ export default function DraftQuotationsPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div>
-                    <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">Draft Quotations</h1>
-                    <p className="text-gray-500 text-sm">All quotations saved as drafts — not yet sent to customers.</p>
+                    <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">{t('draftQuotationsTitle')}</h1>
+                    <p className="text-gray-500 text-sm">{t('draftQuotationsSubtitle')}</p>
                 </div>
                 <Link href="/superadmin/quotations/create" className="flex items-center gap-2 px-4 py-2.5 bg-[#FF6B35] text-white rounded-xl font-bold text-sm shadow-lg shadow-[#FF6B35]/20 hover:bg-[#FF5722] transition-colors">
                     <Plus size={16} />New Quotation

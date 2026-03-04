@@ -7,18 +7,15 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Lock, ChevronLeft, Shield, User, Phone, Building2, MapPin, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ChevronLeft, User, Phone, Building2, MapPin, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ROUTES, VALIDATION_RULES, LOCALES, STORAGE_KEYS } from '@/utils/constants';
+import { ROUTES, VALIDATION_RULES, STORAGE_KEYS } from '@/utils/constants';
 import type { RegisterRequest } from '@/types';
 
 export default function RegisterPage() {
-  // Company logo is not fetched here to avoid triggering protected API endpoints
-  // for unauthenticated users (which would cause a false 'Session Expired' redirect).
-  const companyLogo = null;
   const { register, isSubmitting } = useAuth();
   const { isAuthenticated, user, isLoading } = useAuthStore();
   const router = useRouter();

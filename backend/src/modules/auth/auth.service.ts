@@ -27,9 +27,12 @@ import type {
 /**
  * Authentication Service Class
  */
+// Simple in-memory cache for security settings (TTL: 5 minutes)
+let _secSettingsCache: { value: { maxLoginAttempts: number; lockDurationMinutes: number; passwordMinLength: number; forceStrongPasswords: boolean }; expiresAt: number } | null = null;
+
 export class AuthService {
   // Constants
-  private static readonly SALT_ROUNDS = 12;
+  private static readonly SALT_ROUNDS = 10;
   private static readonly RESET_TOKEN_EXPIRY_MINUTES = 15;
   private static readonly VERIFICATION_TOKEN_EXPIRY_HOURS = 24;
 
@@ -37,14 +40,20 @@ export class AuthService {
    * Load security settings from DB (with safe defaults if not configured)
    */
   private static async getSecuritySettings() {
+    const now = Date.now();
+    if (_secSettingsCache && now < _secSettingsCache.expiresAt) {
+      return _secSettingsCache.value;
+    }
     try {
       const s = await (prisma as any).systemSettings.findUnique({ where: { id: 'CURRENT' } });
-      return {
+      const value = {
         maxLoginAttempts: s?.maxLoginAttempts ?? 5,
         lockDurationMinutes: s?.accountLockDurationMinutes ?? 30,
         passwordMinLength: s?.passwordMinLength ?? 8,
         forceStrongPasswords: s?.forceStrongPasswords ?? true,
       };
+      _secSettingsCache = { value, expiresAt: now + 5 * 60 * 1000 };
+      return value;
     } catch {
       return { maxLoginAttempts: 5, lockDurationMinutes: 30, passwordMinLength: 8, forceStrongPasswords: true };
     }
@@ -228,8 +237,8 @@ export class AuthService {
         },
       });
 
-      // NEW: Audit Log for User Login
-      await AuditService.log({
+      // Fire-and-forget audit log — do not await; keeps login response fast
+      AuditService.log({
         userId: user.id,
         action: 'USER_LOGIN',
         entityType: 'USER',
@@ -249,12 +258,6 @@ export class AuthService {
       );
 
       logger.info(`User logged in: ${user.email}`);
-
-      // Create audit log
-      await this.createAuditLog(user.id, 'LOGIN', 'User logged in successfully', {
-        ipAddress: deviceInfo?.ipAddress,
-        userAgent: deviceInfo?.userAgent,
-      });
 
       return {
         user: this.sanitizeUser(user),
@@ -295,8 +298,8 @@ export class AuthService {
       const tokenHash = TokenService.hashToken(refreshToken);
       await TokenService.revokeToken(tokenHash, 'logout');
 
-      // Create audit log
-      await this.createAuditLog(userId, 'LOGOUT', 'User logged out');
+      // Fire-and-forget audit log
+      this.createAuditLog(userId, 'LOGOUT', 'User logged out');
 
       logger.info(`User logged out: ${userId}`);
     } catch (error) {
@@ -313,8 +316,8 @@ export class AuthService {
       // Revoke all refresh tokens for user
       await TokenService.revokeAllUserTokens(userId, 'logout_all');
 
-      // Create audit log
-      await this.createAuditLog(userId, 'LOGOUT_ALL', 'User logged out from all devices');
+      // Fire-and-forget audit log
+      this.createAuditLog(userId, 'LOGOUT_ALL', 'User logged out from all devices');
 
       logger.info(`User logged out from all devices: ${userId}`);
     } catch (error) {
@@ -655,7 +658,8 @@ export class AuthService {
 
       logger.warn(`Account locked due to failed login attempts: ${userId}`);
 
-      await this.createAuditLog(userId, 'ACCOUNT_LOCKED', 'Account locked due to failed login attempts');
+      // Fire-and-forget audit log
+      this.createAuditLog(userId, 'ACCOUNT_LOCKED', 'Account locked due to failed login attempts');
     } else {
       // Increment attempts
       await prisma.user.update({

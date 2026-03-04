@@ -4,14 +4,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Bell, 
   Search, 
-  Filter, 
   Trash2, 
   CheckCheck, 
   AlertTriangle, 
   Package, 
   CreditCard,
   Settings,
-  MoreVertical,
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -19,7 +17,6 @@ import {
   X,
   User,
   Activity,
-  Calendar,
   Layers,
   Info,
   RefreshCcw,
@@ -28,8 +25,10 @@ import {
 import { format, formatDistanceToNow } from 'date-fns';
 import notificationService, { Notification, NotificationPreference } from '@/services/notification.service';
 import { toast } from 'react-hot-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function NotificationsPage() {
+  const { t, isRTL } = useLanguage();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'preferences'>('all');
@@ -85,7 +84,7 @@ export default function NotificationsPage() {
         pages: data.pagination.totalPages 
       }));
     } catch (err) {
-      toast.error('Failed to load notifications');
+      toast.error(t('notifFetchFailed'));
     } finally {
       setLoading(false);
     }
@@ -211,12 +210,12 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen font-sans">
+    <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen font-sans" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* 🧭 1️⃣ Top Section – Overview Cards */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-black text-shielder-dark tracking-tight uppercase">Notification Center</h1>
-          <p className="text-gray-500 text-sm font-medium">Enterprise Monitoring & Audit Dashboard</p>
+          <h1 className="text-3xl font-black text-shielder-dark tracking-tight uppercase">{t('notificationsTitle')}</h1>
+          <p className="text-gray-500 text-sm font-medium">{t('notificationsSubtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -224,7 +223,7 @@ export default function NotificationsPage() {
             className="hidden md:flex items-center px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-black uppercase tracking-widest text-shielder-dark hover:bg-gray-50 transition-all shadow-sm"
           >
             <Settings size={16} className="mr-2" />
-            Manage Settings
+            {t('notifManageSettings')}
           </button>
           <button 
             onClick={() => fetchNotifications()}
@@ -237,10 +236,10 @@ export default function NotificationsPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Total Notifications', value: stats.total, icon: <Bell />, color: 'blue', type: '' },
-          { label: 'Unread Notifications', value: stats.unread, icon: <Clock />, color: 'amber', type: 'unread' },
-          { label: 'System Alerts', value: stats.system, icon: <Activity />, color: 'purple', type: 'SYSTEM_ALERT' },
-          { label: 'Low Stock Alerts', value: stats.lowStock, icon: <AlertTriangle />, color: 'red', type: 'LOW_STOCK' },
+          { label: t('notifTotalNotifications'), value: stats.total, icon: <Bell />, color: 'blue', type: '' },
+          { label: t('notifUnreadNotifications'), value: stats.unread, icon: <Clock />, color: 'amber', type: 'unread' },
+          { label: t('notifSystemAlerts'), value: stats.system, icon: <Activity />, color: 'purple', type: 'SYSTEM_ALERT' },
+          { label: t('notifLowStockAlerts'), value: stats.lowStock, icon: <AlertTriangle />, color: 'red', type: 'LOW_STOCK' },
         ].map((card, i) => (
           <div 
             key={i}
@@ -278,7 +277,7 @@ export default function NotificationsPage() {
                 activeTab === 'all' ? 'bg-white text-shielder-primary shadow-sm' : 'text-gray-400 hover:text-shielder-dark'
               }`}
             >
-              Notifications
+              {t('notifTabNotifications')}
             </button>
             <button 
               onClick={() => setActiveTab('preferences')}
@@ -286,7 +285,7 @@ export default function NotificationsPage() {
                 activeTab === 'preferences' ? 'bg-white text-shielder-primary shadow-sm' : 'text-gray-400 hover:text-shielder-dark'
               }`}
             >
-              Audit Settings
+              {t('notifTabAuditSettings')}
             </button>
           </div>
 
@@ -296,7 +295,7 @@ export default function NotificationsPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                 <input 
                   type="text"
-                  placeholder="Search alerts..."
+                  placeholder={t('notifSearchPlaceholder')}
                   value={filters.search}
                   onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))}
                   className="pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm w-full md:w-64 focus:ring-2 focus:ring-shielder-primary outline-none transition-all"
@@ -307,7 +306,7 @@ export default function NotificationsPage() {
                 onChange={(e) => setFilters(f => ({ ...f, module: e.target.value }))}
                 className="px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none font-bold text-gray-600"
               >
-                <option value="">All Modules</option>
+                <option value="">{t('notifAllModules')}</option>
                 <option value="ORDER">Orders</option>
                 <option value="INVENTORY">Inventory</option>
                 <option value="PAYMENT">Payments</option>
@@ -318,7 +317,7 @@ export default function NotificationsPage() {
                 onClick={handleMarkAllRead}
                 className="flex items-center px-4 py-2.5 bg-emerald-50 text-emerald-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-100 transition-all"
               >
-                <CheckCheck size={16} className="mr-2" /> Mark all read
+                <CheckCheck size={16} className="mr-2" /> {t('notifMarkAllRead')}
               </button>
             </div>
           )}
@@ -329,14 +328,14 @@ export default function NotificationsPage() {
           <div className="p-12">
             <div className="max-w-4xl mx-auto">
               <div className="mb-10">
-                <h2 className="text-xl font-black text-shielder-dark uppercase tracking-tight">Audit & Security Preferences</h2>
-                <p className="text-sm text-gray-500 font-medium">Configure how system-wide alerts are delivered and monitored.</p>
+                <h2 className="text-xl font-black text-shielder-dark uppercase tracking-tight">{t('notifAuditPreferencesTitle')}</h2>
+                <p className="text-sm text-gray-500 font-medium">{t('notifAuditPreferencesDesc')}</p>
               </div>
 
               {prefLoading ? (
                 <div className="flex flex-col items-center justify-center py-20">
                   <Loader2 className="animate-spin text-shielder-primary mb-4" size={40} />
-                  <p className="text-xs font-black uppercase text-gray-400">Loading Configuration...</p>
+                  <p className="text-xs font-black uppercase text-gray-400">{t('notifLoadingConfig')}</p>
                 </div>
               ) : !preferences ? (
                 <div className="p-10 bg-red-50 text-red-600 rounded-3xl text-center">
@@ -418,12 +417,12 @@ export default function NotificationsPage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50/50">
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Notification ID</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Identity & Source</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Context</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Timestamp</th>
-                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Actions</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('notifIdCol')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('notifIdentityCol')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('notifContextCol')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('status')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">{t('createdAt')}</th>
+                  <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">{t('actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -438,8 +437,8 @@ export default function NotificationsPage() {
                     <td colSpan={6} className="px-6 py-32 text-center">
                       <div className="flex flex-col items-center">
                         <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-gray-300 mb-4"><Bell size={40} /></div>
-                        <h4 className="text-lg font-black text-shielder-dark uppercase tracking-tight">Zero Activity Found</h4>
-                        <p className="text-gray-400 text-sm max-w-xs mt-2">No notifications found matching your current filter criteria.</p>
+                        <h4 className="text-lg font-black text-shielder-dark uppercase tracking-tight">{t('notifEmpty')}</h4>
+                        <p className="text-gray-400 text-sm max-w-xs mt-2">{t('notifEmptyHint')}</p>
                         <button onClick={() => setFilters({ search: '', type: '', module: '', read: undefined })} className="mt-6 text-shielder-primary text-xs font-black uppercase tracking-widest hover:underline">Reset Filters</button>
                       </div>
                     </td>
@@ -516,7 +515,7 @@ export default function NotificationsPage() {
         {activeTab !== 'preferences' && pagination.pages > 1 && (
           <div className="p-6 bg-gray-50/50 border-t border-gray-50 flex items-center justify-between">
             <p className="text-xs font-black uppercase tracking-widest text-gray-400">
-              Page <span className="text-shielder-dark">{pagination.page}</span> of {pagination.pages}
+              {t('page')} <span className="text-shielder-dark">{pagination.page}</span> {t('of')} {pagination.pages}
             </p>
             <div className="flex gap-2">
               <button 

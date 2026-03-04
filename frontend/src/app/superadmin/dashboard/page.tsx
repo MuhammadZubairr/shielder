@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { 
-  Users, 
   Package, 
   ShoppingCart, 
   TrendingUp, 
@@ -10,7 +9,6 @@ import {
   ArrowRight,
   RefreshCcw,
   CheckCircle2,
-  Calendar,
   Layers,
   Activity as ActivityIcon,
   BadgeAlert,
@@ -19,6 +17,7 @@ import {
 import adminService from '@/services/admin.service';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Recharts is ~500 KB parsed — lazy-load it so it doesn't block the initial
 // dashboard paint. The charts appear after the stats cards are already visible.
@@ -66,6 +65,7 @@ interface Activity {
 }
 
 export default function SuperAdminDashboard() {
+  const { t, isRTL } = useLanguage();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [lowStock, setLowStock] = useState<LowStockProduct[]>([]);
   const [analytics, setAnalytics] = useState<MonthlyAnalytic[]>([]);
@@ -89,7 +89,7 @@ export default function SuperAdminDashboard() {
       setAnalytics(analyticsRes.data.data);
       setActivities(activityRes.data.data);
     } catch (err: any) {
-      setError('Failed to refresh system dashboard data. Please check your connection.');
+      setError(t('fetchError'));
     } finally {
       setLoading(false);
     }
@@ -109,32 +109,32 @@ export default function SuperAdminDashboard() {
         <div className="bg-red-50 p-4 rounded-full mb-4">
           <BadgeAlert className="text-red-500" size={48} />
         </div>
-        <h3 className="text-xl font-bold" style={{color:'var(--color-tertiary)'}}>Data Fetch Error</h3>
+        <h3 className="text-xl font-bold" style={{color:'var(--color-tertiary)'}}>{t('dataFetchError')}</h3>
         <p className="text-gray-500 mt-2 text-center max-w-md">{error}</p>
         <button 
           onClick={fetchData}
           className="mt-6 flex items-center gap-2 px-6 py-3 btn-secondary rounded-xl font-semibold"
         >
           <RefreshCcw size={18} />
-          Retry Connection
+          {t('retryBtn')}
         </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-800">Overview</h1>
-          <p className="text-gray-500 mt-1">Real-time status of Shielder marketplace</p>
+          <h1 className="text-3xl font-extrabold text-gray-800">{t('overviewTitle')}</h1>
+          <p className="text-gray-500 mt-1">{t('saOverviewSubtitle')}</p>
         </div>
         <button 
           onClick={fetchData}
           className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all font-medium text-gray-700 bg-white"
         >
           <RefreshCcw size={16} />
-          Refresh
+          {t('refreshBtn')}
         </button>
       </div>
 
@@ -146,7 +146,7 @@ export default function SuperAdminDashboard() {
               <div className="bg-[#DC2626] p-2 rounded-lg text-white">
                 <AlertTriangle size={24} />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">Low Stock Alerts</h2>
+              <h2 className="text-xl font-bold text-gray-800">{t('lowStockAlerts')}</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -161,8 +161,8 @@ export default function SuperAdminDashboard() {
                         <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-[10px] font-black rounded uppercase">LOW</span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 mb-1">Supplier: <span className="text-gray-700 font-medium">{product.brand?.name || 'N/A'}</span></p>
-                    <p className="text-sm font-semibold">Stock: <span className={product.stock <= 2 ? 'text-red-500' : 'text-yellow-700'}>{product.stock} units</span></p>
+                    <p className="text-xs text-gray-500 mb-1">{t('supplierLabel')}: <span className="text-gray-700 font-medium">{product.brand?.name || 'N/A'}</span></p>
+                    <p className="text-sm font-semibold">{t('stock')}: <span className={product.stock <= 2 ? 'text-red-500' : 'text-yellow-700'}>{product.stock} {t('stockUnits')}</span></p>
                   </div>
                 </div>
               ))}
@@ -173,7 +173,7 @@ export default function SuperAdminDashboard() {
                 href="/superadmin/products?filter=lowstock"
                 className="flex items-center gap-2 text-sm font-bold text-[#DC2626] hover:underline"
               >
-                Manage Inventory
+                {t('manageInventory')}
                 <ArrowRight size={14} />
               </Link>
             </div>
@@ -184,8 +184,8 @@ export default function SuperAdminDashboard() {
               <CheckCircle2 size={24} />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-[#DC2626]">Low Stock Alert</h2>
-              <p className="text-gray-600">This area shows products that are low in stock and need attention.</p>
+              <h2 className="text-xl font-bold text-[#DC2626]">{t('lowStockAlerts')}</h2>
+              <p className="text-gray-600">{t('lowStockAreaDesc')}</p>
             </div>
           </div>
         )}
@@ -194,31 +194,31 @@ export default function SuperAdminDashboard() {
       {/* 4. DASHBOARD STATISTICS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatsCard 
-          label="Total Products" 
+          label={t('totalProducts')} 
           value={(summary?.totalProducts ?? 0).toLocaleString()} 
           icon={Package}
           bgColor="#5B5FC7"
         />
         <StatsCard 
-          label="Total Stock" 
+          label={t('totalStock')} 
           value={(summary?.totalStock ?? 0).toLocaleString()} 
           icon={Layers}
           bgColor="#374151"
         />
         <StatsCard 
-          label="Inventory Value" 
-          value={`${(summary?.inventoryValue ?? 0).toLocaleString()} SAR`} 
+          label={t('inventoryValue')} 
+          value={`${(summary?.inventoryValue ?? 0).toLocaleString()} ${t('sarCurrency')}`} 
           icon={TrendingUp}
           bgColor="#FF6B35"
         />
         <StatsCard 
-          label="Total Revenue" 
-          value={`${(summary?.totalRevenue ?? 0).toLocaleString()} SAR`} 
+          label={t('totalRevenue')} 
+          value={`${(summary?.totalRevenue ?? 0).toLocaleString()} ${t('sarCurrency')}`} 
           icon={ShoppingCart}
           bgColor="#5B5FC7"
         />
         <StatsCard 
-          label="Total Categories" 
+          label={t('totalCategories')} 
           value={(summary?.totalCategories ?? 0).toLocaleString()} 
           icon={ActivityIcon}
           bgColor="#374151"
@@ -232,7 +232,7 @@ export default function SuperAdminDashboard() {
             <div className="bg-blue-50 p-2 rounded-lg text-[#5B5FC7]">
               <TrendingUp size={20} />
             </div>
-            <h3 className="font-bold text-gray-800 text-lg">Sales Graph</h3>
+            <h3 className="font-bold text-gray-800 text-lg">{t('salesGraph')}</h3>
           </div>
           <div className="flex-1 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -242,7 +242,7 @@ export default function SuperAdminDashboard() {
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#6B7280', fontSize: 12}} />
                 <Tooltip 
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  formatter={((value: any) => [`${(Number(value) || 0).toLocaleString()} SAR`, 'Revenue']) as any}
+                  formatter={((value: any) => [`${(Number(value) || 0).toLocaleString()} ${t('sarCurrency')}`, t('revenueLabel')]) as any}
                 />
                 <Line 
                   type="monotone" 
@@ -270,7 +270,7 @@ export default function SuperAdminDashboard() {
             <div className="bg-blue-50 p-2 rounded-lg text-[#5B5FC7]">
               <Layers size={20} />
             </div>
-            <h3 className="font-bold text-gray-800 text-lg">Order Trend</h3>
+            <h3 className="font-bold text-gray-800 text-lg">{t('orderTrend')}</h3>
           </div>
           <div className="flex-1 w-full">
             <ResponsiveContainer width="100%" height="100%">
@@ -294,7 +294,7 @@ export default function SuperAdminDashboard() {
           <div className="bg-gray-50 p-2 rounded-lg text-gray-700">
             <ActivityIcon size={20} />
           </div>
-          <h3 className="font-bold text-gray-800 text-lg">Monitoring Log</h3>
+          <h3 className="font-bold text-gray-800 text-lg">{t('monitoringLog')}</h3>
         </div>
         
         <div className="space-y-4">
@@ -319,7 +319,7 @@ export default function SuperAdminDashboard() {
           )) : (
             <div className="text-center py-10 text-gray-400">
               <RefreshCcw className="mx-auto mb-2 opacity-20" size={32} />
-              <p>No recent activity detected</p>
+              <p>{t('noRecentActivity')}</p>
             </div>
           )}
         </div>

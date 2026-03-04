@@ -31,6 +31,7 @@ import adminService from '@/services/admin.service';
 import { toast } from 'react-hot-toast';
 import { getImageUrl } from '@/utils/helpers';
 import { ApiErrorResponse } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // --- Types ---
 interface Product {
@@ -78,6 +79,7 @@ interface Supplier {
 }
 
 const ProductManagement = () => {
+  const { t, isRTL } = useLanguage();
   // Data State
   const [products, setProducts] = useState<Product[]>([]);
   const [summary, setSummary] = useState({
@@ -464,24 +466,24 @@ const ProductManagement = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0205A6]"></div>
-        <p className="text-[#0A1E36] font-bold animate-pulse">Initializing Inventory Engine...</p>
+        <p className="text-[#0A1E36] font-bold animate-pulse">{t('initializingInventory')}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* 1. Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-[#0A1E36] tracking-tight">Product Management</h1>
-          <p className="text-gray-500 text-sm italic font-medium">Manage marketplace inventory, approvals, and stock levels</p>
+          <h1 className="text-2xl font-black text-[#0A1E36] tracking-tight">{t('productMgmtTitle')}</h1>
+          <p className="text-gray-500 text-sm italic font-medium">{t('productMgmtSubtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
             onClick={() => fetchData()}
             className="p-2.5 text-gray-500 hover:text-[#0205A6] bg-white border border-gray-200 rounded-xl hover:shadow-sm transition-all active:scale-95"
-            title="Refresh Data"
+            title={t('refreshBtn')}
           >
             <RefreshCcw size={18} className={refreshing ? 'animate-spin' : ''} />
           </button>
@@ -490,14 +492,14 @@ const ProductManagement = () => {
             className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-white text-slate-700 border border-slate-200 rounded-[10px] hover:bg-slate-50 transition-all font-semibold shadow-sm active:scale-95"
           >
             <Upload size={18} />
-            Bulk Upload
+            {t('bulkUpload')}
           </button>
           <button 
             onClick={() => { resetForm(); setShowAddEditModal(true); }}
             className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#FF6B35] text-white rounded-[10px] hover:bg-[#FF5722] transition-all font-semibold shadow-md active:scale-95"
           >
             <Plus size={18} />
-            Add Product
+            {t('addProduct')}
           </button>
         </div>
       </div>
@@ -505,10 +507,10 @@ const ProductManagement = () => {
       {/* 2. Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Total Products', value: summary.totalProducts, icon: Package, color: '#0A1E36' },
-          { label: 'Active Products', value: summary.activeProducts, icon: CheckCircle2, color: '#16A34A' },
-          { label: 'Pending Approval', value: summary.pendingApproval, icon: AlertTriangle, color: '#FACC15' },
-          { label: 'Low Stock Items', value: summary.lowStockProducts, icon: Layers, color: summary.lowStockProducts > 0 ? '#DC2626' : '#16A34A' },
+          { label: t('totalProducts'), value: summary.totalProducts, icon: Package, color: '#0A1E36' },
+          { label: t('activeProducts'), value: summary.activeProducts, icon: CheckCircle2, color: '#16A34A' },
+          { label: t('pendingApproval'), value: summary.pendingApproval, icon: AlertTriangle, color: '#FACC15' },
+          { label: t('lowStockProducts'), value: summary.lowStockProducts, icon: Layers, color: summary.lowStockProducts > 0 ? '#DC2626' : '#16A34A' },
         ].map((card, i) => (
           <div key={i} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-md transition-all duration-300">
             <div>
@@ -529,7 +531,7 @@ const ProductManagement = () => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#0205A6] transition-colors" size={18} />
             <input
               type="text"
-              placeholder="Search by product name or supplier..."
+              placeholder={t('searchProducts')}
               className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0205A6] focus:border-transparent transition-all text-sm font-medium"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -541,7 +543,7 @@ const ProductManagement = () => {
               value={categoryFilter}
               onChange={(e) => { setCategoryFilter(e.target.value); setSubcategoryFilter(''); }}
             >
-              <option value="">All Categories</option>
+              <option value="">{t('allCategories')}</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <select 
@@ -550,7 +552,7 @@ const ProductManagement = () => {
               onChange={(e) => setSubcategoryFilter(e.target.value)}
               disabled={!categoryFilter}
             >
-              <option value="">{categoryFilter ? 'All Subcategories' : 'Select Category first'}</option>
+              <option value="">{categoryFilter ? t('allSubcategories') : t('selectCategoryFirst')}</option>
               {subcategories.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
             <select 
@@ -558,10 +560,10 @@ const ProductManagement = () => {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="">All Statuses</option>
-              <option value="PUBLISHED">Approved</option>
-              <option value="PENDING">Pending</option>
-              <option value="REJECTED">Rejected</option>
+              <option value="">{t('allStatuses')}</option>
+              <option value="PUBLISHED">{t('approved')}</option>
+              <option value="PENDING">{t('pending')}</option>
+              <option value="REJECTED">{t('rejected')}</option>
             </select>
           </div>
         </div>
@@ -573,13 +575,13 @@ const ProductManagement = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Product</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Category / Sub</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Supplier</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Price (SAR)</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Stock</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('productCol')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('categorySubCol')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('supplierLabel')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('productPrice')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">{t('stockCol')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('status')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

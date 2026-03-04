@@ -1,18 +1,47 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
-
+// keyword is matched against the category name from the DB (case-insensitive)
 const CATEGORIES = [
-  { nameKey: 'landingCat1Name', descKey: 'landingCat1Desc', countKey: 'landingCat1ProductCount', image: '/images/landing/factory-1.png', href: '/products?category=air' },
-  { nameKey: 'landingCat2Name', descKey: 'landingCat2Desc', countKey: 'landingCat2ProductCount', image: '/images/landing/factory-2.png', href: '/products?category=diesel' },
-  { nameKey: 'landingCat3Name', descKey: 'landingCat3Desc', countKey: 'landingCat3ProductCount', image: '/images/landing/factory-3.png', href: '/products?category=oil' },
+  { nameKey: 'landingCat1Name', descKey: 'landingCat1Desc', keyword: 'air',    image: '/images/landing/product-cat-1.jpeg', href: '/products?category=air' },
+  { nameKey: 'landingCat2Name', descKey: 'landingCat2Desc', keyword: 'diesel', image: '/images/landing/product-cat-2.jpeg', href: '/products?category=diesel' },
+  { nameKey: 'landingCat3Name', descKey: 'landingCat3Desc', keyword: 'oil',    image: '/images/landing/product-cat-3.jpeg', href: '/products?category=oil' },
 ];
 
 export default function ProductCategoriesSection() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, locale } = useLanguage();
+  const [counts, setCounts] = useState<(number | null)[]>([null, null, null]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api').replace(/\/$/, '');
+        const res  = await fetch(`${apiUrl}/inventory/categories?limit=100&locale=${locale || 'en'}`);
+        const json = await res.json();
+        const cats: { name: string; _count?: { products?: number } }[] =
+          json?.categories ?? json?.data ?? [];
+
+        const resolved = CATEGORIES.map(({ keyword }) => {
+          const match = cats.find(c =>
+            c.name?.toLowerCase().includes(keyword.toLowerCase())
+          );
+          return match?._count?.products ?? null;
+        });
+        setCounts(resolved);
+      } catch {
+        // silently fall back to translation strings
+      }
+    })();
+  }, [locale]);
+
+  const countLabel = (idx: number): string => {
+    const n = counts[idx];
+    if (n === null) return t(`landingCat${idx + 1}ProductCount`);
+    return isRTL ? `+${n} منتج` : `${n}+ Products`;
+  };
 
   return (
     <section className="py-24 bg-[#0205A6]" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -50,7 +79,7 @@ export default function ProductCategoriesSection() {
               {/* Body */}
               <div className={`p-6 flex flex-col gap-2 ${isRTL ? 'text-right' : 'text-left'}`}>
                 {/* Count badge */}
-                <span className="text-[#F97316] text-xs font-semibold">{t(cat.countKey)}</span>
+                <span className="text-[#F97316] text-xs font-semibold">{countLabel(i)}</span>
                 <h3 className="text-gray-900 font-bold text-xl">{t(cat.nameKey)}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed mb-3">{t(cat.descKey)}</p>
                 {/* View Product button */}
@@ -69,3 +98,4 @@ export default function ProductCategoriesSection() {
     </section>
   );
 }
+

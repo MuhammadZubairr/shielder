@@ -1,5 +1,4 @@
 "use client";
-import settingsService from '@/services/settings.service';
 /**
  * Login Page
  * User login form with Arabic/English support
@@ -8,7 +7,7 @@ import settingsService from '@/services/settings.service';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Lock, ChevronLeft, Shield, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, ChevronLeft, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/auth.store';
@@ -18,9 +17,6 @@ import type { LoginRequest } from '@/types';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
-    // Use static logo for login page (public, no API call)
-    const companyLogo = null; // or set to "/images/company-logo.png" if you have a static logo
-
     // Clear auth state if session expired
     useEffect(() => {
       const params = new URLSearchParams(window.location.search);
@@ -46,6 +42,50 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const { t, isRTL, locale, setLocale } = useLanguage();
   const redirectHandled = useRef(false);
+
+  // Kick off compilation of ALL panel pages the moment the login page mounts.
+  // This gives Next.js the maximum possible time to compile every route in
+  // the background while the user is still typing their credentials —
+  // so navigation is instant after login regardless of which item they click.
+  useEffect(() => {
+    const routes = [
+      // Superadmin
+      '/superadmin/dashboard',
+      '/superadmin/admins',
+      '/superadmin/categories',
+      '/superadmin/subcategories',
+      '/superadmin/products',
+      '/superadmin/orders',
+      '/superadmin/users',
+      '/superadmin/payments',
+      '/superadmin/quotations',
+      '/superadmin/quotations/create',
+      '/superadmin/quotations/drafts',
+      '/superadmin/quotations/expired',
+      '/superadmin/quotations/reports',
+      '/superadmin/reports',
+      '/superadmin/notifications',
+      '/superadmin/settings',
+      // Admin
+      '/admin/dashboard',
+      '/admin/categories',
+      '/admin/subcategories',
+      '/admin/products',
+      '/admin/orders',
+      '/admin/users',
+      '/admin/quotations',
+      '/admin/quotations/create',
+      '/admin/quotations/drafts',
+      '/admin/quotations/expired',
+      '/admin/quotations/reports',
+      '/admin/reports',
+      '/admin/notifications',
+      '/admin/settings',
+      // Customer
+      '/customer/dashboard',
+    ];
+    routes.forEach(r => router.prefetch(r));
+  }, [router]);
 
   const expired = searchParams.get('expired');
 

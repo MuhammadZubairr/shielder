@@ -11,7 +11,7 @@
  */
 
 import en from '../../public/locales/en.json';
-import ar from '../../public/locales/ar.json';
+import ar from '../../public/locales/ar.json'; // updated
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

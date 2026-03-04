@@ -70,9 +70,14 @@ function buildQuery(filters: ActiveFilters, page: number, tab: Tab, locale: stri
   return params;
 }
 
+// ── Module-level category cache (avoids refetch on every locale change) ───────
+// Keyed by locale so switching language still gets the right names.
+const _categoryCache: Record<string, Category[]> = {};
+
 // ── Product Card ──────────────────────────────────────────────────────────────
-function ProductCard({ product, tab, t, isRTL }: {
+function ProductCard({ product, tab, t, isRTL, isAuthenticated }: {
   product: Product; tab: Tab; t: (k: string) => string; isRTL: boolean;
+  isAuthenticated: boolean;
 }) {
   const rawImage = product.mainImage ?? product.images?.[0] ?? null;
   const image     = getImageUrl(rawImage) ?? PLACEHOLDER_IMAGE;
@@ -80,7 +85,6 @@ function ProductCard({ product, tab, t, isRTL }: {
   const original = Number(product.originalPrice ?? price * 1.2);
   const isQuotation = tab === 'quotation';
   const { addItem, loading: cartLoading } = useCart();
-  const { isAuthenticated } = useAuthStore();
   const router = useRouter();
 
   const handleAddToCart = () => {
@@ -598,6 +602,10 @@ function ProductsContent() {
   const [loading,    setLoading]    = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
 
+  // Single Zustand subscription at the page level — passed down as a plain prop
+  // so individual ProductCards don't each create their own store subscription.
+  const { isAuthenticated } = useAuthStore();
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── URL sync ──────────────────────────────────────────────────────────────
@@ -643,17 +651,23 @@ function ProductsContent() {
     return () => { cancelled = true; };
   }, [appliedFilters, page, activeTab, locale]);
 
-  // ── Fetch categories ──────────────────────────────────────────────────────
+  // ── Fetch categories (with module-level locale-keyed cache) ─────────────────
   useEffect(() => {
+    const key = locale || 'en';
+    if (_categoryCache[key]) {
+      setCategories(_categoryCache[key]);
+      return;
+    }
     (async () => {
       try {
-        const res  = await apiClient.get(`inventory/categories?limit=100&locale=${locale || 'en'}`);
+        const res  = await apiClient.get(`inventory/categories?limit=100&locale=${key}`);
         const data = res.data;
-        const cats = data?.categories ?? data?.data ?? [];
-        setCategories(cats.map((c: any) => ({
+        const cats: Category[] = (data?.categories ?? data?.data ?? []).map((c: any) => ({
           id:   c.id,
           name: c.name || c.translations?.[0]?.name || c.nameEn || 'Category',
-        })));
+        }));
+        _categoryCache[key] = cats;
+        setCategories(cats);
       } catch { /* optional */ }
     })();
   }, [locale]);
@@ -800,7 +814,7 @@ function ProductsContent() {
                       )}
                     </div>
                   )
-                : products.map(p => <ProductCard key={p.id} product={p} tab={activeTab} t={t} isRTL={isRTL} />)
+                : products.map(p => <ProductCard key={p.id} product={p} tab={activeTab} t={t} isRTL={isRTL} isAuthenticated={isAuthenticated} />)
             }
           </div>
 

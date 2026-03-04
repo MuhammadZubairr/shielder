@@ -11,20 +11,17 @@ import {
   FileText, 
   ShieldCheck, 
   AlertCircle,
-  RefreshCcw,
   CheckCircle2,
-  Trash2,
   Undo2
 } from 'lucide-react';
 import { paymentService, Payment } from '@/services/payment.service';
 import { format } from 'date-fns';
 import SARSymbol from '@/components/SARSymbol';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 
 export default function PaymentDetailsPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
   
   const [payment, setPayment] = useState<Payment | null>(null);

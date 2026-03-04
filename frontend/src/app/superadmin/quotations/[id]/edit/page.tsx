@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Save, Send, Plus, Trash2, Search, Package, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Send, Trash2, Search, Loader2 } from 'lucide-react';
 import quotationService from '@/services/quotation.service';
 import apiClient from '@/services/api.service';
 import SARSymbol from '@/components/SARSymbol';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CartItem {
     productId: string;
@@ -18,6 +19,7 @@ interface CartItem {
 }
 
 export default function EditQuotationPage() {
+    const { t, isRTL } = useLanguage();
     const { id } = useParams();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
@@ -133,11 +135,11 @@ export default function EditQuotationPage() {
     const today = new Date().toISOString().split('T')[0];
 
     return (
-        <div className="space-y-6 max-w-5xl mx-auto">
+        <div className="space-y-6 max-w-5xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
             <div className="flex items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <Link href={`/superadmin/quotations/${id}`} className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"><ArrowLeft size={18} /></Link>
                 <div>
-                    <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">Edit Quotation</h1>
+                    <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">{t('editQuotation')}</h1>
                     <p className="text-gray-500 text-sm">{quotation.quotationNumber}</p>
                 </div>
             </div>

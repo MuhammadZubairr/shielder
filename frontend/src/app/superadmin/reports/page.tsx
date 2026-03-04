@@ -36,10 +36,12 @@ import {
 import { format, subDays, startOfDay } from 'date-fns';
 import toast from 'react-hot-toast';
 import { ApiErrorResponse } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const COLORS = ['#1a1a1a', '#eab308', '#22c55e', '#ef4444', '#3b82f6', '#a855f7'];
 
 export default function ReportsDashboard() {
+  const { t, isRTL } = useLanguage();
   const [activeTab, setActiveTab] = useState('OVERVIEW');
   const [dateRange, setDateRange] = useState('30D');
   const [customRange, setCustomRange] = useState({ from: '', to: '' });
@@ -160,12 +162,12 @@ export default function ReportsDashboard() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
         <div>
-          <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">Enterprise Reports</h1>
-          <p className="text-gray-500 text-sm font-medium">Business intelligence and performance metrics.</p>
+          <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">{t('enterpriseReportsTitle')}</h1>
+          <p className="text-gray-500 text-sm font-medium">{t('enterpriseReportsSubtitle')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex bg-gray-100 p-1 rounded-xl">
@@ -316,12 +318,6 @@ export default function ReportsDashboard() {
       )}
     </div>
   );
-}
-
-// --- REPORT TABS ---
-
-interface TabProps {
-  data: any; // Using any for now to avoid breaking existing complex access patterns, but will type the record
 }
 
 function OverviewTab({ data }: { data: Record<string, any> | null }) {

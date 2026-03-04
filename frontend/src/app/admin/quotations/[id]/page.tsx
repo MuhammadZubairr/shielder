@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
     ArrowLeft, Edit3, Send, CheckCircle2, XCircle,
-    ArrowRightLeft, RotateCcw, Download, Printer,
-    Clock, FileText, Activity, Loader2, AlertTriangle
+    ArrowRightLeft, RotateCcw, Printer,
+    Clock, Activity, Loader2
 } from 'lucide-react';
 import quotationService from '@/services/quotation.service';
 import { format } from 'date-fns';
@@ -23,7 +23,6 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function ViewQuotationPage() {
     const { id } = useParams();
-    const router = useRouter();
     const [quotation, setQuotation] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState('');
@@ -43,7 +42,7 @@ export default function ViewQuotationPage() {
 
     useEffect(() => { fetchQuotation(); }, [id]);
 
-    const handleAction = async (action: string, payload?: any) => {
+    const handleAction = async (action: string) => {
         try {
             setActionLoading(action);
             if (action === 'send') await quotationService.send(id as string);
@@ -242,7 +241,7 @@ export default function ViewQuotationPage() {
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 print:hidden">
                 <h3 className="text-sm font-black uppercase tracking-widest text-shielder-dark mb-4 flex items-center gap-2"><Activity size={16} />Activity Timeline</h3>
                 <div className="space-y-3">
-                    {(quotation.activities || []).map((act: any, idx: number) => (
+                    {(quotation.activities || []).map((act: any) => (
                         <div key={act.id} className="flex items-start gap-3">
                             <div className="w-6 h-6 rounded-full bg-shielder-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                                 <Clock size={12} className="text-shielder-primary" />

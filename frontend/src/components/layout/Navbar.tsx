@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Menu, Moon, Sun } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Menu, Moon, Sun, Globe } from 'lucide-react';
 import { useDashboard } from '@/contexts/DashboardContext';
 import { usePathname } from 'next/navigation';
 import { NotificationDropdown } from './NotificationDropdown';
@@ -9,12 +9,16 @@ import { ProfileDropdown } from './ProfileDropdown';
 import { GlobalSearch } from './GlobalSearch';
 import { useAuth } from '@/hooks/useAuth';
 import profileService from '@/services/profile.service';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export const Navbar = () => {
   const { setIsMobileOpen, toggleSidebar, sidebarCollapsed } = useDashboard();
   const { user } = useAuth();
+  const { locale, setLocale, t } = useLanguage();
   const pathname = usePathname();
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
 
   // Dynamic Title Logic
   const getPageTitle = (path: string) => {
@@ -55,6 +59,17 @@ export const Navbar = () => {
       }
     }
   }, [user]);
+
+  // Close language menu on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setShowLangMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   const toggleDarkMode = async () => {
     const newMode = !isDarkMode;
@@ -120,6 +135,44 @@ export const Navbar = () => {
 
         {/* Notifications */}
         <NotificationDropdown />
+
+        {/* Language Switcher */}
+        <div className="relative" ref={langRef}>
+          <button
+            onClick={() => setShowLangMenu(v => !v)}
+            className="flex items-center gap-1.5 px-2.5 py-2 text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-xl text-xs font-bold transition-all"
+            title="Switch Language"
+          >
+            <Globe size={16} />
+            <span className="hidden sm:inline uppercase tracking-wide">{locale}</span>
+          </button>
+
+          {showLangMenu && (
+            <div className="absolute end-0 top-full mt-2 w-44 bg-white rounded-xl border border-gray-100 shadow-xl overflow-hidden z-50">
+              <div className="px-3 py-2 border-b border-gray-50">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('switchLanguage')}</p>
+              </div>
+              {[
+                { code: 'en' as const, label: 'English', native: 'English', flag: '🇬🇧' },
+                { code: 'ar' as const, label: 'Arabic',  native: 'العربية', flag: '🇸🇦' },
+              ].map(lang => (
+                <button
+                  key={lang.code}
+                  onClick={() => { setLocale(lang.code); setShowLangMenu(false); }}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors text-start ${locale === lang.code ? 'bg-shielder-primary/5' : ''}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base leading-none">{lang.flag}</span>
+                    <span className="text-sm font-semibold text-gray-700">{lang.native}</span>
+                  </div>
+                  {locale === lang.code && (
+                    <span className="w-2 h-2 rounded-full bg-shielder-primary" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Vertical Separator */}
         <div className="h-8 w-px bg-gray-100 hidden sm:block"></div>

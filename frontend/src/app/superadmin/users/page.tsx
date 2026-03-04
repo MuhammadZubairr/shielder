@@ -4,17 +4,11 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { 
   Users, 
   Search, 
-  Filter, 
-  MoreVertical, 
   Mail, 
-  Phone,
   UserCheck,
   UserX,
   RefreshCcw,
-  BadgeCheck,
   Calendar,
-  Plus,
-  ArrowUpRight,
   Shield,
   UserPlus,
   Lock,
@@ -27,8 +21,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 import adminService from '@/services/admin.service';
-import { UserRole } from '@/types';
 import { toast } from 'react-hot-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface UserStats {
   totalUsers: number;
@@ -38,6 +32,7 @@ interface UserStats {
 }
 
 export default function UserManagement() {
+  const { t, isRTL } = useLanguage();
   const [users, setUsers] = useState<any[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,7 +72,7 @@ export default function UserManagement() {
       setTotalPages(usersRes.pagination?.pages || 1);
       setStats(statsRes.data);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Failed to sync user directory');
+      toast.error(err.response?.data?.message || t('fetchUsersFailed'));
     } finally {
       setLoading(false);
     }
@@ -117,26 +112,26 @@ export default function UserManagement() {
     try {
       if (editingUser) {
         await adminService.updateUserAccount(editingUser.id, formData);
-        toast.success('User account updated successfully');
+        toast.success(t('userUpdated'));
       } else {
         await adminService.createUserAccount(formData);
-        toast.success('New user account has been provisioned');
+        toast.success(t('userCreated'));
       }
       setIsModalOpen(false);
       fetchData();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Operation failed');
+      toast.error(err.response?.data?.message || t('userCreateFailed'));
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to move this user to trash?')) return;
+    if (!window.confirm(t('confirmDeleteMsg'))) return;
     try {
       await adminService.deleteUserAccount(id);
-      toast.success('User has been moved to trash');
+      toast.success(t('userDeleted'));
       fetchData();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Delete failed');
+      toast.error(err.response?.data?.message || t('userDeleteFailed'));
     }
   };
 
@@ -152,30 +147,30 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-20" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">User Management</h1>
+            <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">{t('usersTitle')}</h1>
           </div>
-          <p className="text-gray-500 text-sm">Manage all user accounts and roles in the system.</p>
+          <p className="text-gray-500 text-sm">{t('userMgmtSubtitle')}</p>
         </div>
         <button 
           onClick={() => handleOpenModal()}
           className="flex items-center justify-center space-x-2 px-5 py-2.5 bg-shielder-dark text-white rounded-xl font-bold text-sm hover:bg-black transition-all shadow-lg shadow-black/10 group"
         >
           <UserPlus size={18} className="group-hover:scale-110 transition-transform" />
-          <span>Add New User</span>
+          <span>{t('addNewUser')}</span>
         </button>
       </div>
 
       {/* Modern Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Users', value: stats?.totalUsers || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Active Users', value: stats?.activeUsers || 0, icon: UserCheck, color: 'text-green-600', bg: 'bg-green-50' },
-          { label: 'Inactive Users', value: stats?.inactiveUsers || 0, icon: UserX, color: 'text-red-600', bg: 'bg-red-50' },
-          { label: 'Joined This Month', value: stats?.newlyRegistered || 0, icon: Clock, color: 'text-purple-600', bg: 'bg-purple-50' },
+          { label: t('totalUsers'), value: stats?.totalUsers || 0, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: t('activeUsers'), value: stats?.activeUsers || 0, icon: UserCheck, color: 'text-green-600', bg: 'bg-green-50' },
+          { label: t('inactiveUsers'), value: stats?.inactiveUsers || 0, icon: UserX, color: 'text-red-600', bg: 'bg-red-50' },
+          { label: t('joinedThisMonth'), value: stats?.newlyRegistered || 0, icon: Clock, color: 'text-purple-600', bg: 'bg-purple-50' },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center space-x-4">
             <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
@@ -195,7 +190,7 @@ export default function UserManagement() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input 
             type="text" 
-            placeholder="Search by name, email or mobile..."
+            placeholder={t('searchUsers')}
             className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-shielder-primary text-sm transition-all"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -207,18 +202,18 @@ export default function UserManagement() {
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
           >
-            <option value="">All Roles</option>
-            <option value="ADMIN">Admin</option>
-            <option value="USER">User (Customer)</option>
+            <option value="">{t('allRoles')}</option>
+            <option value="ADMIN">{t('roleAdmin')}</option>
+            <option value="USER">{t('roleCustomer')}</option>
           </select>
           <select 
             className="flex-1 md:flex-none px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-600 focus:outline-none"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="">All Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
+            <option value="">{t('allStatuses')}</option>
+            <option value="ACTIVE">{t('active')}</option>
+            <option value="INACTIVE">{t('inactive')}</option>
           </select>
           <button 
             onClick={() => {
@@ -241,12 +236,12 @@ export default function UserManagement() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">User Details</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">User Role</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Account Status</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Info</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Joined Date</th>
-                <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">Actions</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('usersColUser')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('userRole')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('accountStatus')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('usersColPhone')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('usersColJoined')}</th>
+                <th className="px-6 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -268,8 +263,8 @@ export default function UserManagement() {
                       <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                         <Users size={32} className="text-gray-200" />
                       </div>
-                      <p className="text-gray-900 font-black uppercase tracking-tight">No Accounts Found</p>
-                      <p className="text-gray-400 text-sm mt-1">Adjust your filters or provision a new user.</p>
+                      <p className="text-gray-900 font-black uppercase tracking-tight">{t('noAccountsFound')}</p>
+                      <p className="text-gray-400 text-sm mt-1">{t('adjustFiltersOrAdd')}</p>
                     </div>
                   </td>
                 </tr>
@@ -295,8 +290,8 @@ export default function UserManagement() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border ${getRoleBadge(user.role)}`}>
-                        {user.role === 'USER' ? 'User (Customer)' : 
-                         user.role === 'SUPER_ADMIN' ? 'Super Admin' : 
+                          {user.role === 'USER' ? t('roleCustomer') : 
+                         user.role === 'SUPER_ADMIN' ? t('roleSuperAdmin') : 
                          user.role?.replace('_', ' ')}
                       </span>
                     </td>
@@ -305,19 +300,19 @@ export default function UserManagement() {
                         {user.isActive ? (
                           <>
                             <div className="w-1.5 h-1.5 rounded-full bg-green-500 mr-2 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
-                            <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">Active</span>
+                            <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">{t('active')}</span>
                           </>
                         ) : (
                           <>
                             <div className="w-1.5 h-1.5 rounded-full bg-red-400 mr-2"></div>
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Locked</span>
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('lockedStatus')}</span>
                           </>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-[10px] font-bold text-gray-600 uppercase tracking-tight">
-                        {user.profile?.phoneNumber || 'No Phone Registered'}
+                        {user.profile?.phoneNumber || t('noPhoneRegistered') || '—'}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -354,7 +349,7 @@ export default function UserManagement() {
         {/* Pagination Toolbar */}
         <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50/30">
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-            Page {page} of {totalPages}
+            {t('page')} {page} {t('of')} {totalPages}
           </p>
           <div className="flex items-center space-x-2">
             <button 
@@ -385,8 +380,8 @@ export default function UserManagement() {
                   {editingUser ? <Edit size={24} /> : <UserPlus size={24} />}
                 </div>
                 <div>
-                  <h3 className="text-lg font-black uppercase tracking-tight">{editingUser ? 'Edit User' : 'Add New User'}</h3>
-                  <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest">{editingUser ? 'Update account details' : 'Create a new account'}</p>
+                  <h3 className="text-lg font-black uppercase tracking-tight">{editingUser ? t('editUserTitle') : t('addNewUserTitle')}</h3>
+                  <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest">{editingUser ? t('updateAccountDetails') : t('createNewAccount')}</p>
                 </div>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="text-white/50 hover:text-white group">
@@ -398,7 +393,7 @@ export default function UserManagement() {
               <div className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('name')}</label>
                   <input 
                     type="text" 
                     required
@@ -409,7 +404,7 @@ export default function UserManagement() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('phone')}</label>
                   <input 
                     type="text" 
                     placeholder="Phone number"
@@ -421,7 +416,7 @@ export default function UserManagement() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('emailAddress')}</label>
                 {formData.role === 'ADMIN' && !editingUser ? (
                   // ADMIN: prefix input + fixed @shielder.com suffix
                   <div className="flex items-stretch">
@@ -461,7 +456,7 @@ export default function UserManagement() {
 
               {!editingUser && (
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Password</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('password')}</label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
                     <input 
@@ -478,25 +473,25 @@ export default function UserManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">User Role</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('userRole')}</label>
                   <select 
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-shielder-primary"
                     value={formData.role}
                     onChange={(e) => setFormData({...formData, role: e.target.value, email: ''})}
                   >
-                    <option value="ADMIN">Admin</option>
-                    <option value="USER">Simple User</option>
+                    <option value="ADMIN">{t('roleAdmin')}</option>
+                    <option value="USER">{t('simpleUser')}</option>
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Account Status</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">{t('accountStatus')}</label>
                   <select 
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-shielder-primary"
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value})}
                   >
-                    <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive / Locked</option>
+                    <option value="ACTIVE">{t('active')}</option>
+                    <option value="INACTIVE">{t('inactive')}</option>
                   </select>
                 </div>
               </div>
@@ -508,13 +503,13 @@ export default function UserManagement() {
                   onClick={() => setIsModalOpen(false)}
                   className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-colors"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button 
                   type="submit"
                   className="flex-[2] py-3 bg-[#FF6B35] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#FF5722] transition-all shadow-lg shadow-[#FF6B35]/20"
                 >
-                  {editingUser ? 'Save Changes' : 'Create Account'}
+                  {editingUser ? t('saveChanges') : t('createAccountBtn')}
                 </button>
               </div>
             </form>

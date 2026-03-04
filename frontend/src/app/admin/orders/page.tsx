@@ -5,7 +5,6 @@ import {
   Search,
   RefreshCcw,
   TrendingUp,
-  Package,
   CheckCircle2,
   XCircle,
   Clock,
@@ -21,8 +20,6 @@ import { useAuthStore } from '@/store/auth.store';
 import { orderService } from '@/services/order.service';
 import OrdersTable from './OrdersTable';
 import type { Order, OrderSummary, Pagination } from './types';
-
-const TAX_RATE = 0.1;
 
 type Filters = {
   search: string;

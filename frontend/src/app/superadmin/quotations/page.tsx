@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
     Search, Plus, Eye, Edit3, Trash2, RefreshCcw,
-    TrendingUp, CheckCircle2, Clock, XCircle, FileText,
-    ChevronLeft, ChevronRight, Send, RotateCcw, ArrowRightLeft
+    CheckCircle2, XCircle, FileText,
+    ChevronLeft, ChevronRight, Send, ArrowRightLeft
 } from 'lucide-react';
 import quotationService from '@/services/quotation.service';
 import { format } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const STATUS_COLORS: Record<string, string> = {
     DRAFT: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -22,7 +22,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AllQuotationsPage() {
-    const router = useRouter();
+    const { t, isRTL } = useLanguage();
     const [quotations, setQuotations] = useState<any[]>([]);
     const [summary, setSummary] = useState<any>({});
     const [loading, setLoading] = useState(true);
@@ -65,12 +65,12 @@ export default function AllQuotationsPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div>
-                    <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">Quotation Management</h1>
-                    <p className="text-gray-500 text-sm font-medium mt-1">Manage the full quotation lifecycle — from draft to converted order.</p>
+                    <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">{t('quotationMgmtTitle')}</h1>
+                    <p className="text-gray-500 text-sm font-medium mt-1">{t('quotationMgmtSubtitle')}</p>
                 </div>
                 <div className="flex items-center space-x-3">
                     <button onClick={() => { fetchQuotations(); fetchAnalytics(); }} className="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200">
@@ -78,28 +78,28 @@ export default function AllQuotationsPage() {
                     </button>
                     <Link href="/superadmin/quotations/create" className="flex items-center space-x-2 px-4 py-2.5 bg-[#FF6B35] text-white rounded-xl hover:bg-[#FF5722] transition-colors font-bold text-sm shadow-lg shadow-[#FF6B35]/20">
                         <Plus size={18} />
-                        <span>Create Quotation</span>
+                        <span>{t('createQuotation')}</span>
                     </Link>
                 </div>
             </div>
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <StatCard label="Total" value={summary.total || 0} icon={<FileText size={20} />} color="bg-shielder-dark" />
-                <StatCard label="Approved" value={summary.approved || 0} icon={<CheckCircle2 size={20} />} color="bg-green-500" />
-                <StatCard label="Converted" value={summary.converted || 0} icon={<ArrowRightLeft size={20} />} color="bg-teal-500" />
-                <StatCard label="Expired" value={summary.expired || 0} icon={<XCircle size={20} />} color="bg-orange-500" />
+                <StatCard label={t('total')} value={summary.total || 0} icon={<FileText size={20} />} color="bg-shielder-dark" />
+                <StatCard label={t('approved')} value={summary.approved || 0} icon={<CheckCircle2 size={20} />} color="bg-green-500" />
+                <StatCard label={t('converted')} value={summary.converted || 0} icon={<ArrowRightLeft size={20} />} color="bg-teal-500" />
+                <StatCard label={t('expired')} value={summary.expired || 0} icon={<XCircle size={20} />} color="bg-orange-500" />
             </div>
 
             {/* Conversion Rate Banner */}
             {summary.conversionRate && (
                 <div className="bg-gradient-to-r from-shielder-dark to-shielder-secondary p-4 rounded-2xl flex items-center justify-between">
                     <div>
-                        <p className="text-white/70 text-xs font-bold uppercase tracking-widest">Conversion Rate</p>
+                        <p className="text-white/70 text-xs font-bold uppercase tracking-widest">{t('conversionRate')}</p>
                         <p className="text-white text-3xl font-black">{summary.conversionRate}%</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-white/70 text-xs font-bold uppercase tracking-widest">Revenue from Converted</p>
+                        <p className="text-white/70 text-xs font-bold uppercase tracking-widest">{t('revenueFromConverted')}</p>
                         <p className="text-shielder-primary text-2xl font-black">${Number(summary.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                     </div>
                 </div>
@@ -109,10 +109,10 @@ export default function AllQuotationsPage() {
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row gap-4">
                 <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input type="text" placeholder="Search quotation number, customer..." className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-shielder-primary/20 focus:outline-none text-sm" value={filters.search} onChange={e => setFilters(p => ({ ...p, search: e.target.value }))} />
+                    <input type="text" placeholder={t('searchOrders')} className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-shielder-primary/20 focus:outline-none text-sm" value={filters.search} onChange={e => setFilters(p => ({ ...p, search: e.target.value }))} />
                 </div>
                 <select className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none" value={filters.status} onChange={e => setFilters(p => ({ ...p, status: e.target.value }))}>
-                    <option value="">All Statuses</option>
+                    <option value="">{t('allStatuses')}</option>
                     {['DRAFT', 'SENT', 'VIEWED', 'APPROVED', 'REJECTED', 'EXPIRED', 'CONVERTED'].map(s => (
                         <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
                     ))}
@@ -125,7 +125,7 @@ export default function AllQuotationsPage() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-gray-50/50 border-b border-gray-100">
-                                {['Quotation #', 'Customer', 'Email', 'Total', 'Status', 'Expiry', 'Created By', 'Date', 'Actions'].map(h => (
+                                {[t('quotationNumber'), t('customer'), t('emailAddress'), t('orderTotal'), t('status'), t('expiryCol'), t('createdByCol'), t('quotationDate'), t('actions')].map(h => (
                                     <th key={h} className="px-5 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400 whitespace-nowrap">{h}</th>
                                 ))}
                             </tr>
@@ -134,7 +134,7 @@ export default function AllQuotationsPage() {
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => <tr key={i} className="animate-pulse"><td colSpan={9} className="px-5 py-4"><div className="h-10 bg-gray-50 rounded-lg w-full" /></td></tr>)
                             ) : quotations.length === 0 ? (
-                                <tr><td colSpan={9} className="px-5 py-16 text-center"><div className="flex flex-col items-center gap-3"><FileText size={40} className="text-gray-200" /><p className="text-gray-400 font-medium">No quotations found</p><Link href="/superadmin/quotations/create" className="text-shielder-primary text-sm font-bold hover:underline">Create your first quotation →</Link></div></td></tr>
+                                <tr><td colSpan={9} className="px-5 py-16 text-center"><div className="flex flex-col items-center gap-3"><FileText size={40} className="text-gray-200" /><p className="text-gray-400 font-medium">{t('noQuotations')}</p><Link href="/superadmin/quotations/create" className="text-shielder-primary text-sm font-bold hover:underline">{t('createFirstQuotation')} →</Link></div></td></tr>
                             ) : quotations.map((q: any) => (
                                 <tr key={q.id} className="hover:bg-gray-50/50 transition-colors group">
                                     <td className="px-5 py-4 whitespace-nowrap">
@@ -203,7 +203,7 @@ export default function AllQuotationsPage() {
                 </div>
                 {/* Pagination */}
                 <div className="px-5 py-4 bg-gray-50/50 flex items-center justify-between border-t border-gray-100">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Page {pagination.page} of {pagination.pages || 1} ({pagination.total} total)</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('page')} {pagination.page} {t('of')} {pagination.pages || 1} ({pagination.total} {t('total')})</span>
                     <div className="flex items-center space-x-2">
                         <button disabled={pagination.page <= 1} onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))} className="p-2 bg-white border border-gray-200 rounded-lg text-gray-400 disabled:opacity-30 hover:bg-gray-50"><ChevronLeft size={16} /></button>
                         <button disabled={pagination.page >= (pagination.pages || 1)} onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))} className="p-2 bg-white border border-gray-200 rounded-lg text-gray-400 disabled:opacity-30 hover:bg-gray-50"><ChevronRight size={16} /></button>

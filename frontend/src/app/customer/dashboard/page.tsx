@@ -2,11 +2,9 @@
 
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function CustomerDashboard() {
   const { user, logout } = useAuth();
-  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">

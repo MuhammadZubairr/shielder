@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { AlertCircle, Eye, RotateCcw, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react';
 import quotationService from '@/services/quotation.service';
 import { format } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function ExpiredQuotationsPage() {
+    const { t, isRTL } = useLanguage();
     const [quotations, setQuotations] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -40,12 +42,12 @@ export default function ExpiredQuotationsPage() {
     const today = new Date().toISOString().split('T')[0];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
             <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 flex items-center gap-4">
                 <AlertCircle size={24} className="text-orange-500 shrink-0" />
                 <div>
-                    <p className="font-black text-orange-700">Expired Quotations</p>
-                    <p className="text-orange-600 text-sm">These quotations have passed their expiry date. Reactivate them to allow further action.</p>
+                    <p className="font-black text-orange-700">{t('expiredQuotationsTitle')}</p>
+                    <p className="text-orange-600 text-sm">{t('expiredQuotationsSubtitle')}</p>
                 </div>
             </div>
 

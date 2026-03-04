@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import {
     BarChart, Bar, LineChart, Line, XAxis, YAxis,
-    CartesianGrid, Tooltip, ResponsiveContainer, Legend
+    CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { TrendingUp, FileText, CheckCircle2, XCircle, ArrowRightLeft, DollarSign, RefreshCcw } from 'lucide-react';
 import quotationService from '@/services/quotation.service';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function QuotationReportsPage() {
+    const { t, isRTL } = useLanguage();
     const [analytics, setAnalytics] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -32,12 +34,12 @@ export default function QuotationReportsPage() {
     ] : [];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
             {/* Header */}
             <div className="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                 <div>
-                    <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">Quotation Reports</h1>
-                    <p className="text-gray-500 text-sm">Analytics overview for quotation performance and trends.</p>
+                    <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">{t('quotationReportsTitle')}</h1>
+                    <p className="text-gray-500 text-sm">{t('quotationReportsSubtitle')}</p>
                 </div>
                 <button onClick={fetch} className="p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors"><RefreshCcw size={18} /></button>
             </div>

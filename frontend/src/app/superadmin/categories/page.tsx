@@ -21,6 +21,7 @@ import {
 import adminService from '@/services/admin.service';
 import { toast } from 'react-hot-toast';
 import { getImageUrl } from '@/utils/helpers';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // --- Types ---
 interface Category {
@@ -60,6 +61,7 @@ const StatusBadge = ({ isActive }: { isActive: boolean }) => (
 );
 
 export default function CategoryManagementPage() {
+  const { t, isRTL } = useLanguage();
   // State
   const [categories, setCategories] = useState<Category[]>([]);
   const [summary, setSummary] = useState<SummaryData>({
@@ -123,7 +125,7 @@ export default function CategoryManagementPage() {
       setSummary(summaryRes.data.data || { totalCategories: 0, activeCategories: 0, disabledCategories: 0 });
     } catch (error: any) {
       if (error.response?.status !== 401) {
-        toast.error(error.response?.data?.message || 'Failed to fetch categories');
+        toast.error(error.response?.data?.message || t('fetchCategoriesFailed'));
       }
     } finally {
       setLoading(false);
@@ -157,8 +159,8 @@ export default function CategoryManagementPage() {
 
   const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nameEn) return toast.error('English name is required');
-    if (!imageFile) return toast.error('Category Image is required');
+    if (!formData.nameEn) return toast.error(t('nameEnRequired'));
+    if (!imageFile) return toast.error(t('imageRequired'));
 
     const data = new FormData();
     data.append('nameEn', formData.nameEn);
@@ -171,12 +173,12 @@ export default function CategoryManagementPage() {
     try {
       setFormLoading(true);
       await adminService.createCategory(data);
-      toast.success('Category created successfully');
+      toast.success(t('categoryCreated'));
       setShowAddModal(false);
       resetForm();
       fetchData();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create category');
+      toast.error(error.response?.data?.message || t('categoryCreateFailed'));
     } finally {
       setFormLoading(false);
     }
@@ -197,11 +199,11 @@ export default function CategoryManagementPage() {
     try {
       setFormLoading(true);
       await adminService.updateCategory(selectedCategory.id, data);
-      toast.success('Category updated successfully');
+      toast.success(t('categoryUpdated'));
       setShowEditModal(false);
       fetchData();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to update category');
+      toast.error(error.response?.data?.message || t('categoryUpdateFailed'));
     } finally {
       setFormLoading(false);
     }
@@ -219,11 +221,11 @@ export default function CategoryManagementPage() {
     try {
       setFormLoading(true);
       await adminService.deleteCategory(selectedCategory.id);
-      toast.success('Category deleted successfully');
+      toast.success(t('categoryDeleted'));
       setShowDeleteModal(false);
       fetchData();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete category');
+      toast.error(error.response?.data?.message || t('categoryDeleteFailed'));
     } finally {
       setFormLoading(false);
     }
@@ -266,28 +268,28 @@ export default function CategoryManagementPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* 1. Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A1E36]">Category Management</h1>
-          <p className="text-gray-500 text-sm italic font-medium">Manage marketplace category hierarchy and visibility</p>
+          <h1 className="text-2xl font-bold text-[#0A1E36]">{t('categoriesTitle')}</h1>
+          <p className="text-gray-500 text-sm italic font-medium">{t('categoriesSubtitle')}</p>
         </div>
         <button 
           onClick={() => { resetForm(); setShowAddModal(true); }}
           className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#FF6B35] text-white rounded-[10px] hover:bg-[#FF5722] transition-all font-semibold shadow-md active:scale-95"
         >
           <Plus size={18} />
-          Add Category
+          {t('addCategory')}
         </button>
       </div>
 
       {/* 2. Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {[
-          { label: 'Total Categories', value: summary.totalCategories, icon: FolderTree, color: '#0205A6' },
-          { label: 'Active Categories', value: summary.activeCategories, icon: CheckCircle2, color: '#16A34A' },
-          { label: 'Disabled Categories', value: summary.disabledCategories, icon: X, color: '#DC2626' },
+          { label: t('totalCategories'), value: summary.totalCategories, icon: FolderTree, color: '#0205A6' },
+          { label: t('activeCategories'), value: summary.activeCategories, icon: CheckCircle2, color: '#16A34A' },
+          { label: t('disabledCategories'), value: summary.disabledCategories, icon: X, color: '#DC2626' },
         ].map((card, i) => (
           <div key={i} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-shadow">
             <div>
@@ -307,7 +309,7 @@ export default function CategoryManagementPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Search by category name..."
+            placeholder={t('searchCategories')}
             className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0205A6] focus:border-transparent transition-all text-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -321,9 +323,9 @@ export default function CategoryManagementPage() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="">All Statuses</option>
-              <option value="ACTIVE">Active Only</option>
-              <option value="DISABLED">Disabled Only</option>
+              <option value="">{t('allStatuses')}</option>
+              <option value="ACTIVE">{t('activeOnly')}</option>
+              <option value="DISABLED">{t('disabledOnly')}</option>
             </select>
           </div>
           <button 
@@ -342,13 +344,13 @@ export default function CategoryManagementPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Image</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Category Name</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Description</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Data</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date Created</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">{t('imageCol')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('categoryName')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('categoryDescription')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">{t('dataCol')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('status')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('createdAt')}</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -375,8 +377,8 @@ export default function CategoryManagementPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col items-center gap-1">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">Sub: {cat._count.subcategories}</span>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase">Pro: {cat._count.products}</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">{t('subCount')}: {cat._count.subcategories}</span>
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">{t('proCount')}: {cat._count.products}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -407,7 +409,7 @@ export default function CategoryManagementPage() {
               )) : (
                 <tr>
                   <td colSpan={7} className="px-6 py-20 text-center text-gray-400 italic text-sm">
-                    No categories found matching your criteria.
+                    {t('noCategories')}
                   </td>
                 </tr>
               )}
@@ -451,7 +453,7 @@ export default function CategoryManagementPage() {
                   {showAddModal ? <Plus size={20} /> : <Edit2 size={20} />}
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">{showAddModal ? 'Create Category' : 'Edit Category'}</h2>
+                  <h2 className="text-xl font-bold">{showAddModal ? t('addCategory') : t('editCategory')}</h2>
                   <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Inventory Classification</p>
                 </div>
               </div>
@@ -478,8 +480,8 @@ export default function CategoryManagementPage() {
                       <div className="p-3 bg-white rounded-full shadow-sm text-gray-400 group-hover:text-[#0205A6] transition-colors">
                         <Upload size={24} />
                       </div>
-                      <p className="mt-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Click to Upload Category Image</p>
-                      <p className="text-[8px] text-gray-400 italic mt-0.5">JPG, PNG or WEBP (Max 5MB)</p>
+                      <p className="mt-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('clickToUpload')}</p>
+                      <p className="text-[8px] text-gray-400 italic mt-0.5">{t('imageHint')}</p>
                     </>
                   )}
                   <input 
@@ -491,14 +493,14 @@ export default function CategoryManagementPage() {
                   />
                   {imagePreview && (
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <p className="text-white text-[10px] font-black uppercase tracking-widest">Change Image</p>
+                      <p className="text-white text-[10px] font-black uppercase tracking-widest">{t('changeImage')}</p>
                     </div>
                   )}
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Category Name — English <span className="text-[#DC2626]">*</span></label>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('nameEn')} <span className="text-[#DC2626]">*</span></label>
                 <input
                   type="text"
                   required
@@ -510,7 +512,7 @@ export default function CategoryManagementPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Description — English <span className="text-[#DC2626]">*</span></label>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">{t('descriptionEn')} <span className="text-[#DC2626]">*</span></label>
                 <textarea
                   required
                   rows={2}
@@ -524,7 +526,7 @@ export default function CategoryManagementPage() {
               {/* Arabic fields */}
               <div className="border-t border-dashed border-gray-200 pt-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Arabic (عربي)</span>
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('arabicSection')}</span>
                   <span className="h-px flex-1 bg-gray-200" />
                 </div>
                 <div className="space-y-4" dir="rtl">
@@ -553,8 +555,8 @@ export default function CategoryManagementPage() {
 
               <div className="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-100">
                 <div>
-                   <p className="text-xs font-bold text-[#0A1E36]">Active Status</p>
-                   <p className="text-[10px] text-gray-500 italic">Toggle category visibility in the marketplace</p>
+                   <p className="text-xs font-bold text-[#0A1E36]">{t('active')}</p>
+                   <p className="text-[10px] text-gray-500 italic">{t('toggleVisibility')}</p>
                 </div>
                 <button
                   type="button"
@@ -572,7 +574,7 @@ export default function CategoryManagementPage() {
                   onClick={() => { setShowAddModal(false); setShowEditModal(false); resetForm(); }}
                   className="flex-1 px-4 py-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 transition-all font-black text-[10px] uppercase tracking-widest"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button
                   type="submit"
@@ -580,7 +582,7 @@ export default function CategoryManagementPage() {
                   className={`flex-1 px-4 py-3 text-white rounded-xl transition-all font-black text-[10px] uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg ${showAddModal ? 'bg-[#FF6B35] hover:bg-[#FF5722]' : 'bg-[#FF6B35] hover:bg-[#FF5722]'}`}
                 >
                   {formLoading ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
-                  {showAddModal ? 'Create Category' : 'Save Changes'}
+                  {showAddModal ? t('addCategory') : t('saveChanges')}
                 </button>
               </div>
             </form>
@@ -595,7 +597,7 @@ export default function CategoryManagementPage() {
             <div className="mx-auto w-16 h-16 rounded-full bg-[#DC2626]/10 text-[#DC2626] flex items-center justify-center mb-6">
               <Trash2 size={32} />
             </div>
-            <h2 className="text-2xl font-black text-[#0A1E36] mb-3 uppercase tracking-tight">Delete Category?</h2>
+            <h2 className="text-2xl font-black text-[#0A1E36] mb-3 uppercase tracking-tight">{t('deleteCategory')}</h2>
             <div className="bg-red-50 p-4 rounded-xl border border-red-100 mb-8">
               <p className="text-gray-600 text-xs leading-relaxed">
                 You are about to remove <b className="text-[#DC2626]">{selectedCategory?.name}</b>. This action is irreversible.
@@ -606,7 +608,7 @@ export default function CategoryManagementPage() {
                 onClick={() => setShowDeleteModal(false)}
                 className="flex-1 px-4 py-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 font-black text-[10px] uppercase tracking-widest transition-all"
               >
-                No, Cancel
+                {t('noCancel')}
               </button>
               <button
                 onClick={handleDeleteCategory}
@@ -614,7 +616,7 @@ export default function CategoryManagementPage() {
                 className="flex-1 px-4 py-3 bg-[#DC2626] text-white rounded-xl hover:bg-red-700 font-black text-[10px] uppercase tracking-widest shadow-lg transition-all flex items-center justify-center gap-2"
               >
                 {formLoading && <Loader2 className="animate-spin" size={16} />}
-                Yes, Delete
+                {t('yesDelete')}
               </button>
             </div>
           </div>
@@ -628,7 +630,7 @@ export default function CategoryManagementPage() {
             <div className="mx-auto w-16 h-16 rounded-full bg-[#FACC15]/10 text-[#FACC15] flex items-center justify-center mb-6">
               <AlertTriangle size={32} />
             </div>
-            <h2 className="text-2xl font-black text-[#0A1E36] mb-3 uppercase tracking-tight">Deletion Blocked</h2>
+            <h2 className="text-2xl font-black text-[#0A1E36] mb-3 uppercase tracking-tight">{t('deletionBlocked')}</h2>
             <p className="text-gray-500 text-sm mb-2 font-medium">This category cannot be deleted yet.</p>
             <div className="bg-yellow-50 p-5 rounded-2xl border border-yellow-100 mb-8 text-left">
               <p className="text-gray-700 text-xs leading-relaxed mb-3">
@@ -652,7 +654,7 @@ export default function CategoryManagementPage() {
               onClick={() => setShowWarningModal(false)}
               className="w-full px-4 py-3 bg-[#0A1E36] text-white rounded-xl hover:bg-black font-black text-[10px] uppercase tracking-widest transition-all shadow-lg"
             >
-              I Understand
+              {t('iUnderstand')}
             </button>
           </div>
         </div>

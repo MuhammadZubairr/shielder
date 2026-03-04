@@ -23,7 +23,9 @@ class AdminService {
   }
 
   async getQuotationsTotalCount() {
-    return apiClient.get('/quotations', { params: { limit: 1, page: 1 } });
+    // Use the analytics endpoint — it returns `total` via parallel prisma.count()
+    // calls with no record data fetched, avoiding the wasteful list?limit=1 approach.
+    return apiClient.get('/quotations/analytics');
   }
 
   

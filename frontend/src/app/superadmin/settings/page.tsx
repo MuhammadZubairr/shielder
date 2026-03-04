@@ -26,10 +26,12 @@ import { toast } from 'react-hot-toast';
 import { getImageUrl } from '@/utils/helpers';
 import { format } from 'date-fns';
 import { ApiErrorResponse } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type TabType = 'general' | 'order' | 'payment' | 'notification' | 'security' | 'backup' | 'logs';
 
 export default function SettingsPage() {
+    const { t, isRTL } = useLanguage();
     // Logo upload state and ref (for general tab)
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -41,9 +43,9 @@ export default function SettingsPage() {
       try {
         const { data } = await settingsService.uploadCompanyLogo(file);
         onChange('companyLogo', data.data.companyLogo);
-        toast.success('Logo updated');
+        toast.success(t('settingLogoUpdated'));
       } catch (err) {
-        toast.error('Failed to upload logo');
+        toast.error(t('settingLogoFailed'));
       } finally {
         setUploadingLogo(false);
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -104,7 +106,7 @@ export default function SettingsPage() {
       };
       setFormData(normalized);
     } catch (err) {
-      toast.error('Failed to load settings');
+      toast.error(t('settingLoadFailed'));
     } finally {
       setLoading(false);
     }
@@ -116,7 +118,7 @@ export default function SettingsPage() {
       const { data } = await settingsService.getLogs({});
       setLogs(data.data.logs);
     } catch (err) {
-      toast.error('Failed to load logs');
+      toast.error(t('settingLogsFailed'));
     } finally {
       setLogsLoading(false);
     }
@@ -146,7 +148,7 @@ export default function SettingsPage() {
     setSaving(true);
     try {
       await settingsService.updateSettings(section, formData as SystemSettings);
-      toast.success(`${section.charAt(0).toUpperCase() + section.slice(1)} settings updated`);
+      toast.success(t('settingsSaved'));
       fetchSettings(); // Refresh to get masked values/audit updates
     } catch (err) {
       const error = err as ApiErrorResponse;
@@ -167,20 +169,20 @@ export default function SettingsPage() {
         pendingAction();
       }
     } catch (err) {
-      toast.error('Invalid password confirmation');
+      toast.error(t('settingPasswordInvalid'));
     } finally {
       setVerifying(false);
     }
   };
 
   const sidebarItems = [
-    { id: 'general', label: 'General', icon: <Settings size={20} />, color: 'blue' },
-    { id: 'order', label: 'Order', icon: <ShoppingCart size={20} />, color: 'emerald' },
-    { id: 'payment', label: 'Payment', icon: <CreditCard size={20} />, color: 'purple' },
-    { id: 'notification', label: 'Notification', icon: <Bell size={20} />, color: 'amber' },
-    { id: 'security', label: 'Security', icon: <ShieldCheck size={20} />, color: 'red' },
-    { id: 'backup', label: 'Backup & Restore', icon: <Database size={20} />, color: 'indigo' },
-    { id: 'logs', label: 'System Logs', icon: <History size={20} />, color: 'gray' },
+    { id: 'general', label: t('settingTabGeneral'), icon: <Settings size={20} />, color: 'blue' },
+    { id: 'order', label: t('settingTabOrder'), icon: <ShoppingCart size={20} />, color: 'emerald' },
+    { id: 'payment', label: t('settingTabPayment'), icon: <CreditCard size={20} />, color: 'purple' },
+    { id: 'notification', label: t('settingTabNotification'), icon: <Bell size={20} />, color: 'amber' },
+    { id: 'security', label: t('settingTabSecurity'), icon: <ShieldCheck size={20} />, color: 'red' },
+    { id: 'backup', label: t('settingTabBackup'), icon: <Database size={20} />, color: 'indigo' },
+    { id: 'logs', label: t('settingTabLogs'), icon: <History size={20} />, color: 'gray' },
   ];
 
   if (loading || !formData) {
@@ -192,14 +194,14 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen bg-gray-50/30">
+    <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen bg-gray-50/30" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Navigation Sidebar */}
         <aside className="w-full lg:w-72 shrink-0">
           <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-4 sticky top-8">
             <div className="px-4 py-6 mb-4">
-              <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">Configuration</h1>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">System Control Panel</p>
+              <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">{t('configurationTitle')}</h1>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{t('systemControlPanel')}</p>
             </div>
             <nav className="space-y-1">
               {sidebarItems.map((item) => (
@@ -227,19 +229,19 @@ export default function SettingsPage() {
           <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden mb-8">
             <div className="p-8 border-b border-gray-50 bg-gray-50/30">
               <h2 className="text-xl font-black text-shielder-dark uppercase tracking-tight">
-                {sidebarItems.find(i => i.id === activeTab)?.label} Settings
+                {sidebarItems.find(i => i.id === activeTab)?.label}
               </h2>
-              <p className="text-sm text-gray-500 font-medium">Manage and configure your system-wide parameters.</p>
+              <p className="text-sm text-gray-500 font-medium">{t('settingManageDesc')}</p>
             </div>
 
             <div className="p-8">
-              {activeTab === 'general' && renderGeneralTab(formData, handleInputChange, uploadingLogo, fileInputRef, handleLogoUpload)}
-              {activeTab === 'order' && renderOrderTab(formData, handleInputChange)}
-              {activeTab === 'payment' && renderPaymentTab(formData, handleInputChange)}
-              {activeTab === 'notification' && renderNotificationTab(formData, handleInputChange)}
-              {activeTab === 'security' && renderSecurityTab(formData, handleInputChange)}
-              {activeTab === 'backup' && renderBackupTab(formData, handleInputChange, () => setShowConfirmModal(true), () => setPendingAction(() => () => triggerBackup()))}
-              {activeTab === 'logs' && renderLogsTab(logs, logsLoading)}
+              {activeTab === 'general' && renderGeneralTab(formData, handleInputChange, uploadingLogo, fileInputRef, handleLogoUpload, t)}
+              {activeTab === 'order' && renderOrderTab(formData, handleInputChange, t)}
+              {activeTab === 'payment' && renderPaymentTab(formData, handleInputChange, t)}
+              {activeTab === 'notification' && renderNotificationTab(formData, handleInputChange, t)}
+              {activeTab === 'security' && renderSecurityTab(formData, handleInputChange, t)}
+              {activeTab === 'backup' && renderBackupTab(formData, handleInputChange, () => setShowConfirmModal(true), () => setPendingAction(() => () => triggerBackup()), t)}
+              {activeTab === 'logs' && renderLogsTab(logs, logsLoading, t)}
 
               {/* Save Changes button at the bottom */}
               {activeTab !== 'logs' && activeTab !== 'backup' && (
@@ -250,7 +252,7 @@ export default function SettingsPage() {
                     className="flex items-center gap-2 px-6 py-3 bg-[#FF6B35] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#FF5722] transition-all shadow-md disabled:opacity-50"
                   >
                     {saving ? <RefreshCcw className="animate-spin" size={16} /> : <Save size={16} />}
-                    Save Changes
+                    {t('saveChanges')}
                   </button>
                 </div>
               )}
@@ -267,13 +269,13 @@ export default function SettingsPage() {
               <div className="w-20 h-20 bg-red-50 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6">
                 <ShieldAlert size={40} />
               </div>
-              <h3 className="text-2xl font-black text-shielder-dark uppercase tracking-tight mb-2">Identify Verification</h3>
-              <p className="text-gray-500 text-sm font-medium mb-8">You are performing a sensitive system action. Please enter your administrator password to proceed.</p>
+              <h3 className="text-2xl font-black text-shielder-dark uppercase tracking-tight mb-2">{t('settingIdentityVerification')}</h3>
+              <p className="text-gray-500 text-sm font-medium mb-8">{t('settingIdentityVerificationDesc')}</p>
               
               <div className="space-y-4">
                 <input 
                   type="password"
-                  placeholder="Admin Password"
+                  placeholder={t('settingAdminPassword')}
                   value={verifyPassword}
                   onChange={(e) => setVerifyPassword(e.target.value)}
                   className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary text-center font-bold tracking-widest"
@@ -283,14 +285,14 @@ export default function SettingsPage() {
                     onClick={() => { setShowConfirmModal(false); setVerifyPassword(''); }}
                     className="flex-1 py-4 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-shielder-dark"
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                   <button 
                     onClick={handleVerifyAndProceed}
                     disabled={verifying || !verifyPassword}
                     className="flex-1 py-4 bg-[#FF6B35] text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg shadow-[#FF6B35]/20 disabled:opacity-50"
                   >
-                    {verifying ? 'Verifying...' : 'Authorize Action'}
+                    {verifying ? t('settingVerifying') : t('settingAuthorizeAction')}
                   </button>
                 </div>
               </div>
@@ -305,9 +307,9 @@ export default function SettingsPage() {
     toast.promise(
       settingsService.triggerBackup(),
       {
-        loading: 'System snapshotting in progress...',
-        success: 'Backup successful, stored in secure vault',
-        error: 'Backup failed'
+        loading: t('settingBackupProgress'),
+        success: t('settingBackupSuccess'),
+        error: t('settingBackupFailed')
       }
     ).then(() => {
       fetchSettings();
@@ -328,153 +330,156 @@ function renderGeneralTab(
   onChange: OnChangeType,
   uploadingLogo: boolean,
   fileInputRef: React.RefObject<HTMLInputElement>,
-  handleLogoUpload: (e: React.ChangeEvent<HTMLInputElement>, onChange: OnChangeType) => void
+  handleLogoUpload: (e: React.ChangeEvent<HTMLInputElement>, onChange: OnChangeType) => void,
+  t: (key: string) => string
 ) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className="space-y-6">
-        <div>
-          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">System Name</label>
-          <input 
-            type="text" 
-            value={data.systemName}
-            onChange={(e) => onChange('systemName', e.target.value)}
-            className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-          />
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-6">
+          <div>
+            <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingSystemName')}</label>
+            <input 
+              type="text" 
+              value={data.systemName}
+              onChange={(e) => onChange('systemName', e.target.value)}
+              className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingCompanyName')}</label>
+            <input 
+              type="text" 
+              value={data.companyName}
+              onChange={(e) => onChange('companyName', e.target.value)}
+              className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingCompanyEmail')}</label>
+            <input 
+              type="email" 
+              value={data.companyEmail}
+              onChange={(e) => onChange('companyEmail', e.target.value)}
+              className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingCompanyPhone')}</label>
+            <input 
+              type="text" 
+              value={data.companyPhone}
+              onChange={(e) => onChange('companyPhone', e.target.value)}
+              className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+            />
+          </div>
         </div>
-        <div>
-          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">Company Name</label>
-          <input 
-            type="text" 
-            value={data.companyName}
-            onChange={(e) => onChange('companyName', e.target.value)}
-            className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">Company Email</label>
-          <input 
-            type="email" 
-            value={data.companyEmail}
-            onChange={(e) => onChange('companyEmail', e.target.value)}
-            className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">Company Phone</label>
-          <input 
-            type="text" 
-            value={data.companyPhone}
-            onChange={(e) => onChange('companyPhone', e.target.value)}
-            className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-          />
+
+        <div className="space-y-6">
+          <div className="bg-gray-50 p-6 rounded-[32px] border border-dashed border-gray-200 text-center">
+              <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">{t('settingCompanyLogo')}</label>
+              <div className="w-24 h-24 bg-white rounded-2xl shadow-sm mx-auto mb-4 flex items-center justify-center overflow-hidden border border-gray-100 relative">
+                 {data.companyLogo ? (
+                   <Image 
+                     src={getImageUrl(data.companyLogo) || ''}
+                     alt="Logo"
+                     className="object-contain p-2"
+                     fill
+                   />
+                 ) : (
+                   <UploadCloud className="text-gray-300" size={32} />
+                 )}
+                 {uploadingLogo && (
+                   <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs font-bold">{t('settingUploading')}</div>
+                 )}
+              </div>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                onChange={e => handleLogoUpload(e, onChange)}
+              />
+              <button
+                type="button"
+                className="text-[10px] font-black uppercase tracking-widest text-shielder-primary hover:underline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingLogo}
+              >
+                {uploadingLogo ? t('settingUploading') : t('settingUploadNewFile')}
+              </button>
+          </div>
+          <div>
+            <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingPhysicalAddress')}</label>
+            <textarea 
+              rows={3}
+              value={data.companyAddress}
+              onChange={(e) => onChange('companyAddress', e.target.value)}
+              className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold resize-none"
+            />
+          </div>
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div className="bg-gray-50 p-6 rounded-[32px] border border-dashed border-gray-200 text-center">
-            <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">Company Logo</label>
-            <div className="w-24 h-24 bg-white rounded-2xl shadow-sm mx-auto mb-4 flex items-center justify-center overflow-hidden border border-gray-100 relative">
-               {data.companyLogo ? (
-                 <Image 
-                   src={getImageUrl(data.companyLogo) || ''}
-                   alt="Logo"
-                   className="object-contain p-2"
-                   fill
-                 />
-               ) : (
-                 <UploadCloud className="text-gray-300" size={32} />
-               )}
-               {uploadingLogo && (
-                 <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs font-bold">Uploading...</div>
-               )}
-            </div>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-              onChange={e => handleLogoUpload(e, onChange)}
-            />
-            <button
-              type="button"
-              className="text-[10px] font-black uppercase tracking-widest text-shielder-primary hover:underline"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingLogo}
-            >
-              {uploadingLogo ? 'Uploading...' : 'Upload New File'}
-            </button>
+      {/* Currency / Timezone / Date Format — full width row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingCurrencyLabel')}</label>
+          <select 
+            value={data.currency}
+            onChange={(e) => onChange('currency', e.target.value)}
+            className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+          >
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="GBP">GBP (£)</option>
+            <option value="SAR">SAR (ر.س)</option>
+            <option value="PKR">PKR (Rs.)</option>
+          </select>
         </div>
         <div>
-          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">Physical Address</label>
-          <textarea 
-            rows={3}
-            value={data.companyAddress}
-            onChange={(e) => onChange('companyAddress', e.target.value)}
-            className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold resize-none"
-          />
+          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingTimezoneLabel')}</label>
+          <select 
+            value={data.timezone}
+            onChange={(e) => onChange('timezone', e.target.value)}
+            className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+          >
+            <option value="UTC">UTC (GMT+0)</option>
+            <option value="America/New_York">Eastern Time (GMT-5)</option>
+            <option value="America/Chicago">Central Time (GMT-6)</option>
+            <option value="America/Los_Angeles">Pacific Time (GMT-8)</option>
+            <option value="Europe/London">London (GMT+0)</option>
+            <option value="Europe/Paris">Paris (GMT+1)</option>
+            <option value="Asia/Dubai">Dubai (GMT+4)</option>
+            <option value="Asia/Riyadh">Riyadh (GMT+3)</option>
+            <option value="Asia/Karachi">Karachi (GMT+5)</option>
+            <option value="Asia/Kolkata">India (GMT+5:30)</option>
+            <option value="Asia/Shanghai">Shanghai (GMT+8)</option>
+            <option value="Asia/Tokyo">Tokyo (GMT+9)</option>
+          </select>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">Currency</label>
-              <select 
-                value={data.currency}
-                onChange={(e) => onChange('currency', e.target.value)}
-                className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-              >
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="SAR">SAR (ر.س)</option>
-                <option value="PKR">PKR (Rs.)</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">Timezone</label>
-              <select 
-                value={data.timezone}
-                onChange={(e) => onChange('timezone', e.target.value)}
-                className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-              >
-                <option value="UTC">UTC (GMT+0)</option>
-                <option value="America/New_York">Eastern Time (GMT-5)</option>
-                <option value="America/Chicago">Central Time (GMT-6)</option>
-                <option value="America/Los_Angeles">Pacific Time (GMT-8)</option>
-                <option value="Europe/London">London (GMT+0)</option>
-                <option value="Europe/Paris">Paris (GMT+1)</option>
-                <option value="Asia/Dubai">Dubai (GMT+4)</option>
-                <option value="Asia/Riyadh">Riyadh (GMT+3)</option>
-                <option value="Asia/Karachi">Karachi (GMT+5)</option>
-                <option value="Asia/Kolkata">India (GMT+5:30)</option>
-                <option value="Asia/Shanghai">Shanghai (GMT+8)</option>
-                <option value="Asia/Tokyo">Tokyo (GMT+9)</option>
-              </select>
-            </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">Date Format</label>
-              <select 
-                 value={data.dateFormat}
-                 onChange={(e) => onChange('dateFormat', e.target.value)}
-                 className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-              >
-                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-              </select>
-            </div>
+        <div>
+          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingDateFormat')}</label>
+          <select 
+            value={data.dateFormat}
+            onChange={(e) => onChange('dateFormat', e.target.value)}
+            className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+          >
+            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+          </select>
         </div>
       </div>
     </div>
   );
 }
 
-function renderOrderTab(data: SystemSettings, onChange: OnChangeType) {
+function renderOrderTab(data: SystemSettings, onChange: OnChangeType, t: (key: string) => string) {
   return (
     <div className="space-y-8">
        <div>
-          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">Default Order Status</label>
+          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingDefaultOrderStatus')}</label>
           <select
             value={data.defaultOrderStatus}
             onChange={(e) => onChange('defaultOrderStatus', e.target.value)}
@@ -501,8 +506,8 @@ function renderOrderTab(data: SystemSettings, onChange: OnChangeType) {
                   <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data.autoCompleteOrderAfterPayment ? 'translate-x-6' : ''}`} />
                 </button>
              </div>
-             <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">Auto-Complete Lifecycle</h4>
-             <p className="text-[11px] text-gray-500 font-medium mt-1">Automatically transition order to COMPLETED once payment is fully received.</p>
+             <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t('settingAutoComplete')}</h4>
+             <p className="text-[11px] text-gray-500 font-medium mt-1">{t('settingAutoCompleteDesc')}</p>
           </div>
 
           <div className="bg-gray-50 p-8 rounded-[32px] hover:bg-white border border-transparent hover:border-gray-100 transition-all group">
@@ -517,8 +522,8 @@ function renderOrderTab(data: SystemSettings, onChange: OnChangeType) {
                   <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data.allowPartialPayment ? 'translate-x-6' : ''}`} />
                 </button>
              </div>
-             <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">Allow Partial Payments</h4>
-             <p className="text-[11px] text-gray-500 font-medium mt-1">Enables multi-installment payment support and partial status tracking.</p>
+             <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t('settingPartialPayments')}</h4>
+             <p className="text-[11px] text-gray-500 font-medium mt-1">{t('settingPartialPaymentsDesc')}</p>
           </div>
 
           <div className="bg-gray-50 p-8 rounded-[32px] hover:bg-white border border-transparent hover:border-gray-100 transition-all group">
@@ -533,8 +538,8 @@ function renderOrderTab(data: SystemSettings, onChange: OnChangeType) {
                   <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data.allowOrderCancellation ? 'translate-x-6' : ''}`} />
                 </button>
              </div>
-             <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">Customer Cancellations</h4>
-             <p className="text-[11px] text-gray-500 font-medium mt-1">Allow staff and admins to cancel active orders before shipment.</p>
+             <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t('settingCancellations')}</h4>
+             <p className="text-[11px] text-gray-500 font-medium mt-1">{t('settingCancellationsDesc')}</p>
           </div>
 
           <div className="bg-gray-100/50 p-8 rounded-[32px] border border-gray-100">
@@ -543,8 +548,8 @@ function renderOrderTab(data: SystemSettings, onChange: OnChangeType) {
                     <Clock size={24} />
                 </div>
                 <div>
-                   <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">Zombie Order Cleanup</h4>
-                   <p className="text-[11px] text-gray-500 font-medium">Auto-cancel unpaid orders after (X) hours.</p>
+                   <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t('settingZombieCleanup')}</h4>
+                   <p className="text-[11px] text-gray-500 font-medium">{t('settingZombieCleanupDesc')}</p>
                 </div>
              </div>
              <div className="relative mt-4">
@@ -553,9 +558,9 @@ function renderOrderTab(data: SystemSettings, onChange: OnChangeType) {
                   value={data.autoCancelUnpaidOrdersHours || ''}
                   onChange={(e) => onChange('autoCancelUnpaidOrdersHours', parseInt(e.target.value) || null)}
                   className="w-full px-6 py-4 bg-white border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-                  placeholder="Disabled (Leave empty)"
+                  placeholder={t('settingDisabledLeaveEmpty')}
                 />
-                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase">Hours</span>
+                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase">{t('settingHours')}</span>
              </div>
           </div>
        </div>
@@ -563,18 +568,18 @@ function renderOrderTab(data: SystemSettings, onChange: OnChangeType) {
   );
 }
 
-function renderPaymentTab(data: SystemSettings, onChange: OnChangeType) {
+function renderPaymentTab(data: SystemSettings, onChange: OnChangeType, t: (key: string) => string) {
   return (
     <div className="space-y-10">
       <section>
         <div className="flex items-center justify-between mb-6">
            <div>
-              <h3 className="text-sm font-black text-shielder-dark uppercase tracking-tight">Payment Gateway Configuration</h3>
-              <p className="text-[11px] text-gray-500 font-medium mt-1 text-red-500 font-bold uppercase tracking-widest">Enterprise sensitive area</p>
+              <h3 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t('settingGatewayConfig')}</h3>
+              <p className="text-[11px] text-gray-500 font-medium mt-1 text-red-500 font-bold uppercase tracking-widest">{t('settingEnterpriseSensitive')}</p>
            </div>
            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-xl">
               <Lock size={14} className="text-amber-600" />
-              <span className="text-[10px] font-black text-amber-600 uppercase">Encrypted Storage</span>
+              <span className="text-[10px] font-black text-amber-600 uppercase">{t('settingEncryptedStorage')}</span>
            </div>
         </div>
 
@@ -607,8 +612,8 @@ function renderPaymentTab(data: SystemSettings, onChange: OnChangeType) {
           <div className="space-y-4">
              <div className="bg-gray-50 p-6 rounded-3xl flex items-center justify-between">
                 <div>
-                   <h4 className="text-xs font-black text-shielder-dark uppercase tracking-tight">Online Payments Enabled</h4>
-                   <p className="text-[10px] text-gray-500 font-medium">Accept payments through the online gateway.</p>
+                   <h4 className="text-xs font-black text-shielder-dark uppercase tracking-tight">{t('settingOnlinePayEnabled')}</h4>
+                   <p className="text-[10px] text-gray-500 font-medium">{t('settingOnlinePayDesc')}</p>
                 </div>
                 <button 
                   onClick={() => onChange('onlinePaymentEnabled', !data.onlinePaymentEnabled)}
@@ -619,8 +624,8 @@ function renderPaymentTab(data: SystemSettings, onChange: OnChangeType) {
              </div>
              <div className="bg-gray-50 p-6 rounded-3xl flex items-center justify-between">
                 <div>
-                   <h4 className="text-xs font-black text-shielder-dark uppercase tracking-tight">Live Production Mode</h4>
-                   <p className="text-[10px] text-gray-500 font-medium">Toggle off for Sandbox/Test environment.</p>
+                   <h4 className="text-xs font-black text-shielder-dark uppercase tracking-tight">{t('settingProductionMode')}</h4>
+                   <p className="text-[10px] text-gray-500 font-medium">{t('settingProductionModeDesc')}</p>
                 </div>
                 <button 
                   onClick={() => onChange('paymentTestMode', !data.paymentTestMode)}
@@ -630,7 +635,7 @@ function renderPaymentTab(data: SystemSettings, onChange: OnChangeType) {
                 </button>
              </div>
              <div className="bg-gray-50 p-6 rounded-3xl">
-                <h4 className="text-xs font-black text-shielder-dark uppercase tracking-tight mb-2">Webhook Endpoint</h4>
+                <h4 className="text-xs font-black text-shielder-dark uppercase tracking-tight mb-2">{t('settingWebhookEndpoint')}</h4>
                 <div className="flex gap-2">
                    <code className="flex-1 px-3 py-2 bg-white rounded-lg border border-gray-100 text-[10px] font-mono text-gray-400 break-all select-all">
                       {process.env.NEXT_PUBLIC_API_URL || 'https://api.shielder-filters.com'}/settings/payments/webhook
@@ -642,7 +647,7 @@ function renderPaymentTab(data: SystemSettings, onChange: OnChangeType) {
       </section>
 
       <section className="bg-gray-50 p-8 rounded-[32px]">
-          <h3 className="text-sm font-black text-shielder-dark uppercase tracking-tight mb-6">Active Disbursement Methods</h3>
+          <h3 className="text-sm font-black text-shielder-dark uppercase tracking-tight mb-6">{t('settingDisbursementMethods')}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
              {['CASH', 'BANK_TRANSFER', 'CREDIT_CARD', 'ONLINE_GATEWAY'].map(method => (
                <label key={method} className={`flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer ${data.paymentMethodsEnabled?.includes(method) ? 'bg-white border-shielder-primary shadow-sm' : 'bg-gray-100/50 border-gray-100'}`}>
@@ -670,28 +675,28 @@ function renderPaymentTab(data: SystemSettings, onChange: OnChangeType) {
   );
 }
 
-function renderNotificationTab(data: SystemSettings, onChange: OnChangeType) {
+function renderNotificationTab(data: SystemSettings, onChange: OnChangeType, t: (key: string) => string) {
   const toggles = [
-    { key: 'enableEmailNotifications' as keyof SystemSettings, label: 'Email Broadcasts', desc: 'Allow system to send external mail updates.' },
-    { key: 'enableLowStockAlerts' as keyof SystemSettings, label: 'Inventory Guard', desc: 'Monitor stock levels and ping relevant staff.' },
-    { key: 'enableOrderStatusNotifications' as keyof SystemSettings, label: 'Order Lifecycle', desc: 'Updates on creation, fulfillment, and shipping.' },
-    { key: 'enablePaymentNotifications' as keyof SystemSettings, label: 'Financial Audit', desc: 'Success and failure pings for all transactions.' },
+    { key: 'enableEmailNotifications' as keyof SystemSettings, labelKey: 'settingEmailBroadcasts', descKey: 'settingEmailBroadcastsDesc' },
+    { key: 'enableLowStockAlerts' as keyof SystemSettings, labelKey: 'settingInventoryGuardLabel', descKey: 'settingInventoryGuardDesc' },
+    { key: 'enableOrderStatusNotifications' as keyof SystemSettings, labelKey: 'settingOrderLifecycleLabel', descKey: 'settingOrderLifecycleDesc' },
+    { key: 'enablePaymentNotifications' as keyof SystemSettings, labelKey: 'settingFinancialAudit', descKey: 'settingFinancialAuditDesc' },
   ];
 
   return (
     <div className="space-y-12">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {toggles.map(t => (
-          <div key={t.key} className="bg-gray-50 p-6 rounded-[32px] flex items-center justify-between hover:bg-white border border-transparent hover:border-gray-100 transition-all group">
+        {toggles.map(toggle => (
+          <div key={toggle.key} className="bg-gray-50 p-6 rounded-[32px] flex items-center justify-between hover:bg-white border border-transparent hover:border-gray-100 transition-all group">
             <div className="flex-1">
-              <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t.label}</h4>
-              <p className="text-[11px] text-gray-500 font-medium mt-1">{t.desc}</p>
+              <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t(toggle.labelKey)}</h4>
+              <p className="text-[11px] text-gray-500 font-medium mt-1">{t(toggle.descKey)}</p>
             </div>
             <button 
-              onClick={() => onChange(t.key, !data[t.key])}
-              className={`w-12 h-6 rounded-full transition-all relative ${data[t.key] ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
+              onClick={() => onChange(toggle.key, !data[toggle.key])}
+              className={`w-12 h-6 rounded-full transition-all relative ${data[toggle.key] ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
             >
-              <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data[t.key] ? 'translate-x-6' : ''}`} />
+              <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data[toggle.key] ? 'translate-x-6' : ''}`} />
             </button>
           </div>
         ))}
@@ -703,8 +708,8 @@ function renderNotificationTab(data: SystemSettings, onChange: OnChangeType) {
                 <AlertTriangle size={36} />
              </div>
              <div>
-                <h4 className="text-lg font-black uppercase tracking-tight">Stock Breach Threshold</h4>
-                <p className="text-sm text-gray-400 mt-1">System-wide default for inventory alerts. Overridable per-product.</p>
+                <h4 className="text-lg font-black uppercase tracking-tight">{t('settingStockBreach')}</h4>
+                <p className="text-sm text-gray-400 mt-1">{t('settingStockBreachDesc')}</p>
                 <div className="mt-6 flex items-center gap-4">
                    <input 
                       type="range" 
@@ -725,15 +730,15 @@ function renderNotificationTab(data: SystemSettings, onChange: OnChangeType) {
   );
 }
 
-function renderSecurityTab(data: SystemSettings, onChange: OnChangeType) {
+function renderSecurityTab(data: SystemSettings, onChange: OnChangeType, t: (key: string) => string) {
   return (
     <div className="space-y-10">
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-             <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">Password Complexity</label>
+             <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">{t('settingPasswordComplexity')}</label>
              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-gray-500">Min Length</span>
-                <span className="text-sm font-black text-shielder-dark">{data.passwordMinLength} chars</span>
+                <span className="text-xs font-bold text-gray-500">{t('settingMinLength')}</span>
+                <span className="text-sm font-black text-shielder-dark">{data.passwordMinLength} {t('settingChars')}</span>
              </div>
              <input 
                type="range" min="8" max="32" 
@@ -744,10 +749,10 @@ function renderSecurityTab(data: SystemSettings, onChange: OnChangeType) {
           </div>
 
           <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-             <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">Login Hardening</label>
+             <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">{t('settingLoginHardening')}</label>
              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-gray-500">Max Failed Retries</span>
-                <span className="text-sm font-black text-shielder-dark">{data.maxLoginAttempts} attempts</span>
+                <span className="text-xs font-bold text-gray-500">{t('settingMaxFailedRetries')}</span>
+                <span className="text-sm font-black text-shielder-dark">{data.maxLoginAttempts} {t('settingAttempts')}</span>
              </div>
              <input 
                type="range" min="3" max="20" 
@@ -758,10 +763,10 @@ function renderSecurityTab(data: SystemSettings, onChange: OnChangeType) {
           </div>
 
           <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-             <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">Session Management</label>
+             <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">{t('settingSessionMgmt')}</label>
              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-gray-500">Timeout (Mins)</span>
-                <span className="text-sm font-black text-shielder-dark">{data.sessionTimeoutMinutes} min</span>
+                <span className="text-xs font-bold text-gray-500">{t('settingTimeoutMins')}</span>
+                <span className="text-sm font-black text-shielder-dark">{data.sessionTimeoutMinutes} {t('settingMinUnit')}</span>
              </div>
              <input 
                type="range" min="5" max="480" 
@@ -772,10 +777,10 @@ function renderSecurityTab(data: SystemSettings, onChange: OnChangeType) {
           </div>
 
           <div className="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-             <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">Account Lock Duration</label>
+             <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">{t('settingAccountLock')}</label>
              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-gray-500">Lock Time (Mins)</span>
-                <span className="text-sm font-black text-shielder-dark">{data.accountLockDurationMinutes} min</span>
+                <span className="text-xs font-bold text-gray-500">{t('settingLockTimeMins')}</span>
+                <span className="text-sm font-black text-shielder-dark">{data.accountLockDurationMinutes} {t('settingMinUnit')}</span>
              </div>
              <input 
                type="range" min="1" max="60" 
@@ -791,8 +796,8 @@ function renderSecurityTab(data: SystemSettings, onChange: OnChangeType) {
              <div className="flex gap-4">
                 <ShieldAlert className="text-red-600" size={24} />
                 <div>
-                   <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">Force Strong Passwords</h4>
-                   <p className="text-[10px] text-gray-500 font-medium">Require symbols, numbers, and case variation.</p>
+                   <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t('settingForceStrongPw')}</h4>
+                   <p className="text-[10px] text-gray-500 font-medium">{t('settingForceStrongPwDesc')}</p>
                 </div>
              </div>
              <button 
@@ -807,8 +812,8 @@ function renderSecurityTab(data: SystemSettings, onChange: OnChangeType) {
              <div className="flex gap-4">
                 <Lock className="text-purple-600" size={24} />
                 <div>
-                   <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">Two-Factor Authentication</h4>
-                   <p className="text-[10px] text-gray-500 font-medium">Enforce MFA via email or authenticator app.</p>
+                   <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t('settingTwoFactor')}</h4>
+                   <p className="text-[10px] text-gray-500 font-medium">{t('settingTwoFactorDesc')}</p>
                 </div>
              </div>
              <button 
@@ -823,7 +828,7 @@ function renderSecurityTab(data: SystemSettings, onChange: OnChangeType) {
   );
 }
 
-function renderBackupTab(data: SystemSettings, onChange: OnChangeType, onVerify: () => void, onProceed: () => void) {
+function renderBackupTab(data: SystemSettings, onChange: OnChangeType, onVerify: () => void, onProceed: () => void, t: (key: string) => string) {
   return (
     <div className="space-y-12">
       <div className="bg-indigo-600 rounded-[40px] p-10 text-white relative overflow-hidden">
@@ -831,20 +836,20 @@ function renderBackupTab(data: SystemSettings, onChange: OnChangeType, onVerify:
             <Database size={120} />
          </div>
          <div className="relative z-10">
-            <h3 className="text-2xl font-black uppercase tracking-tight mb-2">Manual Snapshot</h3>
-            <p className="text-indigo-100 text-sm max-w-md">Instantly archive the current state of the database, product inventory, and configurations to our secure encrypted vault.</p>
+            <h3 className="text-2xl font-black uppercase tracking-tight mb-2">{t('settingManualSnapshot')}</h3>
+            <p className="text-indigo-100 text-sm max-w-md">{t('settingManualSnapshotDesc')}</p>
             <div className="mt-8 flex flex-wrap gap-4">
                <button 
                   onClick={() => { onVerify(); onProceed(); }}
                   className="flex items-center gap-3 px-8 py-4 bg-white text-indigo-600 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-xl"
                >
                   <UploadCloud size={18} />
-                  Initiate New Backup
+                  {t('settingInitiateBackup')}
                </button>
                <div className="flex items-center gap-3 px-6 py-4 bg-indigo-500/30 rounded-2xl border border-white/10 backdrop-blur-sm">
                   <div className="text-left">
-                     <p className="text-[10px] font-black uppercase text-indigo-200">Last Successful Sync</p>
-                     <p className="text-xs font-bold">{data.lastBackupDate ? format(new Date(data.lastBackupDate), 'MMM dd, yyyy HH:mm') : 'Never'}</p>
+                     <p className="text-[10px] font-black uppercase text-indigo-200">{t('settingLastSync')}</p>
+                     <p className="text-xs font-bold">{data.lastBackupDate ? format(new Date(data.lastBackupDate), 'MMM dd, yyyy HH:mm') : t('settingNever')}</p>
                   </div>
                </div>
             </div>
@@ -853,23 +858,27 @@ function renderBackupTab(data: SystemSettings, onChange: OnChangeType, onVerify:
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
          <div className="bg-gray-50 p-8 rounded-[36px] border border-gray-100">
-            <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight mb-6">Automation Schedule</h4>
+            <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight mb-6">{t('settingAutomationSchedule')}</h4>
             <div className="space-y-4">
-               {['Every Night at 00:00', 'Weekly on Sunday', 'Never (Manual Only)'].map(schedule => (
-                 <label key={schedule} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 cursor-pointer hover:border-indigo-400 transition-all group">
-                    <span className="text-xs font-black uppercase tracking-widest text-gray-500 group-hover:text-shielder-dark">{schedule}</span>
-                    <input type="radio" name="schedule" className="accent-indigo-600 w-4 h-4" defaultChecked={schedule.includes('Never')} />
+               {[
+                 { key: 'nightly', label: t('settingEveryNight') },
+                 { key: 'weekly', label: t('settingWeeklySunday') },
+                 { key: 'never', label: t('settingNeverManual') }
+               ].map(schedule => (
+                 <label key={schedule.key} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 cursor-pointer hover:border-indigo-400 transition-all group">
+                    <span className="text-xs font-black uppercase tracking-widest text-gray-500 group-hover:text-shielder-dark">{schedule.label}</span>
+                    <input type="radio" name="schedule" className="accent-indigo-600 w-4 h-4" defaultChecked={schedule.key === 'never'} />
                  </label>
                ))}
             </div>
          </div>
 
          <div className="bg-red-50/30 p-8 rounded-[36px] border border-red-100 border-dashed">
-            <h4 className="text-sm font-black text-red-600 uppercase tracking-tight mb-2">Critical Recovery</h4>
-            <p className="text-[11px] text-gray-500 font-medium mb-6">Restore system from an external file. This will wipe all current data and restart the environment.</p>
+            <h4 className="text-sm font-black text-red-600 uppercase tracking-tight mb-2">{t('settingCriticalRecovery')}</h4>
+            <p className="text-[11px] text-gray-500 font-medium mb-6">{t('settingCriticalRecoveryDesc')}</p>
             <button className="w-full flex items-center justify-center gap-3 px-6 py-5 bg-red-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-100">
                <Upload size={18} />
-               Upload & Restore Data
+               {t('settingUploadRestore')}
             </button>
          </div>
       </div>
@@ -894,19 +903,19 @@ interface SystemLog {
   createdAt: string;
 }
 
-function renderLogsTab(logs: SystemLog[], loading: boolean) {
-  if (loading) return <div className="text-center py-20 animate-pulse font-black text-gray-300 uppercase italic">Parsing Forensic Records...</div>;
+function renderLogsTab(logs: SystemLog[], loading: boolean, t: (key: string) => string) {
+  if (loading) return <div className="text-center py-20 animate-pulse font-black text-gray-300 uppercase italic">{t('settingParsingRecords')}</div>;
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
           <tr className="border-b border-gray-50">
-            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Admin</th>
-            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Action</th>
-            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Field</th>
-            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Modification</th>
-            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">Timestamp</th>
+            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settingAdminCol')}</th>
+            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settingActionCol')}</th>
+            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settingFieldCol')}</th>
+            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settingModificationCol')}</th>
+            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settingTimestampCol')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50">
@@ -943,7 +952,7 @@ function renderLogsTab(logs: SystemLog[], loading: boolean) {
           ))}
           {logs.length === 0 && (
             <tr>
-              <td colSpan={5} className="py-20 text-center text-xs font-black text-gray-300 uppercase">No audit events captured yet.</td>
+              <td colSpan={5} className="py-20 text-center text-xs font-black text-gray-300 uppercase">{t('settingNoAuditEvents')}</td>
             </tr>
           )}
         </tbody>

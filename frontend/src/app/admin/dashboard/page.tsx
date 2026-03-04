@@ -69,8 +69,8 @@ export default function AdminDashboardPage() {
         const d = unwrap<any>(overviewRes.value);
         const totalQuotations =
           quotationsRes.status === 'fulfilled'
-            ? (unwrap<any>(quotationsRes.value)?.pagination?.total ??
-               (quotationsRes.value as any)?.data?.pagination?.total ??
+            ? (unwrap<any>(quotationsRes.value)?.total ??
+               (quotationsRes.value as any)?.data?.total ??
                0)
             : 0;
         setKpiData({

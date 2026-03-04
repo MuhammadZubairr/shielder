@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   User, 
@@ -16,18 +15,19 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
-  Camera,
-  Upload as UploadIcon
+  Camera
 } from 'lucide-react';
 import authService from '@/services/auth.service';
 import profileService from '@/services/profile.service';
 import { handleApiError } from '@/services/api.service';
 import { toast } from 'react-hot-toast';
 import { getImageUrl } from '@/utils/helpers';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type TabType = 'overview' | 'security';
 
 export default function ProfilePage() {
+  const { t, isRTL } = useLanguage();
   const { user, refreshUser } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -111,20 +111,20 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
+    <div className="max-w-4xl mx-auto py-8 px-4" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Tab Switcher */}
       <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-2xl w-fit mb-6">
         <button 
           onClick={() => setActiveTab('overview')}
           className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-white text-shielder-dark shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Overview
+          {t('profileOverview')}
         </button>
         <button 
           onClick={() => setActiveTab('security')}
           className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'security' ? 'bg-white text-shielder-dark shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Security & Password
+          {t('profileSecurityTab')}
         </button>
       </div>
 

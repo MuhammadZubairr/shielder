@@ -25,6 +25,7 @@ import {
 import adminService from '@/services/admin.service';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-hot-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // --- Types ---
 interface Admin {
@@ -77,6 +78,7 @@ const RoleBadge = ({ role }: { role: string }) => (
 
 export default function AdminManagementPage() {
   const { user: currentUser } = useAuth();
+  const { t, isRTL } = useLanguage();
   
   // State
   const [admins, setAdmins] = useState<Admin[]>([]);
@@ -326,28 +328,28 @@ export default function AdminManagementPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* 1. Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#0A1E36]">Admin Management</h1>
-          <p className="text-gray-500 text-sm">Manage system administrators and their permissions</p>
+          <h1 className="text-2xl font-bold text-[#0A1E36]">{t('adminMgmtTitle')}</h1>
+          <p className="text-gray-500 text-sm">{t('adminMgmtSubtitle')}</p>
         </div>
         <button 
           onClick={() => { resetForm(); setShowAddModal(true); }}
           className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#FF6B35] text-white rounded-[10px] hover:bg-[#FF5722] transition-colors font-semibold shadow-sm"
         >
           <UserPlus size={18} />
-          Add Admin
+          {t('addAdmin')}
         </button>
       </div>
 
       {/* 2. Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: 'Total Admins', value: summary.totalAdmins, icon: Users, color: '#0205A6' },
-          { label: 'Active Admins', value: summary.activeAdmins, icon: ShieldCheck, color: '#16A34A' },
-          { label: 'Suspended Admins', value: summary.suspendedAdmins, icon: ShieldAlert, color: '#DC2626' },
+          { label: t('totalAdmins'), value: summary.totalAdmins, icon: Users, color: '#0205A6' },
+          { label: t('activeAdmins'), value: summary.activeAdmins, icon: ShieldCheck, color: '#16A34A' },
+          { label: t('suspendedAdmins'), value: summary.suspendedAdmins, icon: ShieldAlert, color: '#DC2626' },
         ].map((card, i) => (
           <div key={i} className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 border-t-4" style={{ borderTopColor: card.color }}>
             <div className="flex items-center justify-between">
@@ -369,7 +371,7 @@ export default function AdminManagementPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
-            placeholder="Search by name or email..."
+            placeholder={t('searchUsers')}
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0205A6] focus:border-transparent transition-all"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -381,17 +383,17 @@ export default function AdminManagementPage() {
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
           >
-            <option value="">All Admins</option>
-            <option value="ADMIN">Admin</option>
+            <option value="">{t('all')} {t('admins')}</option>
+            <option value="ADMIN">{t('roleAdmin')}</option>
           </select>
           <select 
             className="flex-1 md:w-40 px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0205A6] bg-white"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
-            <option value="">All Status</option>
-            <option value="ACTIVE">Active</option>
-            <option value="SUSPENDED">Suspended</option>
+            <option value="">{t('allStatuses')}</option>
+            <option value="ACTIVE">{t('active')}</option>
+            <option value="SUSPENDED">{t('suspendedAdmins')}</option>
           </select>
           <button 
             onClick={() => { setSearch(''); setRoleFilter(''); setStatusFilter(''); }}
@@ -408,12 +410,12 @@ export default function AdminManagementPage() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-[#0A1E36] bg-opacity-[0.02]">
               <tr className="border-b border-gray-100">
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Contact Info</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Join Date</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{t('name')}</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{t('usersColPhone')}</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{t('usersColRole')}</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{t('status')}</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">{t('usersColJoined')}</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-right">{t('actions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50 bg-white">
@@ -459,7 +461,7 @@ export default function AdminManagementPage() {
                         disabled={admin.id === currentUser?.id}
                       >
                         <Edit2 size={10} />
-                        <span>Edit</span>
+                        <span>{t('edit')}</span>
                       </button>
 
                       <button 
@@ -472,7 +474,7 @@ export default function AdminManagementPage() {
                         disabled={admin.id === currentUser?.id}
                       >
                         {admin.isActive ? <EyeOff size={10} /> : <Eye size={10} />}
-                        <span>{admin.isActive ? 'Suspend' : 'Active'}</span>
+                        <span>{admin.isActive ? t('suspendAdmin') : t('activateAdmin')}</span>
                       </button>
 
                       <button 
@@ -481,7 +483,7 @@ export default function AdminManagementPage() {
                         disabled={admin.id === currentUser?.id}
                       >
                         <Trash2 size={10} />
-                        <span>Delete</span>
+                        <span>{t('delete')}</span>
                       </button>
                     </div>
                   </td>
@@ -493,13 +495,13 @@ export default function AdminManagementPage() {
                       <div className="p-4 bg-gray-50 rounded-full">
                         <Users size={48} className="text-gray-200" />
                       </div>
-                      <p className="font-semibold text-gray-600">No Administrators Found</p>
-                      <p className="text-xs max-w-xs mx-auto">Try adjusting your filters or search terms to find the admins you are looking for.</p>
+                      <p className="font-semibold text-gray-600">{t('noAccountsFound')}</p>
+                      <p className="text-xs max-w-xs mx-auto">{t('noResultsFound')}</p>
                       <button 
                         onClick={() => { setSearch(''); setRoleFilter(''); setStatusFilter(''); }}
                         className="mt-2 text-sm text-[#0205A6] font-bold hover:underline"
                       >
-                        Clear all filters
+                        {t('reset')}
                       </button>
                     </div>
                   </td>
@@ -520,7 +522,7 @@ export default function AdminManagementPage() {
               disabled={pagination.page === 1}
               className="px-3 py-1.5 text-xs font-bold rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-30 transition-all flex items-center gap-1"
             >
-              <ChevronLeft size={14} /> Previous
+              <ChevronLeft size={14} /> {t('previous')}
             </button>
             <div className="flex items-center gap-1 mx-2">
               {[...Array(pagination.pages)].map((_, i) => (
@@ -542,7 +544,7 @@ export default function AdminManagementPage() {
               disabled={pagination.page === pagination.pages}
               className="px-3 py-1.5 text-xs font-bold rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-30 transition-all flex items-center gap-1"
             >
-              Next <ChevronRight size={14} />
+              {t('next')} <ChevronRight size={14} />
             </button>
           </div>
         </div>
@@ -560,7 +562,7 @@ export default function AdminManagementPage() {
                   <UserPlus size={20} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-[#0A1E36]">Provision Admin</h2>
+                  <h2 className="text-xl font-bold text-[#0A1E36]">{t('addAdmin')}</h2>
                   <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">System Access Protocol</p>
                 </div>
               </div>
@@ -572,18 +574,18 @@ export default function AdminManagementPage() {
               <div className="p-6 space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Full Name</label>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">{t('name')}</label>
                   <input
                     type="text"
                     required
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0205A6] focus:bg-white focus:outline-none transition-all text-sm"
-                    placeholder="Enter full name"
+                    placeholder={t('enterName')}
                     value={formData.fullName}
                     onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                   />
                 </div>
                 <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">Phone Number</label>
+                  <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-1.5">{t('phone')}</label>
                   <input
                     type="tel"
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0205A6] focus:bg-white focus:outline-none transition-all text-sm"
@@ -646,7 +648,7 @@ export default function AdminManagementPage() {
                   onClick={() => setShowAddModal(false)}
                   className="flex-1 px-4 py-3 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all font-bold text-xs uppercase tracking-widest"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button
                   type="submit"
@@ -654,7 +656,7 @@ export default function AdminManagementPage() {
                   className="flex-1 px-4 py-3 bg-[#FF6B35] text-white rounded-xl hover:bg-[#FF5722] transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
                 >
                   {formLoading ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
-                  Add Admin
+                  {t('addAdmin')}
                 </button>
               </div>
             </form>
@@ -672,7 +674,7 @@ export default function AdminManagementPage() {
                   <Edit2 size={20} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-[#0A1E36]">Edit Admin Profile</h2>
+                  <h2 className="text-xl font-bold text-[#0A1E36]">{t('editAdmin')}</h2>
                   <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest">Update administrator details</p>
                 </div>
               </div>
@@ -733,7 +735,7 @@ export default function AdminManagementPage() {
                   onClick={() => setShowEditModal(false)}
                   className="flex-1 px-4 py-3 border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-all font-bold text-xs uppercase tracking-widest"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button
                   type="submit"
@@ -741,7 +743,7 @@ export default function AdminManagementPage() {
                   className="flex-1 px-4 py-3 bg-[#FF6B35] text-white rounded-xl hover:bg-[#FF5722] transition-all font-bold text-xs uppercase tracking-widest disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
                 >
                   {formLoading ? <Loader2 className="animate-spin" size={16} /> : <CheckCircle2 size={16} />}
-                  Save Changes
+                  {t('saveChanges')}
                 </button>
               </div>
             </form>
@@ -757,7 +759,7 @@ export default function AdminManagementPage() {
               {selectedAdmin?.isActive ? <EyeOff size={32} /> : <Eye size={32} />}
             </div>
             <h2 className="text-2xl font-black text-[#0A1E36] mb-2 uppercase tracking-tight">
-              {selectedAdmin?.isActive ? 'Suspend admin?' : 'Activate admin?'}
+              {selectedAdmin?.isActive ? t('confirmSuspendTitle') : t('confirmActivateAdminTitle')}
             </h2>
             <p className="text-gray-500 text-sm mb-8 leading-relaxed">
               Admin: <span className="font-bold text-gray-800">{selectedAdmin?.profile?.fullName || selectedAdmin?.email}</span>.
@@ -770,7 +772,7 @@ export default function AdminManagementPage() {
                 onClick={() => setShowStatusModal(false)}
                 className="flex-1 px-4 py-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 font-bold text-xs uppercase tracking-widest transition-all"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 onClick={handleToggleStatus}
@@ -778,7 +780,7 @@ export default function AdminManagementPage() {
                 className={`flex-1 px-4 py-3 text-white rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg transition-all flex items-center justify-center gap-2 ${selectedAdmin?.isActive ? 'bg-[#DC2626] hover:bg-red-700' : 'bg-[#16A34A] hover:bg-green-700'}`}
               >
                 {formLoading && <Loader2 className="animate-spin" size={16} />}
-                Confirm
+                {t('confirm')}
               </button>
             </div>
           </div>
@@ -792,7 +794,7 @@ export default function AdminManagementPage() {
             <div className="mx-auto w-16 h-16 rounded-full bg-[#DC2626] bg-opacity-10 text-[#DC2626] flex items-center justify-center mb-6">
               <Trash2 size={32} />
             </div>
-            <h2 className="text-2xl font-black text-[#0A1E36] mb-3 uppercase tracking-tight">Delete Admin?</h2>
+            <h2 className="text-2xl font-black text-[#0A1E36] mb-3 uppercase tracking-tight">{t('confirmDeleteAdminTitle')}</h2>
             <div className="bg-red-50 p-3 rounded-lg border border-red-100 mb-6">
               <p className="text-[#DC2626] text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
                 <AlertTriangle size={14} /> Attention
@@ -806,7 +808,7 @@ export default function AdminManagementPage() {
                 onClick={() => setShowDeleteModal(false)}
                 className="flex-1 px-4 py-3 border border-gray-200 text-gray-500 rounded-xl hover:bg-gray-50 font-bold text-xs uppercase tracking-widest transition-all"
               >
-                Cancel
+                {t('cancel')}
               </button>
               <button
                 onClick={handleDeleteAdmin}
@@ -814,7 +816,7 @@ export default function AdminManagementPage() {
                 className="flex-1 px-4 py-3 bg-[#DC2626] text-white rounded-xl hover:bg-red-700 font-bold text-xs uppercase tracking-widest shadow-lg transition-all flex items-center justify-center gap-2"
               >
                 {formLoading && <Loader2 className="animate-spin" size={16} />}
-                Delete Admin
+                {t('delete')} {t('admins')}
               </button>
             </div>
           </div>
