@@ -5,7 +5,7 @@
 import { Router } from 'express';
 import { quotationController } from './quotation.controller';
 import { authenticate } from '@/modules/auth/auth.middleware';
-import { requireSuperAdmin, requireRoles } from '@/common/middleware/rbac.middleware';
+import { requireRoles } from '@/common/middleware/rbac.middleware';
 import { validate } from '@/common/middleware/validation.middleware';
 import { quotationValidation } from './quotation.validation';
 import { UserRole } from '@/common/constants/roles';
