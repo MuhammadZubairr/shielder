@@ -575,11 +575,42 @@ export class ProductService {
           throw new Error('Name, Price, and Stock are required and must be numeric');
         }
 
-        const categoryId = catMap.get(catName);
-        if (!categoryId) throw new Error(`Category "${row['Category Name']}" not found`);
+        // Auto-create category if it doesn't exist
+        let categoryId = catMap.get(catName);
+        if (!categoryId) {
+          const displayName = row['Category Name']?.toString().trim() || catName;
+          const newCat = await prisma.category.create({
+            data: {
+              translations: {
+                create: [
+                  { locale: 'en', name: displayName },
+                  { locale: 'ar', name: await toArabic(displayName) },
+                ]
+              }
+            }
+          });
+          categoryId = newCat.id;
+          catMap.set(catName, categoryId);
+        }
 
-        const subcategoryId = subMap.get(subName);
-        if (!subcategoryId) throw new Error(`Subcategory "${row['Subcategory Name']}" not found`);
+        // Auto-create subcategory if it doesn't exist (linked to the category above)
+        let subcategoryId = subMap.get(subName);
+        if (!subcategoryId) {
+          const displayName = row['Subcategory Name']?.toString().trim() || subName;
+          const newSub = await prisma.subcategory.create({
+            data: {
+              categoryId,
+              translations: {
+                create: [
+                  { locale: 'en', name: displayName },
+                  { locale: 'ar', name: await toArabic(displayName) },
+                ]
+              }
+            }
+          });
+          subcategoryId = newSub.id;
+          subMap.set(subName, subcategoryId);
+        }
 
         const brandId = brandName ? brandMap.get(brandName) : null;
 
