@@ -111,6 +111,8 @@ function ProductCard({ product, tab, t, isRTL, isAuthenticated }: {
     );
   };
 
+  const [detailOpen, setDetailOpen] = useState(false);
+
   const [quotationModalOpen, setQuotationModalOpen] = useState(false);
   const [quotationQty, setQuotationQty]             = useState(1);
   const { addItem: addToQuotation } = useQuotation();
@@ -143,7 +145,11 @@ function ProductCard({ product, tab, t, isRTL, isAuthenticated }: {
     : null;
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col">
+    <>
+    <div
+      className="bg-white rounded-2xl overflow-hidden border border-gray-200 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 flex flex-col cursor-pointer"
+      onClick={() => setDetailOpen(true)}
+    >
       {/* Image */}
       <div className="relative h-52 overflow-hidden bg-gray-50">
         {image && !imgError ? (
@@ -186,17 +192,8 @@ function ProductCard({ product, tab, t, isRTL, isAuthenticated }: {
           </p>
         )}
 
-        {/* Filter Type / Material */}
-        {(product.filterType || product.material) && (
-          <p className="text-gray-500 text-xs">
-            {[product.filterType, product.material].filter(Boolean).join(' · ')}
-          </p>
-        )}
-
-        {/* Dimensions */}
-        {product.dimensions && (
-          <p className="text-gray-400 text-xs">{product.dimensions}</p>
-        )}
+        {/* Description */}
+        <p className="text-gray-500 text-xs line-clamp-2 mt-0.5">{product.description}</p>
 
         {/* Price */}
         {isQuotation ? (
@@ -213,13 +210,13 @@ function ProductCard({ product, tab, t, isRTL, isAuthenticated }: {
         {/* Button */}
         {isQuotation ? (
           <button
-            onClick={handleGetQuotation}
+            onClick={e => { e.stopPropagation(); handleGetQuotation(); }}
             className="mt-3 w-full bg-[#0D1637] hover:bg-[#0a1128] text-white font-semibold text-sm py-3 rounded-xl transition-colors">
             {t('productsGetQuotation')}
           </button>
         ) : (
           <button
-            onClick={handleAddToCart}
+            onClick={e => { e.stopPropagation(); handleAddToCart(); }}
             disabled={cartLoading || product.stock === 0}
             className="mt-3 w-full bg-[#F97316] hover:bg-[#e8650a] text-white font-semibold text-sm py-3 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
             <ShoppingCart size={15} />
@@ -227,6 +224,26 @@ function ProductCard({ product, tab, t, isRTL, isAuthenticated }: {
           </button>
         )}
       </div>
+
+      {/* ── Product Detail Modal ── */}
+      {detailOpen && (
+        <ProductDetailModal
+          product={product}
+          tab={tab}
+          t={t}
+          isRTL={isRTL}
+          isAuthenticated={isAuthenticated}
+          onClose={() => setDetailOpen(false)}
+          onAddToCart={handleAddToCart}
+          onGetQuotation={handleGetQuotation}
+          cartLoading={cartLoading}
+          image={image}
+          imgError={imgError}
+          setImgError={setImgError}
+          price={price}
+          badgeLabel={badgeLabel}
+        />
+      )}
 
       {/* ── Quotation quick-add modal ── */}
       {quotationModalOpen && (
@@ -339,6 +356,153 @@ function ProductCard({ product, tab, t, isRTL, isAuthenticated }: {
         </>
       )}
     </div>
+    </>
+  );
+}
+
+// ── Product Detail Modal ──────────────────────────────────────────────────────
+function ProductDetailModal({
+  product, tab, t, isRTL, isAuthenticated,
+  onClose, onAddToCart, onGetQuotation,
+  cartLoading, image, imgError, setImgError, price, badgeLabel,
+}: {
+  product: Product; tab: Tab; t: (k: string) => string; isRTL: boolean;
+  isAuthenticated: boolean;
+  onClose: () => void;
+  onAddToCart: () => void;
+  onGetQuotation: () => void;
+  cartLoading: boolean;
+  image: string | null;
+  imgError: boolean;
+  setImgError: (v: boolean) => void;
+  price: number;
+  badgeLabel: string | null;
+}) {
+  const isQuotation = tab === 'quotation';
+
+  // Lock body scroll
+  useEffect(() => {
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.paddingRight = `${scrollbarWidth}px`;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, []);
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/50 z-[80] backdrop-blur-sm"
+        onClick={onClose}
+      />
+      {/* Modal */}
+      <div className="fixed inset-0 z-[90] flex items-center justify-center px-4">
+        <div
+          className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
+          dir={isRTL ? 'rtl' : 'ltr'}
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h2 className="text-base font-bold text-gray-900">{t('productsDetailTitle') || 'Product Details'}</h2>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
+              <X size={18} className="text-gray-500" />
+            </button>
+          </div>
+
+          {/* Scrollable body */}
+          <div className="overflow-y-auto max-h-[80vh]">
+            {/* Image */}
+            <div className="relative h-64 bg-gray-100 overflow-hidden">
+              {image && !imgError ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={image}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                  onError={() => setImgError(true)}
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                  <ImageOff size={40} className="text-gray-300" />
+                  <span className="text-xs text-gray-400 font-medium">No Image</span>
+                </div>
+              )}
+            </div>
+
+            {/* Details */}
+            <div className="px-6 py-5 space-y-3">
+              {/* Badge + SKU row */}
+              <div className="flex items-center justify-between">
+                {badgeLabel && (
+                  <span className="inline-flex border border-gray-300 text-gray-500 text-xs font-semibold px-2.5 py-0.5 rounded-full tracking-wider">
+                    {badgeLabel}
+                  </span>
+                )}
+                {(product.filterNumber || product.sku) && (
+                  <span className="text-gray-400 text-xs font-medium">
+                    {product.filterNumber ?? product.sku}
+                  </span>
+                )}
+              </div>
+
+              {/* Name */}
+              <h3 className="text-xl font-extrabold text-gray-900 leading-tight">{product.name}</h3>
+
+              {/* Description */}
+              {product.description && (
+                <p className="text-gray-500 text-sm leading-relaxed">{product.description}</p>
+              )}
+
+              {/* Filter Type / Material / Dimensions */}
+              {(product.filterType || product.material || product.dimensions) && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                  {product.filterType && <span><span className="font-semibold text-gray-700">Type:</span> {product.filterType}</span>}
+                  {product.material   && <span><span className="font-semibold text-gray-700">Material:</span> {product.material}</span>}
+                  {product.dimensions && <span><span className="font-semibold text-gray-700">Dimensions:</span> {product.dimensions}</span>}
+                </div>
+              )}
+
+              {/* Price + Stock */}
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-2xl font-extrabold text-[#0205A6] flex items-center gap-1">
+                  <SARSymbol />{price.toFixed(2)}
+                </span>
+                {product.stock !== undefined && product.stock !== null && (
+                  <span className={`text-sm font-semibold ${
+                    product.stock === 0 ? 'text-red-500' : 'text-gray-500'
+                  }`}>
+                    {product.stock === 0 ? t('productsOutOfStock') : `${product.stock} ${t('productsInStock') || 'in stock'}`}
+                  </span>
+                )}
+              </div>
+
+              {/* CTA */}
+              {isQuotation ? (
+                <button
+                  onClick={() => { onClose(); onGetQuotation(); }}
+                  className="w-full bg-[#0D1637] hover:bg-[#0a1128] text-white font-semibold text-sm py-3.5 rounded-2xl transition-colors">
+                  {t('productsGetQuotation')}
+                </button>
+              ) : (
+                <button
+                  onClick={() => { onAddToCart(); onClose(); }}
+                  disabled={cartLoading || product.stock === 0}
+                  className="w-full bg-[#F97316] hover:bg-[#e8650a] text-white font-bold text-sm py-3.5 rounded-2xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <ShoppingCart size={16} />
+                  {t('productsAddToCart')}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
 
