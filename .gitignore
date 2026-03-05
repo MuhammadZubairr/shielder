@@ -57,6 +57,8 @@ uploads/
 # Database & Prisma
 *.sqlite
 *.db
+*.dump
+*.sql
 backend/prisma/migrations/
 prisma/migrations/.migrate_lock
 
