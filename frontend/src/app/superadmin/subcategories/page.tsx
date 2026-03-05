@@ -405,8 +405,9 @@ export default function SubcategoryManagementPage() {
                         {sub.image ? (
                           <img 
                             src={getImageUrl(sub.image) || ''}
-                            alt={sub.name} 
+                            alt={sub.name}
                             className="w-full h-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).src = '/images/landing/factory-1.png'; }}
                           />
                         ) : <ImageIcon className="text-gray-300" size={16} />}
                       </div>

@@ -19,25 +19,25 @@ const prisma = new PrismaClient();
 
 // ─── Image pool (cycle through available images) ─────────────────────────────
 const CATEGORY_IMAGES = [
-  'images/UserEnd images/filter category demoy images.jpg',
-  'images/UserEnd images/filter category deomy image.jpg',
-  'images/UserEnd images/filter catogory deomy image 2.jpg',
-  'images/UserEnd images/filter category deomy image 3.jpg',
-  'images/UserEnd images/StockCake-Robotic_Assembly_Line-503452-medium 1.png',
+  'images/userend-images/filter-category-demoy-images.jpg',
+  'images/userend-images/filter-category-deomy-image.jpg',
+  'images/userend-images/filter-catogory-deomy-image-2.jpg',
+  'images/userend-images/filter-category-deomy-image-3.jpg',
+  'images/userend-images/stockcake-robotic_assembly_line-503452-medium-1.png',
 ];
 
 const PRODUCT_IMAGES = [
-  'images/products-images/Aluminium grear.jpeg',
-  'images/products-images/Exaavator spare parts.jpeg',
-  'images/products-images/Exaavator.jpeg',
-  'images/products-images/Haky parts.jpeg',
-  'images/products-images/UMGS PARTS.jpeg',
-  'images/products-images/filter category demoy images.jpg',
-  'images/products-images/filter category deomy image 3.jpg',
-  'images/products-images/filter category deomy image.jpg',
-  'images/products-images/filter catogory deomy image 2.jpg',
+  'images/products-images/aluminium-grear.jpeg',
+  'images/products-images/exaavator-spare-parts.jpeg',
+  'images/products-images/exaavator.jpeg',
+  'images/products-images/haky-parts.jpeg',
+  'images/products-images/umgs-parts.jpeg',
+  'images/products-images/filter-category-demoy-images.jpg',
+  'images/products-images/filter-category-deomy-image-3.jpg',
+  'images/products-images/filter-category-deomy-image.jpg',
+  'images/products-images/filter-catogory-deomy-image-2.jpg',
   'images/products-images/saprepartss.jpeg',
-  'images/products-images/spare parts.jpeg',
+  'images/products-images/spare-parts.jpeg',
 ];
 
 const USER_IMAGES = [

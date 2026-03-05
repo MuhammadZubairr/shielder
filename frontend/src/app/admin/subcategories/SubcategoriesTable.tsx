@@ -118,6 +118,7 @@ export default function SubcategoriesTable({
                           src={getImageUrl(s.image) || ''}
                           alt={displayName(s)}
                           className="w-9 h-9 rounded-lg object-cover border border-gray-100"
+                          onError={(e) => { (e.target as HTMLImageElement).src = '/images/landing/factory-1.png'; }}
                         />
                       ) : (
                         <div className="w-9 h-9 rounded-lg bg-[#5B5FC7]/10 flex items-center justify-center">

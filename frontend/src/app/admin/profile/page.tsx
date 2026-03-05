@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { useSearchParams } from 'next/navigation';
 import { 
@@ -130,9 +129,14 @@ export default function ProfilePage() {
         <div className="h-32 bg-gradient-to-r from-shielder-dark to-shielder-primary relative">
           <div className="absolute -bottom-12 left-8">
             <div className="w-24 h-24 rounded-2xl bg-white p-1 shadow-lg">
-              <div className="w-full h-full rounded-xl bg-gray-100 flex items-center justify-center text-shielder-dark relative">
+              <div className="w-full h-full rounded-xl bg-gray-100 flex items-center justify-center text-shielder-dark relative overflow-hidden">
                 {user?.profile?.profileImage ? (
-                  <Image src={getImageUrl(user.profile.profileImage) || user.profile.profileImage} alt="Profile" className="rounded-xl object-cover" fill />
+                  <img
+                    src={getImageUrl(user.profile.profileImage) || ''}
+                    alt="Profile"
+                    className="w-full h-full rounded-xl object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
                 ) : (
                   <User size={40} />
                 )}

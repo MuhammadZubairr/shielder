@@ -14,13 +14,21 @@ export const getImageUrl = (imagePath: string | null | undefined): string | null
     return imagePath;
   }
 
-  // Seed/demo images stored under images/products-images/... are served
-  // directly from the Next.js public folder (works on Vercel without a backend).
+  // Seed/demo images stored under images/products-images/... or images/userend-images/...
+  // are served directly from the Next.js public folder (works on Vercel without a backend).
   const normalized = (imagePath.startsWith('/') ? imagePath.slice(1) : imagePath)
-    // Normalise legacy path that had a space in the folder name
-    .replace('images/products images/', 'images/products-images/');
+    // Normalise legacy folder names that had spaces
+    .replace('images/products images/', 'images/products-images/')
+    .replace('images/UserEnd images/', 'images/userend-images/');
   if (normalized.startsWith('images/')) {
-    return `/${normalized}`;
+    // Normalise filename: lowercase + spaces → hyphens (handles old DB records)
+    const parts = normalized.split('/');
+    const cleanedParts = parts.map((seg, i) =>
+      i === parts.length - 1
+        ? seg.toLowerCase().replace(/ /g, '-')
+        : seg
+    );
+    return `/${cleanedParts.join('/')}`;
   }
   
   // User-uploaded files (uploads/...) are served by the backend.

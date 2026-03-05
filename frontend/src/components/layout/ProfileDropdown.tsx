@@ -122,6 +122,7 @@ export const ProfileDropdown = () => {
               src={getImageUrl(user.profile.profileImage) || ''} 
               alt="Profile" 
               className="w-full h-full rounded-xl object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           ) : (
             <User size={20} />
@@ -150,7 +151,12 @@ export const ProfileDropdown = () => {
               <div className="relative flex-shrink-0">
                 <div className="w-12 h-12 rounded-xl bg-dark flex items-center justify-center text-white overflow-hidden">
                   {user?.profile?.profileImage ? (
-                    <img src={getImageUrl(user.profile.profileImage) || ''} alt="Profile" className="w-full h-full object-cover" />
+                    <img
+                      src={getImageUrl(user.profile.profileImage) || ''}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
                   ) : (
                     <User size={22} />
                   )}

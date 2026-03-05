@@ -5,8 +5,22 @@ import { validate } from '../../common/middleware/validation.middleware';
 import { profileValidation } from './profile.validation';
 import { UserRole } from '../../types/rbac.types';
 import { upload } from '../../common/middleware/upload.middleware';
+import multer from 'multer';
 
 const router = Router();
+
+// Separate in-memory multer for profile images — avoids Railway ephemeral filesystem
+const profileImageUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB
+  fileFilter: (_req, file, cb) => {
+    if (['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPEG, PNG and WebP files are allowed'));
+    }
+  },
+});
 
 /**
  * All profile routes require authentication
@@ -25,8 +39,8 @@ router.patch('/language', validate(profileValidation.updateLanguage), ProfileCon
 // PATCH /api/profile/preferences - Update theme/other preferences
 router.patch('/preferences', ProfileController.updatePreferences);
 
-// POST /api/profile/upload-image - Upload profile image
-router.post('/upload-image', upload.single('profileImage'), ProfileController.uploadProfileImage);
+// POST /api/profile/upload-image - Upload profile image (stored as base64 in DB)
+router.post('/upload-image', profileImageUpload.single('profileImage'), ProfileController.uploadProfileImage);
 
 // GET /api/profile/:userId - Admin view any profile (Read-only)
 router.get('/:userId', authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN), ProfileController.getProfileById);

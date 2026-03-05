@@ -491,7 +491,7 @@ export class ProductService {
         'Filter Type': 'Air Filter',
         'Material': 'Synthetic',
         'Dimensions': '250mm x 150mm x 50mm',
-        'Image': 'images/products-images/Aluminium grear.jpeg',
+        'Image': 'images/products-images/aluminium-grear.jpeg',
         'spec_Color': 'White',
         'spec_Size': 'Standard'
       }
@@ -557,16 +557,16 @@ export class ProductService {
         const nameAr = nameArInput || await toArabic(name);
         const descriptionAr = descArInput || (description ? await toArabic(description) : '');
         const rawImage: string | undefined = row['Image']?.toString().trim() || undefined;
-        // Normalise image path: bare filename → full relative path
+        // Normalise image path: bare filename → full relative path, always URL-safe
         let mainImage: string | undefined;
         if (rawImage) {
           if (rawImage.startsWith('http://') || rawImage.startsWith('https://') || rawImage.startsWith('/')) {
             mainImage = rawImage;
-          } else if (rawImage.startsWith('images/')) {
-            mainImage = rawImage;
           } else {
-            // Treat as a bare filename inside the products images folder
-            mainImage = `images/products-images/${rawImage}`;
+            // Strip any leading path prefix so we only keep the filename,
+            // then lowercase + replace spaces with hyphens for URL safety
+            const justFile = rawImage.split('/').pop()!.toLowerCase().replace(/ /g, '-');
+            mainImage = `images/products-images/${justFile}`;
           }
         }
 

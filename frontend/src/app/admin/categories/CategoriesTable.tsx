@@ -115,6 +115,7 @@ export default function CategoriesTable({
                             src={getImageUrl(cat.image) || ''}
                             alt={displayName(cat)}
                             className="w-full h-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).src = '/images/landing/factory-1.png'; }}
                           />
                         ) : (
                           <ImageIcon className="text-gray-300" size={20} />

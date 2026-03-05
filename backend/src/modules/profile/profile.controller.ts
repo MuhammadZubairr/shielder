@@ -195,8 +195,9 @@ export class ProfileController {
         return;
       }
 
-      // Generate URL for the uploaded file
-      const profileImageUrl = `/uploads/profile/${file.filename}`;
+      // Convert buffer to base64 data URL — stored in DB, survives Railway restarts
+      const base64 = file.buffer.toString('base64');
+      const profileImageUrl = `data:${file.mimetype};base64,${base64}`;
 
       // Update profile with new image URL
       const profile = await ProfileService.updateProfile(userId, {
