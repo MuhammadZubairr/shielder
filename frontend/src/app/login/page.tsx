@@ -4,7 +4,7 @@
  * User login form with Arabic/English support
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, ChevronLeft, Eye, EyeOff } from 'lucide-react';
@@ -16,7 +16,7 @@ import { ROUTES, VALIDATION_RULES, STORAGE_KEYS } from '@/utils/constants';
 import type { LoginRequest } from '@/types';
 import toast from 'react-hot-toast';
 
-export default function LoginPage() {
+function LoginPageContent() {
     // Clear auth state if session expired
     useEffect(() => {
       const params = new URLSearchParams(window.location.search);
@@ -339,6 +339,14 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
 

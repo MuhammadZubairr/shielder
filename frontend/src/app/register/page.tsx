@@ -4,7 +4,7 @@
  * User registration form with Arabic/English support
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, ChevronLeft, User, Phone, Building2, MapPin, Eye, EyeOff } from 'lucide-react';
@@ -15,7 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { ROUTES, VALIDATION_RULES, STORAGE_KEYS } from '@/utils/constants';
 import type { RegisterRequest } from '@/types';
 
-export default function RegisterPage() {
+function RegisterPageContent() {
   const { register, isSubmitting } = useAuth();
   const { isAuthenticated, user, isLoading } = useAuthStore();
   const router = useRouter();
@@ -429,6 +429,14 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterPageContent />
+    </Suspense>
   );
 }
 
