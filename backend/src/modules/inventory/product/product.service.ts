@@ -41,6 +41,11 @@ export class ProductService {
     stock: number;
     minimumStockThreshold?: number;
     mainImage?: string;
+    filterNumber?: string;
+    alternateNumbers?: string;
+    filterType?: string;
+    material?: string;
+    dimensions?: string;
     translations: any[];
     specifications?: { specKey: string; specValue: string }[];
   }) {
@@ -55,6 +60,11 @@ export class ProductService {
         stock: data.stock,
         minimumStockThreshold: data.minimumStockThreshold || 5,
         mainImage: data.mainImage,
+        filterNumber: data.filterNumber,
+        alternateNumbers: data.alternateNumbers,
+        filterType: data.filterType,
+        material: data.material,
+        dimensions: data.dimensions,
         status: ProductStatus.PENDING,
         translations: {
           create: data.translations,
@@ -256,6 +266,11 @@ export class ProductService {
         isActive: data.isActive,
         status: data.status,
         mainImage: data.mainImage,
+        filterNumber: data.filterNumber,
+        alternateNumbers: data.alternateNumbers,
+        filterType: data.filterType,
+        material: data.material,
+        dimensions: data.dimensions,
         translations: data.translations ? {
           deleteMany: { productId: id },
           create: data.translations,
@@ -449,16 +464,21 @@ export class ProductService {
 
   async generateTemplate() {
     const headers = [
-      'Product Name', 'Arabic Name', 'SKU', 'Price', 'Stock', 'Minimum Stock',
-      'Category Name', 'Subcategory Name', 'Brand Name', 'Description', 'Arabic Description',
+      'Product Name', 'Arabic Name', 'Filter Number', 'Alternate Numbers',
+      'SKU', 'Price', 'Stock', 'Minimum Stock',
+      'Category Name', 'Subcategory Name', 'Brand Name',
+      'Description', 'Arabic Description',
+      'Filter Type', 'Material', 'Dimensions',
       'Image',
-      'spec_Color', 'spec_Material', 'spec_Size'
+      'spec_Color', 'spec_Size'
     ];
     
     const sampleData = [
       {
         'Product Name': 'High Capacity Air Filter',
         'Arabic Name': 'فلتر هواء عالي السعة',
+        'Filter Number': 'FN-AF-001',
+        'Alternate Numbers': 'AF001, AIR-001, 123456',
         'SKU': 'AF-HC-001',
         'Price': 299.99,
         'Stock': 100,
@@ -468,9 +488,11 @@ export class ProductService {
         'Brand Name': 'Shielder Core',
         'Description': 'Premium air filter for industrial use',
         'Arabic Description': 'فلتر هواء فائق الجودة للاستخدام الصناعي',
+        'Filter Type': 'Air Filter',
+        'Material': 'Synthetic',
+        'Dimensions': '250mm x 150mm x 50mm',
         'Image': 'images/products images/Aluminium grear.jpeg',
         'spec_Color': 'White',
-        'spec_Material': 'Synthetic',
         'spec_Size': 'Standard'
       }
     ];
@@ -525,6 +547,11 @@ export class ProductService {
         const description = row['Description'] || '';
         const nameArInput: string = row['Arabic Name']?.toString().trim() || '';
         const descArInput: string = row['Arabic Description']?.toString().trim() || '';
+        const filterNumber: string | undefined = row['Filter Number']?.toString().trim() || undefined;
+        const alternateNumbers: string | undefined = row['Alternate Numbers']?.toString().trim() || undefined;
+        const filterType: string | undefined = row['Filter Type']?.toString().trim() || undefined;
+        const material: string | undefined = row['Material']?.toString().trim() || undefined;
+        const dimensions: string | undefined = row['Dimensions']?.toString().trim() || undefined;
 
         // Auto-translate if Arabic fields are not provided
         const nameAr = nameArInput || await toArabic(name);
@@ -584,6 +611,11 @@ export class ProductService {
             subcategoryId,
             brandId,
             mainImage,
+            filterNumber,
+            alternateNumbers,
+            filterType,
+            material,
+            dimensions,
             status: ProductStatus.PUBLISHED, // Auto-approve bulk uploads for now as they come from SuperAdmin
             translations: {
               create: [

@@ -27,6 +27,11 @@ interface Product {
   categoryName?: string;
   stock?: number;
   sku?: string;
+  filterNumber?: string;
+  alternateNumbers?: string;
+  filterType?: string;
+  material?: string;
+  dimensions?: string;
 }
 
 interface Category {
@@ -167,9 +172,23 @@ function ProductCard({ product, tab, t, isRTL, isAuthenticated }: {
         {/* Name */}
         <h3 className="font-bold text-gray-900 text-sm leading-snug mt-0.5">{product.name}</h3>
 
-        {/* SKU */}
-        {product.sku && (
-          <p className="text-gray-400 text-xs">{product.sku}</p>
+        {/* Filter Number / SKU */}
+        {(product.filterNumber || product.sku) && (
+          <p className="text-gray-400 text-xs">
+            {product.filterNumber ? `#${product.filterNumber}` : product.sku}
+          </p>
+        )}
+
+        {/* Filter Type / Material */}
+        {(product.filterType || product.material) && (
+          <p className="text-gray-500 text-xs">
+            {[product.filterType, product.material].filter(Boolean).join(' · ')}
+          </p>
+        )}
+
+        {/* Dimensions */}
+        {product.dimensions && (
+          <p className="text-gray-400 text-xs">{product.dimensions}</p>
         )}
 
         {/* Price */}

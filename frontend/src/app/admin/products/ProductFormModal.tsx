@@ -97,12 +97,18 @@ export default function ProductFormModal({ mode, product, onClose, onSuccess }: 
           nameAr: ar.name || p.nameAr || '',
           descriptionEn: en.description || p.descriptionEn || '',
           descriptionAr: ar.description || p.descriptionAr || '',
+          sku: p.sku || '',
           price: String(p.price),
           stock: String(p.stock),
           minimumStockThreshold: String(p.minimumStockThreshold ?? 10),
           categoryId: p.categoryId || p.category?.id || '',
           subcategoryId: p.subcategoryId || p.subcategory?.id || '',
           isActive: p.isActive,
+          filterNumber: p.filterNumber || '',
+          alternateNumbers: p.alternateNumbers || '',
+          filterType: p.filterType || '',
+          material: p.material || '',
+          dimensions: p.dimensions || '',
         });
         if (p.mainImage) {
           setImagePreview(getImageUrl(p.mainImage));
@@ -115,12 +121,18 @@ export default function ProductFormModal({ mode, product, onClose, onSuccess }: 
           nameAr: '',
           descriptionEn: '',
           descriptionAr: '',
+          sku: product.sku || '',
           price: String(product.price),
           stock: String(product.stock),
           minimumStockThreshold: String(product.minimumStockThreshold ?? 10),
           categoryId: product.categoryId || '',
           subcategoryId: product.subcategoryId || '',
           isActive: product.isActive,
+          filterNumber: product.filterNumber || '',
+          alternateNumbers: product.alternateNumbers || '',
+          filterType: product.filterType || '',
+          material: product.material || '',
+          dimensions: product.dimensions || '',
         });
       });
     return () => { mounted = false; };
@@ -196,12 +208,18 @@ export default function ProductFormModal({ mode, product, onClose, onSuccess }: 
 
     const payload = {
       translations,
+      sku: form.sku.trim() || undefined,
       price: parseFloat(form.price),
       stock: parseInt(form.stock, 10),
       minimumStockThreshold: parseInt(form.minimumStockThreshold, 10),
       categoryId: form.categoryId,
       subcategoryId: form.subcategoryId,
       isActive: form.isActive,
+      filterNumber: form.filterNumber.trim() || undefined,
+      alternateNumbers: form.alternateNumbers.trim() || undefined,
+      filterType: form.filterType.trim() || undefined,
+      material: form.material.trim() || undefined,
+      dimensions: form.dimensions.trim() || undefined,
     };
 
     try {
@@ -486,6 +504,18 @@ export default function ProductFormModal({ mode, product, onClose, onSuccess }: 
               {t('inventory')}
             </p>
 
+            {/* SKU */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">SKU</label>
+              <input
+                type="text"
+                value={form.sku}
+                onChange={(e) => set('sku', e.target.value)}
+                placeholder="e.g. SKU-001"
+                className={inputClass(false)}
+              />
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Price */}
               <div>
@@ -542,6 +572,68 @@ export default function ProductFormModal({ mode, product, onClose, onSuccess }: 
                 {errors.minimumStockThreshold && (
                   <p className="text-red-500 text-xs mt-1">{errors.minimumStockThreshold}</p>
                 )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Filter Details ── */}
+          <div className="border border-gray-200 rounded-xl p-4 space-y-4">
+            <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Filter Details</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Filter Number</label>
+                <input
+                  type="text"
+                  value={form.filterNumber}
+                  onChange={(e) => set('filterNumber', e.target.value)}
+                  placeholder="e.g. FN-AF-001"
+                  className={inputClass(false)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Filter Type</label>
+                <input
+                  type="text"
+                  value={form.filterType}
+                  onChange={(e) => set('filterType', e.target.value)}
+                  placeholder="e.g. Air Filter"
+                  className={inputClass(false)}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Alternate Numbers</label>
+              <input
+                type="text"
+                value={form.alternateNumbers}
+                onChange={(e) => set('alternateNumbers', e.target.value)}
+                placeholder="e.g. AF001, AIR-001, 123456  (comma-separated)"
+                className={inputClass(false)}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Material</label>
+                <input
+                  type="text"
+                  value={form.material}
+                  onChange={(e) => set('material', e.target.value)}
+                  placeholder="e.g. Synthetic"
+                  className={inputClass(false)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Dimensions</label>
+                <input
+                  type="text"
+                  value={form.dimensions}
+                  onChange={(e) => set('dimensions', e.target.value)}
+                  placeholder="e.g. 250mm x 150mm x 50mm"
+                  className={inputClass(false)}
+                />
               </div>
             </div>
           </div>

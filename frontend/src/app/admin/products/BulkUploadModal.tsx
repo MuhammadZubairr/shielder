@@ -133,6 +133,8 @@ export default function BulkUploadModal({ onClose, onSuccess }: Props) {
   const templateColumns = [
     'Product Name *',
     'Arabic Name',
+    'Filter Number',
+    'Alternate Numbers',
     'SKU',
     'Price *',
     'Stock *',
@@ -142,9 +144,11 @@ export default function BulkUploadModal({ onClose, onSuccess }: Props) {
     'Brand Name',
     'Description',
     'Arabic Description',
+    'Filter Type',
+    'Material',
+    'Dimensions',
     'Image',
     'spec_Color',
-    'spec_Material',
     'spec_Size',
   ];
 

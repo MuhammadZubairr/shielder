@@ -30,6 +30,11 @@ export interface Product {
   subcategoryId: string;
   mainImage?: string | null;
   sku?: string;
+  filterNumber?: string;
+  alternateNumbers?: string;
+  filterType?: string;
+  material?: string;
+  dimensions?: string;
   category: {
     id: string;
     nameEn?: string;
@@ -56,12 +61,18 @@ export interface ProductFormData {
   nameAr: string;
   descriptionEn: string;
   descriptionAr: string;
+  sku: string;
   price: string;
   stock: string;
   minimumStockThreshold: string;
   categoryId: string;
   subcategoryId: string;
   isActive: boolean;
+  filterNumber: string;
+  alternateNumbers: string;
+  filterType: string;
+  material: string;
+  dimensions: string;
 }
 
 export const EMPTY_PRODUCT_FORM: ProductFormData = {
@@ -69,12 +80,18 @@ export const EMPTY_PRODUCT_FORM: ProductFormData = {
   nameAr: '',
   descriptionEn: '',
   descriptionAr: '',
+  sku: '',
   price: '',
   stock: '',
   minimumStockThreshold: '10',
   categoryId: '',
   subcategoryId: '',
   isActive: true,
+  filterNumber: '',
+  alternateNumbers: '',
+  filterType: '',
+  material: '',
+  dimensions: '',
 };
 
 /** Compute derived stock status from stock + threshold */

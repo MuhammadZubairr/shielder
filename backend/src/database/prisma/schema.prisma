@@ -161,6 +161,11 @@ model Product {
   status                ProductStatus          @default(PENDING)
   isActive              Boolean                @default(true) @map("is_active")
   mainImage             String?                @map("main_image")
+  filterNumber          String?                @map("filter_number")
+  alternateNumbers      String?                @map("alternate_numbers")
+  filterType            String?                @map("filter_type")
+  material              String?
+  dimensions            String?
   createdAt             DateTime               @default(now()) @map("createdAt")
   updatedAt             DateTime               @updatedAt @map("updatedAt")
   sku                   String?
