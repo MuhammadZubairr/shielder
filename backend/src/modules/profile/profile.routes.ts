@@ -4,7 +4,6 @@ import { authenticate, authorize } from '../auth/auth.middleware';
 import { validate } from '../../common/middleware/validation.middleware';
 import { profileValidation } from './profile.validation';
 import { UserRole } from '../../types/rbac.types';
-import { upload } from '../../common/middleware/upload.middleware';
 import multer from 'multer';
 
 const router = Router();
