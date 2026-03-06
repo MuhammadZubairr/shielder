@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
  * User registration form with Arabic/English support
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, ChevronLeft, User, Phone, Building2, MapPin, Eye, EyeOff } from 'lucide-react';
@@ -434,6 +434,10 @@ function RegisterPageContent() {
 }
 
 export default function RegisterPage() {
-  return <RegisterPageContent />;
+  return (
+    <Suspense fallback={null}>
+      <RegisterPageContent />
+    </Suspense>
+  );
 }
 

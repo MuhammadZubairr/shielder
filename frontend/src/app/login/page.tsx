@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
  * User login form with Arabic/English support
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, ChevronLeft, Eye, EyeOff } from 'lucide-react';
@@ -346,6 +346,10 @@ function LoginPageContent() {
 }
 
 export default function LoginPage() {
-  return <LoginPageContent />;
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
+  );
 }
 

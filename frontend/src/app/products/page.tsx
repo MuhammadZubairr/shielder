@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Filter, ShoppingCart, ChevronLeft, ChevronRight, Search, X, Check, Plus, Minus, Download, ImageOff } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -919,5 +919,9 @@ function ProductsContent() {
 
 // ── Default export ────────────────────────────────────────────────────────────
 export default function ProductsPage() {
-  return <ProductsContent />;
+  return (
+    <Suspense fallback={null}>
+      <ProductsContent />
+    </Suspense>
+  );
 }
