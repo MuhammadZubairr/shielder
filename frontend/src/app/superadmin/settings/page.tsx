@@ -19,7 +19,13 @@ import {
   Upload,
   UploadCloud,
   ChevronRight,
-  Lock
+  Lock,
+  Eye,
+  EyeOff,
+  Copy,
+  Banknote,
+  Landmark,
+  Globe
 } from 'lucide-react';
 import settingsService, { SystemSettings } from '@/services/settings.service';
 import { toast } from 'react-hot-toast';
@@ -60,6 +66,7 @@ export default function SettingsPage() {
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [verifyPassword, setVerifyPassword] = useState('');
   const [verifying, setVerifying] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState<SystemSettings | null>(null);
@@ -176,13 +183,13 @@ export default function SettingsPage() {
   };
 
   const sidebarItems = [
-    { id: 'general', label: t('settingTabGeneral'), icon: <Settings size={20} />, color: 'blue' },
-    { id: 'order', label: t('settingTabOrder'), icon: <ShoppingCart size={20} />, color: 'emerald' },
-    { id: 'payment', label: t('settingTabPayment'), icon: <CreditCard size={20} />, color: 'purple' },
-    { id: 'notification', label: t('settingTabNotification'), icon: <Bell size={20} />, color: 'amber' },
-    { id: 'security', label: t('settingTabSecurity'), icon: <ShieldCheck size={20} />, color: 'red' },
-    { id: 'backup', label: t('settingTabBackup'), icon: <Database size={20} />, color: 'indigo' },
-    { id: 'logs', label: t('settingTabLogs'), icon: <History size={20} />, color: 'gray' },
+    { id: 'general',      label: t('settingTabGeneral'),      icon: <Settings size={28} />,    bg: '#0A1E36' },
+    { id: 'order',        label: t('settingTabOrder'),        icon: <ShoppingCart size={28} />, bg: '#0205A6' },
+    { id: 'payment',      label: t('settingTabPayment'),      icon: <CreditCard size={28} />,  bg: '#F97216'  },
+    { id: 'notification', label: t('settingTabNotification'), icon: <Bell size={28} />,        bg: '#0A1E36'  },
+    { id: 'security',     label: t('settingTabSecurity'),     icon: <ShieldCheck size={28} />, bg: '#0205A6'  },
+    { id: 'backup',       label: t('settingTabBackup'),       icon: <Database size={28} />,    bg: '#F97216'  },
+    { id: 'logs',         label: t('settingTabLogs'),         icon: <History size={28} />,     bg: '#ffffff'  },
   ];
 
   if (loading || !formData) {
@@ -195,70 +202,72 @@ export default function SettingsPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen bg-gray-50/30" dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Navigation Sidebar */}
-        <aside className="w-full lg:w-72 shrink-0">
-          <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-4 sticky top-8">
-            <div className="px-4 py-6 mb-4">
-              <h1 className="text-2xl font-black text-shielder-dark uppercase tracking-tight">{t('configurationTitle')}</h1>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{t('systemControlPanel')}</p>
-            </div>
-            <nav className="space-y-1">
-              {sidebarItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id as TabType)}
-                  className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all ${
-                    activeTab === item.id 
-                      ? 'bg-shielder-primary text-white shadow-lg shadow-shielder-primary/20 scale-[1.02]' 
-                      : 'text-gray-400 hover:text-shielder-dark hover:bg-gray-50'
-                  }`}
-                >
-                  <span className={`${activeTab === item.id ? 'text-white' : `text-${item.color}-500`}`}>
-                    {item.icon}
-                  </span>
+
+      {/* Configuration Control Panel — always visible top nav */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Configuration Control Panel</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          {sidebarItems.map((item) => {
+            const isActive = activeTab === item.id;
+            const isLight = item.bg === '#ffffff';
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id as TabType)}
+                style={{ backgroundColor: isActive ? item.bg : isLight ? '#f9fafb' : item.bg + 'cc' }}
+                className={`relative flex flex-col items-center text-center p-4 rounded-2xl transition-all border-2 ${
+                  isActive
+                    ? isLight ? 'border-gray-300 shadow-sm' : 'border-transparent shadow-lg'
+                    : isLight ? 'border-gray-200 hover:border-gray-300' : 'border-transparent opacity-80 hover:opacity-100'
+                }`}
+              >
+                <span className={isLight ? (isActive ? 'text-gray-700' : 'text-gray-400') : 'text-white'}>
+                  {item.icon}
+                </span>
+                <span className={`mt-2 text-sm font-bold ${isLight ? (isActive ? 'text-gray-800' : 'text-gray-500') : 'text-white'}`}>
                   {item.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </aside>
+                </span>
+                {/* <span className={`mt-1 text-[10px] leading-tight line-clamp-2 ${isLight ? 'text-gray-400' : 'text-white/70'}`}>
+                  {item.desc}
+                </span> */}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-        {/* Main Content Area */}
-        <main className="flex-1 min-w-0">
-          <div className="bg-white rounded-[40px] border border-gray-100 shadow-sm overflow-hidden mb-8">
-            <div className="p-8 border-b border-gray-50 bg-gray-50/30">
-              <h2 className="text-xl font-black text-shielder-dark uppercase tracking-tight">
-                {sidebarItems.find(i => i.id === activeTab)?.label}
-              </h2>
-              <p className="text-sm text-gray-500 font-medium">{t('settingManageDesc')}</p>
+      {/* Main Content Area */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800 uppercase">
+            {sidebarItems.find(i => i.id === activeTab)?.label} Settings
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">{t('settingManageDesc')}</p>
+        </div>
+
+        <div className="p-6">
+          {activeTab === 'general' && renderGeneralTab(formData, handleInputChange, uploadingLogo, fileInputRef, handleLogoUpload, t)}
+          {activeTab === 'order' && renderOrderTab(formData, handleInputChange, t)}
+          {activeTab === 'payment' && renderPaymentTab(formData, handleInputChange, t, showSecret, setShowSecret)}
+          {activeTab === 'notification' && renderNotificationTab(formData, handleInputChange, t)}
+          {activeTab === 'security' && renderSecurityTab(formData, handleInputChange, t)}
+          {activeTab === 'backup' && renderBackupTab(formData, handleInputChange, () => setShowConfirmModal(true), () => setPendingAction(() => () => triggerBackup()), t)}
+          {activeTab === 'logs' && <LogsTab logs={logs} loading={logsLoading} t={t} />}
+
+          {/* Save Changes button */}
+          {activeTab !== 'logs' && activeTab !== 'backup' && (
+            <div className="flex justify-end mt-8">
+              <button
+                onClick={() => handleSave(activeTab)}
+                disabled={saving}
+                className="flex items-center gap-2 px-6 py-3 bg-[#F97216] text-white rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-[#e56510] transition-all shadow-md disabled:opacity-50"
+              >
+                {saving ? <RefreshCcw className="animate-spin" size={16} /> : <Save size={16} />}
+                {t('saveChanges')}
+              </button>
             </div>
-
-            <div className="p-8">
-              {activeTab === 'general' && renderGeneralTab(formData, handleInputChange, uploadingLogo, fileInputRef, handleLogoUpload, t)}
-              {activeTab === 'order' && renderOrderTab(formData, handleInputChange, t)}
-              {activeTab === 'payment' && renderPaymentTab(formData, handleInputChange, t)}
-              {activeTab === 'notification' && renderNotificationTab(formData, handleInputChange, t)}
-              {activeTab === 'security' && renderSecurityTab(formData, handleInputChange, t)}
-              {activeTab === 'backup' && renderBackupTab(formData, handleInputChange, () => setShowConfirmModal(true), () => setPendingAction(() => () => triggerBackup()), t)}
-              {activeTab === 'logs' && renderLogsTab(logs, logsLoading, t)}
-
-              {/* Save Changes button at the bottom */}
-              {activeTab !== 'logs' && activeTab !== 'backup' && (
-                <div className="flex justify-end mt-8">
-                  <button
-                    onClick={() => handleSave(activeTab)}
-                    disabled={saving}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#FF6B35] text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#FF5722] transition-all shadow-md disabled:opacity-50"
-                  >
-                    {saving ? <RefreshCcw className="animate-spin" size={16} /> : <Save size={16} />}
-                    {t('saveChanges')}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </main>
+          )}
+        </div>
       </div>
 
       {/* Confirmation Modal */}
@@ -334,343 +343,358 @@ function renderGeneralTab(
   t: (key: string) => string
 ) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-6">
+        {/* Left column */}
+        <div className="space-y-4">
           <div>
-            <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingSystemName')}</label>
-            <input 
-              type="text" 
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('settingSystemName')}</label>
+            <input
+              type="text"
               value={data.systemName}
               onChange={(e) => onChange('systemName', e.target.value)}
-              className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-shielder-primary focus:border-transparent"
             />
           </div>
           <div>
-            <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingCompanyName')}</label>
-            <input 
-              type="text" 
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('settingCompanyName')}</label>
+            <input
+              type="text"
               value={data.companyName}
               onChange={(e) => onChange('companyName', e.target.value)}
-              className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-shielder-primary focus:border-transparent"
             />
           </div>
           <div>
-            <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingCompanyEmail')}</label>
-            <input 
-              type="email" 
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('settingCompanyEmail')}</label>
+            <input
+              type="email"
               value={data.companyEmail}
               onChange={(e) => onChange('companyEmail', e.target.value)}
-              className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-shielder-primary focus:border-transparent"
             />
           </div>
           <div>
-            <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingCompanyPhone')}</label>
-            <input 
-              type="text" 
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('settingCompanyPhone')}</label>
+            <input
+              type="text"
               value={data.companyPhone}
               onChange={(e) => onChange('companyPhone', e.target.value)}
-              className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
+              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-shielder-primary focus:border-transparent"
             />
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-gray-50 p-6 rounded-[32px] border border-dashed border-gray-200 text-center">
-              <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-4 block">{t('settingCompanyLogo')}</label>
-              <div className="w-24 h-24 bg-white rounded-2xl shadow-sm mx-auto mb-4 flex items-center justify-center overflow-hidden border border-gray-100 relative">
-                 {data.companyLogo ? (
-                   <Image 
-                     src={getImageUrl(data.companyLogo) || ''}
-                     alt="Logo"
-                     className="object-contain p-2"
-                     fill
-                   />
-                 ) : (
-                   <UploadCloud className="text-gray-300" size={32} />
-                 )}
-                 {uploadingLogo && (
-                   <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs font-bold">{t('settingUploading')}</div>
-                 )}
-              </div>
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                onChange={e => handleLogoUpload(e, onChange)}
-              />
-              <button
-                type="button"
-                className="text-[10px] font-black uppercase tracking-widest text-shielder-primary hover:underline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingLogo}
-              >
-                {uploadingLogo ? t('settingUploading') : t('settingUploadNewFile')}
-              </button>
+        {/* Right column */}
+        <div className="space-y-4">
+          <div className="border border-gray-200 rounded-xl p-5 text-center">
+            <p className="text-sm font-medium text-gray-700 mb-4">{t('settingCompanyLogo')}</p>
+            <div className="w-24 h-24 bg-white rounded-xl border border-gray-200 mx-auto mb-4 flex items-center justify-center overflow-hidden relative">
+              {data.companyLogo ? (
+                <Image
+                  src={getImageUrl(data.companyLogo) || ''}
+                  alt="Logo"
+                  className="object-contain p-2"
+                  fill
+                />
+              ) : (
+                <UploadCloud className="text-gray-300" size={32} />
+              )}
+              {uploadingLogo && (
+                <div className="absolute inset-0 bg-white/70 flex items-center justify-center text-xs font-medium">{t('settingUploading')}</div>
+              )}
+            </div>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              onChange={e => handleLogoUpload(e, onChange)}
+            />
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 text-sm text-shielder-primary hover:underline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingLogo}
+            >
+              <UploadCloud size={15} />
+              {uploadingLogo ? t('settingUploading') : t('settingUploadNewFile')}
+            </button>
           </div>
           <div>
-            <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingPhysicalAddress')}</label>
-            <textarea 
-              rows={3}
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('settingPhysicalAddress')}</label>
+            <textarea
+              rows={4}
               value={data.companyAddress}
               onChange={(e) => onChange('companyAddress', e.target.value)}
-              className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold resize-none"
+              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-shielder-primary focus:border-transparent resize-none"
             />
           </div>
         </div>
       </div>
 
-      {/* Currency / Timezone / Date Format — full width row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div>
-          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingCurrencyLabel')}</label>
-          <select 
-            value={data.currency}
-            onChange={(e) => onChange('currency', e.target.value)}
-            className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-          >
-            <option value="USD">USD ($)</option>
-            <option value="EUR">EUR (€)</option>
-            <option value="GBP">GBP (£)</option>
-            <option value="SAR">SAR (ر.س)</option>
-            <option value="PKR">PKR (Rs.)</option>
-          </select>
+      {/* Localization & Format */}
+      <fieldset className="border border-gray-200 rounded-xl px-5 pt-3 pb-5">
+        <legend className="text-sm font-medium text-gray-600 px-1">Localization &amp; Format</legend>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('settingCurrencyLabel')}</label>
+            <select
+              value={data.currency}
+              onChange={(e) => onChange('currency', e.target.value)}
+              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-shielder-primary focus:border-transparent"
+            >
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="SAR">SAR (ر.س)</option>
+              <option value="PKR">PKR (Rs.)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('settingTimezoneLabel')}</label>
+            <select
+              value={data.timezone}
+              onChange={(e) => onChange('timezone', e.target.value)}
+              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-shielder-primary focus:border-transparent"
+            >
+              <option value="UTC">UTC</option>
+              <option value="America/New_York">Eastern Time (GMT-5)</option>
+              <option value="America/Chicago">Central Time (GMT-6)</option>
+              <option value="America/Los_Angeles">Pacific Time (GMT-8)</option>
+              <option value="Europe/London">London (GMT+0)</option>
+              <option value="Europe/Paris">Paris (GMT+1)</option>
+              <option value="Asia/Dubai">Dubai (GMT+4)</option>
+              <option value="Asia/Riyadh">Riyadh (GMT+3)</option>
+              <option value="Asia/Karachi">Karachi (GMT+5)</option>
+              <option value="Asia/Kolkata">India (GMT+5:30)</option>
+              <option value="Asia/Shanghai">Shanghai (GMT+8)</option>
+              <option value="Asia/Tokyo">Tokyo (GMT+9)</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('settingDateFormat')}</label>
+            <select
+              value={data.dateFormat}
+              onChange={(e) => onChange('dateFormat', e.target.value)}
+              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-shielder-primary focus:border-transparent"
+            >
+              <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+              <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+              <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingTimezoneLabel')}</label>
-          <select 
-            value={data.timezone}
-            onChange={(e) => onChange('timezone', e.target.value)}
-            className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-          >
-            <option value="UTC">UTC (GMT+0)</option>
-            <option value="America/New_York">Eastern Time (GMT-5)</option>
-            <option value="America/Chicago">Central Time (GMT-6)</option>
-            <option value="America/Los_Angeles">Pacific Time (GMT-8)</option>
-            <option value="Europe/London">London (GMT+0)</option>
-            <option value="Europe/Paris">Paris (GMT+1)</option>
-            <option value="Asia/Dubai">Dubai (GMT+4)</option>
-            <option value="Asia/Riyadh">Riyadh (GMT+3)</option>
-            <option value="Asia/Karachi">Karachi (GMT+5)</option>
-            <option value="Asia/Kolkata">India (GMT+5:30)</option>
-            <option value="Asia/Shanghai">Shanghai (GMT+8)</option>
-            <option value="Asia/Tokyo">Tokyo (GMT+9)</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingDateFormat')}</label>
-          <select 
-            value={data.dateFormat}
-            onChange={(e) => onChange('dateFormat', e.target.value)}
-            className="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-          >
-            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-          </select>
-        </div>
-      </div>
+      </fieldset>
     </div>
   );
 }
 
 function renderOrderTab(data: SystemSettings, onChange: OnChangeType, t: (key: string) => string) {
+  const Toggle = ({ checked, onToggle }: { checked: boolean; onToggle: () => void }) => (
+    <button
+      onClick={onToggle}
+      className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${checked ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
+    >
+      <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-6' : ''}`} />
+    </button>
+  );
+
   return (
-    <div className="space-y-8">
-       <div>
-          <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">{t('settingDefaultOrderStatus')}</label>
-          <select
-            value={data.defaultOrderStatus}
-            onChange={(e) => onChange('defaultOrderStatus', e.target.value)}
-            className="w-full md:w-64 px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-          >
-            <option value="PENDING">Pending</option>
-            <option value="CONFIRMED">Confirmed</option>
-            <option value="PROCESSING">Processing</option>
-            <option value="SHIPPED">Shipped</option>
-            <option value="DELIVERED">Delivered</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
-       </div>
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="bg-gray-50 p-8 rounded-[32px] hover:bg-white border border-transparent hover:border-gray-100 transition-all group">
-             <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-emerald-500">
-                    <CheckCircle2 size={24} />
-                </div>
-                <button 
-                  onClick={() => onChange('autoCompleteOrderAfterPayment', !data.autoCompleteOrderAfterPayment)}
-                  className={`w-12 h-6 rounded-full transition-all relative ${data.autoCompleteOrderAfterPayment ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
-                >
-                  <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data.autoCompleteOrderAfterPayment ? 'translate-x-6' : ''}`} />
-                </button>
-             </div>
-             <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t('settingAutoComplete')}</h4>
-             <p className="text-[11px] text-gray-500 font-medium mt-1">{t('settingAutoCompleteDesc')}</p>
-          </div>
+    <div className="space-y-6">
+      <div>
+        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-widest mb-2">{t('settingDefaultOrderStatus')}</label>
+        <select
+          value={data.defaultOrderStatus}
+          onChange={(e) => onChange('defaultOrderStatus', e.target.value)}
+          className="w-full md:w-64 px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-shielder-primary"
+        >
+          <option value="PENDING">Pending</option>
+          <option value="CONFIRMED">Confirmed</option>
+          <option value="PROCESSING">Processing</option>
+          <option value="SHIPPED">Shipped</option>
+          <option value="DELIVERED">Delivered</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+      </div>
 
-          <div className="bg-gray-50 p-8 rounded-[32px] hover:bg-white border border-transparent hover:border-gray-100 transition-all group">
-             <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-purple-500">
-                    <CreditCard size={24} />
-                </div>
-                <button 
-                  onClick={() => onChange('allowPartialPayment', !data.allowPartialPayment)}
-                  className={`w-12 h-6 rounded-full transition-all relative ${data.allowPartialPayment ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
-                >
-                  <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data.allowPartialPayment ? 'translate-x-6' : ''}`} />
-                </button>
-             </div>
-             <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t('settingPartialPayments')}</h4>
-             <p className="text-[11px] text-gray-500 font-medium mt-1">{t('settingPartialPaymentsDesc')}</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Auto-Complete */}
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
+              <CheckCircle2 size={22} />
+            </div>
+            <Toggle checked={data.autoCompleteOrderAfterPayment} onToggle={() => onChange('autoCompleteOrderAfterPayment', !data.autoCompleteOrderAfterPayment)} />
           </div>
+          <h4 className="text-sm font-bold text-shielder-dark uppercase mt-4">{t('settingAutoComplete')}</h4>
+          <p className="text-xs text-gray-500 mt-1 leading-relaxed">{t('settingAutoCompleteDesc')}</p>
+        </div>
 
-          <div className="bg-gray-50 p-8 rounded-[32px] hover:bg-white border border-transparent hover:border-gray-100 transition-all group">
-             <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-red-500">
-                    <ShieldAlert size={24} />
-                </div>
-                <button 
-                  onClick={() => onChange('allowOrderCancellation', !data.allowOrderCancellation)}
-                  className={`w-12 h-6 rounded-full transition-all relative ${data.allowOrderCancellation ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
-                >
-                  <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data.allowOrderCancellation ? 'translate-x-6' : ''}`} />
-                </button>
-             </div>
-             <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t('settingCancellations')}</h4>
-             <p className="text-[11px] text-gray-500 font-medium mt-1">{t('settingCancellationsDesc')}</p>
+        {/* Partial Payments */}
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400 shrink-0">
+              <CreditCard size={22} />
+            </div>
+            <Toggle checked={data.allowPartialPayment} onToggle={() => onChange('allowPartialPayment', !data.allowPartialPayment)} />
           </div>
+          <h4 className="text-sm font-bold text-shielder-dark uppercase mt-4">{t('settingPartialPayments')}</h4>
+          <p className="text-xs text-gray-500 mt-1 leading-relaxed">{t('settingPartialPaymentsDesc')}</p>
+        </div>
 
-          <div className="bg-gray-100/50 p-8 rounded-[32px] border border-gray-100">
-             <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-indigo-500">
-                    <Clock size={24} />
-                </div>
-                <div>
-                   <h4 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t('settingZombieCleanup')}</h4>
-                   <p className="text-[11px] text-gray-500 font-medium">{t('settingZombieCleanupDesc')}</p>
-                </div>
-             </div>
-             <div className="relative mt-4">
-                <input 
-                  type="number" 
-                  value={data.autoCancelUnpaidOrdersHours || ''}
-                  onChange={(e) => onChange('autoCancelUnpaidOrdersHours', parseInt(e.target.value) || null)}
-                  className="w-full px-6 py-4 bg-white border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-shielder-primary font-bold"
-                  placeholder={t('settingDisabledLeaveEmpty')}
-                />
-                <span className="absolute right-6 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400 uppercase">{t('settingHours')}</span>
-             </div>
+        {/* Customer Cancellations */}
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-400 shrink-0">
+              <ShieldAlert size={22} />
+            </div>
+            <Toggle checked={data.allowOrderCancellation} onToggle={() => onChange('allowOrderCancellation', !data.allowOrderCancellation)} />
           </div>
-       </div>
+          <h4 className="text-sm font-bold text-shielder-dark uppercase mt-4">{t('settingCancellations')}</h4>
+          <p className="text-xs text-gray-500 mt-1 leading-relaxed">{t('settingCancellationsDesc')}</p>
+        </div>
+
+        {/* Zombie Order Cleanup */}
+        <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-400 shrink-0">
+                <Clock size={22} />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-shielder-dark uppercase">{t('settingZombieCleanup')}</h4>
+                <p className="text-xs text-gray-500 mt-0.5">{t('settingZombieCleanupDesc')}</p>
+              </div>
+            </div>
+            <div className="border border-gray-300 rounded-lg flex items-center shrink-0">
+              <input
+                type="number"
+                min={1}
+                value={data.autoCancelUnpaidOrdersHours || ''}
+                onChange={(e) => onChange('autoCancelUnpaidOrdersHours', parseInt(e.target.value) || null)}
+                className="w-14 px-2 py-1.5 text-center text-sm font-medium outline-none rounded-l-lg"
+              />
+              <div className="border-l border-gray-300 flex flex-col">
+                <button className="px-1.5 py-0.5 hover:bg-gray-50 text-gray-400 text-xs leading-none rounded-tr-lg" onClick={() => onChange('autoCancelUnpaidOrdersHours', (data.autoCancelUnpaidOrdersHours || 0) + 1)}>▲</button>
+                <button className="px-1.5 py-0.5 hover:bg-gray-50 text-gray-400 text-xs leading-none rounded-br-lg border-t border-gray-300" onClick={() => onChange('autoCancelUnpaidOrdersHours', Math.max(0, (data.autoCancelUnpaidOrdersHours || 0) - 1))}>▼</button>
+              </div>
+            </div>
+          </div>
+          <div className="relative mt-4">
+            <input
+              type="text"
+              readOnly
+              value={data.autoCancelUnpaidOrdersHours ? '' : ''}
+              placeholder={t('Disabled')}
+              className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-400 outline-none"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-500 uppercase tracking-widest">{t('settingHours')}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-function renderPaymentTab(data: SystemSettings, onChange: OnChangeType, t: (key: string) => string) {
+function renderPaymentTab(data: SystemSettings, onChange: OnChangeType, t: (key: string) => string, showSecret: boolean, setShowSecret: (v: boolean | ((prev: boolean) => boolean)) => void) {
+
+  const methodIcons: Record<string, React.ReactNode> = {
+    CASH:           <Banknote size={22} />,
+    BANK_TRANSFER:  <Landmark size={22} />,
+    CREDIT_CARD:    <CreditCard size={22} />,
+    ONLINE_GATEWAY: <Globe size={22} />,
+  };
+
+  const toggleMethod = (method: string, checked: boolean) => {
+    const current = data.paymentMethodsEnabled || [];
+    const next = checked ? [...current, method] : current.filter((m: string) => m !== method);
+    onChange('paymentMethodsEnabled', next);
+  };
+
   return (
-    <div className="space-y-10">
-      <section>
-        <div className="flex items-center justify-between mb-6">
-           <div>
-              <h3 className="text-sm font-black text-shielder-dark uppercase tracking-tight">{t('settingGatewayConfig')}</h3>
-              <p className="text-[11px] text-gray-500 font-medium mt-1 text-red-500 font-bold uppercase tracking-widest">{t('settingEnterpriseSensitive')}</p>
-           </div>
-           <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-xl">
-              <Lock size={14} className="text-amber-600" />
-              <span className="text-[10px] font-black text-amber-600 uppercase">{t('settingEncryptedStorage')}</span>
-           </div>
+    <div className="space-y-8">
+      {/* API Keys — dark card */}
+      <div className="bg-[#1a1f2e] rounded-2xl p-6 space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Public API Key</label>
+          <input
+            type="text"
+            value={data.paymentGatewayApiKey || ''}
+            onChange={(e) => onChange('paymentGatewayApiKey', e.target.value)}
+            className="w-full px-4 py-2.5 bg-[#111827] border border-white/10 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-shielder-primary font-mono"
+          />
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-shielder-dark rounded-3xl p-6 text-white space-y-4">
-             <div>
-                <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">API KEY (PUBLIC)</label>
-                <div className="relative">
-                  <input 
-                    type="text" 
-                    value={data.paymentGatewayApiKey || ''}
-                    onChange={(e) => onChange('paymentGatewayApiKey', e.target.value)}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-xl outline-none focus:ring-2 focus:ring-shielder-primary font-mono text-xs"
-                  />
-                </div>
-             </div>
-             <div>
-                <label className="text-[10px] font-black text-shielder-primary uppercase tracking-widest mb-2 block">SECRET KEY (PRIVATE)</label>
-                <div className="relative">
-                  <input 
-                    type="password" 
-                    value={data.paymentGatewaySecretKey || ''}
-                    onChange={(e) => onChange('paymentGatewaySecretKey', e.target.value)}
-                    className="w-full px-4 py-3 bg-white/10 border border-white/10 rounded-xl outline-none focus:ring-2 focus:ring-shielder-primary font-mono text-xs"
-                  />
-                </div>
-             </div>
-          </div>
-
-          <div className="space-y-4">
-             <div className="bg-gray-50 p-6 rounded-3xl flex items-center justify-between">
-                <div>
-                   <h4 className="text-xs font-black text-shielder-dark uppercase tracking-tight">{t('settingOnlinePayEnabled')}</h4>
-                   <p className="text-[10px] text-gray-500 font-medium">{t('settingOnlinePayDesc')}</p>
-                </div>
-                <button 
-                  onClick={() => onChange('onlinePaymentEnabled', !data.onlinePaymentEnabled)}
-                  className={`w-12 h-6 rounded-full transition-all relative ${data.onlinePaymentEnabled ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
-                >
-                  <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${data.onlinePaymentEnabled ? 'translate-x-6' : ''}`} />
-                </button>
-             </div>
-             <div className="bg-gray-50 p-6 rounded-3xl flex items-center justify-between">
-                <div>
-                   <h4 className="text-xs font-black text-shielder-dark uppercase tracking-tight">{t('settingProductionMode')}</h4>
-                   <p className="text-[10px] text-gray-500 font-medium">{t('settingProductionModeDesc')}</p>
-                </div>
-                <button 
-                  onClick={() => onChange('paymentTestMode', !data.paymentTestMode)}
-                  className={`w-12 h-6 rounded-full transition-all relative ${!data.paymentTestMode ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}
-                >
-                  <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-all transform ${!data.paymentTestMode ? 'translate-x-6' : ''}`} />
-                </button>
-             </div>
-             <div className="bg-gray-50 p-6 rounded-3xl">
-                <h4 className="text-xs font-black text-shielder-dark uppercase tracking-tight mb-2">{t('settingWebhookEndpoint')}</h4>
-                <div className="flex gap-2">
-                   <code className="flex-1 px-3 py-2 bg-white rounded-lg border border-gray-100 text-[10px] font-mono text-gray-400 break-all select-all">
-                      {process.env.NEXT_PUBLIC_API_URL || 'https://api.shielder-filters.com'}/settings/payments/webhook
-                   </code>
-                </div>
-             </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">Private Secret Key</label>
+          <div className="relative">
+            <input
+              type={showSecret ? 'text' : 'password'}
+              value={data.paymentGatewaySecretKey || ''}
+              onChange={(e) => onChange('paymentGatewaySecretKey', e.target.value)}
+              className="w-full px-4 py-2.5 bg-[#111827] border border-white/10 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-shielder-primary font-mono pr-20"
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+              <button type="button" onClick={() => setShowSecret(v => !v)} className="text-gray-400 hover:text-gray-200 transition-colors">
+                {showSecret ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+              <button type="button" onClick={() => navigator.clipboard.writeText(data.paymentGatewaySecretKey || '')} className="text-gray-400 hover:text-gray-200 transition-colors">
+                <Copy size={16} />
+              </button>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      <section className="bg-gray-50 p-8 rounded-[32px]">
-          <h3 className="text-sm font-black text-shielder-dark uppercase tracking-tight mb-6">{t('settingDisbursementMethods')}</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-             {['CASH', 'BANK_TRANSFER', 'CREDIT_CARD', 'ONLINE_GATEWAY'].map(method => (
-               <label key={method} className={`flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer ${data.paymentMethodsEnabled?.includes(method) ? 'bg-white border-shielder-primary shadow-sm' : 'bg-gray-100/50 border-gray-100'}`}>
-                  <input 
-                    type="checkbox"
-                    checked={data.paymentMethodsEnabled?.includes(method)}
-                    onChange={(e) => {
-                      const current = data.paymentMethodsEnabled || [];
-                      const next = e.target.checked 
-                        ? [...current, method]
-                        : current.filter((m: string) => m !== method);
-                      onChange('paymentMethodsEnabled', next);
-                    }}
-                    className="hidden"
-                  />
-                  <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center ${data.paymentMethodsEnabled?.includes(method) ? 'border-shielder-primary bg-shielder-primary' : 'border-gray-300'}`}>
-                    {data.paymentMethodsEnabled?.includes(method) && <Save size={10} className="text-white" />}
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-shielder-dark">{method.replace('_', ' ')}</span>
-               </label>
-             ))}
+      {/* Gateway toggles */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-800">{t('settingOnlinePayEnabled')}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{t('settingOnlinePayDesc')}</p>
           </div>
-      </section>
+          <button onClick={() => onChange('onlinePaymentEnabled', !data.onlinePaymentEnabled)} className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${data.onlinePaymentEnabled ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}>
+            <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${data.onlinePaymentEnabled ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+        <div className="border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-800">{t('settingProductionMode')}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{t('settingProductionModeDesc')}</p>
+          </div>
+          <button onClick={() => onChange('paymentTestMode', !data.paymentTestMode)} className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${!data.paymentTestMode ? 'bg-[#FF6B35]' : 'bg-gray-200'}`}>
+            <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${!data.paymentTestMode ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+        <div className="border border-gray-200 rounded-xl p-4">
+          <p className="text-sm font-medium text-gray-800 mb-2">{t('settingWebhookEndpoint')}</p>
+          <code className="block px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-mono text-gray-500 break-all select-all">
+            {process.env.NEXT_PUBLIC_API_URL || 'https://api.shielder-filters.com'}/settings/payments/webhook
+          </code>
+        </div>
+      </div>
+
+      {/* Disbursement Methods */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-800 mb-3">{t('settingDisbursementMethods')}</h3>
+        <div className="grid grid-cols-2 gap-3">
+          {(['CASH', 'BANK_TRANSFER', 'CREDIT_CARD', 'ONLINE_GATEWAY'] as const).map(method => {
+            const active = data.paymentMethodsEnabled?.includes(method);
+            return (
+              <button
+                key={method}
+                onClick={() => toggleMethod(method, !active)}
+                className={`flex items-center justify-between px-5 py-4 border rounded-xl transition-all ${active ? 'border-[#FF6B35] bg-white shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'}`}
+              >
+                <span className={`text-sm font-bold uppercase tracking-wide ${active ? 'text-[#FF6B35]' : 'text-gray-800'}`}>{method.replace(/_/g, ' ')}</span>
+                <span className={`p-2 rounded-lg ${active ? 'bg-orange-50 text-[#FF6B35]' : 'bg-gray-100 text-gray-400'}`}>
+                  {methodIcons[method]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
@@ -903,60 +927,143 @@ interface SystemLog {
   createdAt: string;
 }
 
-function renderLogsTab(logs: SystemLog[], loading: boolean, t: (key: string) => string) {
-  if (loading) return <div className="text-center py-20 animate-pulse font-black text-gray-300 uppercase italic">{t('settingParsingRecords')}</div>;
+function LogsTab({ logs, loading, t }: { logs: SystemLog[]; loading: boolean; t: (key: string) => string }) {
+  const [search, setSearch] = React.useState('');
+  const [filterAdmin, setFilterAdmin] = React.useState('all');
+  const [filterAction, setFilterAction] = React.useState('all');
+
+  const actionColors: Record<string, string> = {
+    SECURITY:     'bg-orange-100 text-orange-700',
+    GENERAL:      'bg-blue-100 text-blue-700',
+    ORDER:        'bg-green-100 text-green-700',
+    PAYMENT:      'bg-purple-100 text-purple-700',
+    NOTIFICATION: 'bg-yellow-100 text-yellow-700',
+    BACKUP:       'bg-indigo-100 text-indigo-700',
+  };
+
+  const getActionLabel = (action: string) => action.replace('UPDATE_SETTING_', '');
+
+  const admins = Array.from(new Set(logs.map(l => l.user?.profile?.fullName || 'Admin')));
+  const actions = Array.from(new Set(logs.map(l => getActionLabel(l.action))));
+
+  const filtered = logs.filter(log => {
+    const name = log.user?.profile?.fullName || 'Admin';
+    const label = getActionLabel(log.action);
+    const field = log.changes?.field || '';
+    const matchSearch = !search || name.toLowerCase().includes(search.toLowerCase()) || field.toLowerCase().includes(search.toLowerCase());
+    const matchAdmin = filterAdmin === 'all' || name === filterAdmin;
+    const matchAction = filterAction === 'all' || label === filterAction;
+    return matchSearch && matchAdmin && matchAction;
+  });
+
+  if (loading) return <div className="text-center py-20 text-sm text-gray-400">{t('settingParsingRecords')}</div>;
+
+  const renderModification = (log: SystemLog) => {
+    const oldVal = String(log.changes?.old ?? '');
+    const newVal = String(log.changes?.new ?? '');
+    const isImage = oldVal.includes('upload') || newVal.includes('upload');
+
+    const truncatePath = (path: string) => {
+      const filename = path.split('/').pop() || path;
+      return filename.length > 24 ? filename.slice(0, 22) + '…' : filename;
+    };
+
+    if (isImage) {
+      return (
+        <div className="flex items-center gap-2 text-xs whitespace-nowrap">
+          <span className="bg-red-50 text-red-600 px-2 py-0.5 rounded font-mono truncate max-w-[130px]" title={oldVal}>
+            {truncatePath(oldVal)}
+          </span>
+          <span className="text-gray-400 shrink-0">⇄</span>
+          <span className="bg-green-50 text-green-700 px-2 py-0.5 rounded font-mono truncate max-w-[130px]" title={newVal}>
+            {truncatePath(newVal)}
+          </span>
+        </div>
+      );
+    }
+    if (!oldVal && !newVal) return <span className="text-gray-300 text-xs">—</span>;
+    if (!oldVal || oldVal === 'null') return <span className="bg-red-50 text-red-400 text-xs px-2 py-0.5 rounded">null</span>;
+    return (
+      <div className="flex items-center gap-1.5 whitespace-nowrap">
+        <span className="bg-red-50 text-red-500 text-xs px-2 py-0.5 rounded font-medium">{oldVal}</span>
+        <span className="text-gray-400 text-xs">→</span>
+        <span className="bg-green-50 text-green-600 text-xs px-2 py-0.5 rounded font-medium">{newVal}</span>
+      </div>
+    );
+  };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-gray-50">
-            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settingAdminCol')}</th>
-            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settingActionCol')}</th>
-            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settingFieldCol')}</th>
-            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settingModificationCol')}</th>
-            <th className="px-6 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">{t('settingTimestampCol')}</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-50">
-          {logs.map((log) => (
-            <tr key={log.id} className="hover:bg-gray-50/50 transition-all">
-              <td className="px-6 py-5">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-shielder-primary/10 text-shielder-primary rounded-lg flex items-center justify-center font-black text-[10px]">
-                    {log.user?.profile?.fullName?.[0] || 'A'}
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-shielder-dark uppercase tracking-tight">{log.user?.profile?.fullName || 'Admin'}</p>
-                    <p className="text-[10px] text-gray-400">{log.ipAddress}</p>
-                  </div>
-                </div>
-              </td>
-              <td className="px-6 py-5">
-                <span className="text-[10px] font-black px-2 py-1 bg-gray-100 text-gray-600 rounded-md uppercase tracking-wider">
-                  {log.action.replace('UPDATE_SETTING_', '')}
-                </span>
-              </td>
-              <td className="px-6 py-5 text-xs font-bold text-gray-600">{log.changes?.field}</td>
-              <td className="px-6 py-5">
-                <div className="flex items-center gap-2 text-[10px]">
-                   <span className="text-red-400 line-through">{String(log.changes?.old)}</span>
-                   <ChevronRight size={10} className="text-gray-300" />
-                   <span className="text-emerald-500 font-bold">{String(log.changes?.new)}</span>
-                </div>
-              </td>
-              <td className="px-6 py-5">
-                <p className="text-[10px] font-black text-gray-400 uppercase">{format(new Date(log.createdAt), 'MMM dd, HH:mm')}</p>
-              </td>
+    <div className="space-y-4">
+      {/* Filters row */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-2 flex-1 min-w-[200px]">
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          <input
+            type="text"
+            placeholder="Search logs..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="flex-1 text-sm outline-none bg-transparent text-gray-700 placeholder-gray-400"
+          />
+        </div>
+        <select value={filterAdmin} onChange={e => setFilterAdmin(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 outline-none bg-white">
+          <option value="all">All Admins</option>
+          {admins.map(a => <option key={a} value={a}>{a}</option>)}
+        </select>
+        <select value={filterAction} onChange={e => setFilterAction(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 outline-none bg-white">
+          <option value="all">All Actions</option>
+          {actions.map(a => <option key={a} value={a}>{a}</option>)}
+        </select>
+        <div className="border border-gray-200 rounded-lg px-3 py-2 flex items-center gap-2 text-sm text-gray-500">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+          Date Range: Last 30 Days
+        </div>
+        <span className="ml-auto text-xs text-gray-400">Viewing {filtered.length} of {logs.length} logs</span>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto rounded-xl border border-gray-100">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-100 bg-gray-50">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Field</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Modification</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Timestamp</th>
             </tr>
-          ))}
-          {logs.length === 0 && (
-            <tr>
-              <td colSpan={5} className="py-20 text-center text-xs font-black text-gray-300 uppercase">{t('settingNoAuditEvents')}</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {filtered.map((log) => {
+              const name = log.user?.profile?.fullName || 'Admin';
+              const initial = name[0].toUpperCase();
+              const actionLabel = getActionLabel(log.action);
+              const badgeClass = actionColors[actionLabel] || 'bg-gray-100 text-gray-600';
+              return (
+                <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold shrink-0">{initial}</div>
+                      <span className="text-xs font-semibold text-gray-700 uppercase">{name}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full uppercase ${badgeClass}`}>{actionLabel}</span>
+                  </td>
+                  <td className="px-4 py-4 text-sm text-gray-600">{log.changes?.field || '—'}</td>
+                  <td className="px-4 py-4">{renderModification(log)}</td>
+                  <td className="px-4 py-4 text-xs text-gray-500 whitespace-nowrap">{format(new Date(log.createdAt), 'MMM dd, yyyy, HH:mm')}</td>
+                </tr>
+              );
+            })}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={5} className="py-16 text-center text-sm text-gray-400">{t('settingNoAuditEvents')}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Settings, Building2, Globe, Package, Bell, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuthStore } from '@/store/auth.store';
 import settingsService from '@/services/settings.service';
-import SettingsTabs from './SettingsTabs';
 import GeneralSettingsForm from './GeneralSettingsForm';
 import CompanySettingsForm from './CompanySettingsForm';
 import LocalizationSettingsForm from './LocalizationSettingsForm';
@@ -15,6 +14,15 @@ import InventorySettingsForm from './InventorySettingsForm';
 import NotificationSettingsForm from './NotificationSettingsForm';
 import SecuritySettingsForm from './SecuritySettingsForm';
 import type { SettingsTab } from './types';
+
+const NAV_ITEMS = [
+  { id: 'general'      as SettingsTab, labelKey: 'settingsTabGeneral',      icon: <Settings size={28} />,  bg: '#0A1E36' },
+  { id: 'company'      as SettingsTab, labelKey: 'settingsTabCompany',      icon: <Building2 size={28} />, bg: '#0205A6' },
+  { id: 'localization' as SettingsTab, labelKey: 'settingsTabLocalization', icon: <Globe size={28} />,     bg: '#F97216' },
+  { id: 'inventory'    as SettingsTab, labelKey: 'settingsTabInventory',    icon: <Package size={28} />,   bg: '#0A1E36' },
+  { id: 'notification' as SettingsTab, labelKey: 'settingsTabNotification', icon: <Bell size={28} />,      bg: '#0205A6' },
+  { id: 'security'     as SettingsTab, labelKey: 'settingsTabSecurity',     icon: <Shield size={28} />,    bg: '#F97216' },
+];
 
 export default function AdminSettingsPage() {
   const { t, isRTL } = useLanguage();
@@ -56,7 +64,7 @@ export default function AdminSettingsPage() {
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 size={32} className="animate-spin text-[#5B5FC7]" />
+        <Loader2 size={32} className="animate-spin text-[#0A1E36]" />
       </div>
     );
   }
@@ -67,7 +75,7 @@ export default function AdminSettingsPage() {
         <p className="text-red-600 font-medium">{fetchError}</p>
         <button
           onClick={fetchSettings}
-          className="px-4 py-2 text-sm rounded-lg bg-[#5B5FC7] text-white hover:bg-[#4a4eb5] transition"
+          className="px-4 py-2 text-sm rounded-lg bg-[#0A1E36] text-white hover:bg-[#0d2a4a] transition"
         >
           {t('settingsRetry')}
         </button>
@@ -75,55 +83,64 @@ export default function AdminSettingsPage() {
     );
   }
 
+  const activeItem = NAV_ITEMS.find(i => i.id === activeTab);
+
   return (
     <div
-      className={`max-w-5xl mx-auto px-4 sm:px-6 py-6 ${isRTL ? 'text-right' : ''}`}
+      className="p-4 md:p-8 max-w-[1400px] mx-auto min-h-screen bg-gray-50/30"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('settingsTitle')}</h1>
-        <p className="text-sm text-gray-500 mt-1">{t('settingsSubtitle')}</p>
+      {/* Configuration Control Panel */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Configuration Control Panel</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {NAV_ITEMS.map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                style={{ backgroundColor: isActive ? item.bg : item.bg + 'cc' }}
+                className={`relative flex flex-col items-center text-center p-4 rounded-2xl transition-all border-2 ${
+                  isActive ? 'border-transparent shadow-lg' : 'border-transparent opacity-80 hover:opacity-100'
+                }`}
+              >
+                <span className="text-white">{item.icon}</span>
+                <span className="mt-2 text-sm font-bold text-white">{t(item.labelKey)}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Mobile only horizontal tabs */}
-      <div className="mb-4 lg:hidden">
-        <SettingsTabs activeTab={activeTab} onChange={setActiveTab} />
-      </div>
+      {/* Main Content Area */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-100">
+          <h2 className="text-lg font-bold text-gray-800 uppercase">
+            {activeItem ? t(activeItem.labelKey) : ''} {t('settingsTitle')}
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">{t('settingsSubtitle')}</p>
+        </div>
 
-      {/* Desktop layout: sidebar + content */}
-      <div className={`flex gap-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-        {/* Sidebar (desktop) */}
-        <SettingsTabs activeTab={activeTab} onChange={setActiveTab} />
-
-        {/* Form panel */}
-        <div className="flex-1 min-w-0">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 sm:p-6">
-            <div className="mb-5 pb-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-800">
-                {t(`settingsTab${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`)}
-              </h2>
-            </div>
-
-            {activeTab === 'general' && (
-              <GeneralSettingsForm settings={settings} onSaved={fetchSettings} />
-            )}
-            {activeTab === 'company' && (
-              <CompanySettingsForm settings={settings} onSaved={fetchSettings} />
-            )}
-            {activeTab === 'localization' && (
-              <LocalizationSettingsForm onSaved={fetchSettings} />
-            )}
-            {activeTab === 'inventory' && (
-              <InventorySettingsForm settings={settings} onSaved={fetchSettings} />
-            )}
-            {activeTab === 'notification' && (
-              <NotificationSettingsForm settings={settings} onSaved={fetchSettings} />
-            )}
-            {activeTab === 'security' && (
-              <SecuritySettingsForm settings={settings} onSaved={fetchSettings} />
-            )}
-          </div>
+        <div className="p-6">
+          {activeTab === 'general' && (
+            <GeneralSettingsForm settings={settings} onSaved={fetchSettings} />
+          )}
+          {activeTab === 'company' && (
+            <CompanySettingsForm settings={settings} onSaved={fetchSettings} />
+          )}
+          {activeTab === 'localization' && (
+            <LocalizationSettingsForm onSaved={fetchSettings} />
+          )}
+          {activeTab === 'inventory' && (
+            <InventorySettingsForm settings={settings} onSaved={fetchSettings} />
+          )}
+          {activeTab === 'notification' && (
+            <NotificationSettingsForm settings={settings} onSaved={fetchSettings} />
+          )}
+          {activeTab === 'security' && (
+            <SecuritySettingsForm settings={settings} onSaved={fetchSettings} />
+          )}
         </div>
       </div>
     </div>

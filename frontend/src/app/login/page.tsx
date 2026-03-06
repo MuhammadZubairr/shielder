@@ -1,10 +1,11 @@
 "use client";
+export const dynamic = 'force-dynamic';
 /**
  * Login Page
  * User login form with Arabic/English support
  */
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, Lock, ChevronLeft, Eye, EyeOff } from 'lucide-react';
@@ -181,6 +182,7 @@ function LoginPageContent() {
               alt="Shielder Construction" 
               fill
               className="object-cover"
+              sizes="50vw"
               priority
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30"></div>
@@ -196,6 +198,7 @@ function LoginPageContent() {
                 width={160}
                 height={70}
                 className="drop-shadow-2xl object-contain"
+                style={{ width: 'auto', height: 'auto' }}
               />
             </div>
 
@@ -343,10 +346,6 @@ function LoginPageContent() {
 }
 
 export default function LoginPage() {
-  return (
-    <Suspense fallback={null}>
-      <LoginPageContent />
-    </Suspense>
-  );
+  return <LoginPageContent />;
 }
 

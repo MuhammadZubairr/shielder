@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Filter, ShoppingCart, ChevronLeft, ChevronRight, Search, X, Check, Plus, Minus, Download, ImageOff } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -13,6 +13,8 @@ import { useQuotation } from '@/contexts/QuotationContext';
 import { getImageUrl } from '@/utils/helpers';
 import SARSymbol from '@/components/SARSymbol';
 import { useAuthStore } from '@/store/auth.store';
+
+export const dynamic = 'force-dynamic';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Product {
@@ -917,9 +919,5 @@ function ProductsContent() {
 
 // ── Default export ────────────────────────────────────────────────────────────
 export default function ProductsPage() {
-  return (
-    <Suspense fallback={<PageSkeleton />}>
-      <ProductsContent />
-    </Suspense>
-  );
+  return <ProductsContent />;
 }
