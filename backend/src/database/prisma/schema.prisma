@@ -164,6 +164,11 @@ model Product {
   sku                   String?
   status                ProductStatus          @default(PENDING)
   supplierId            String?                @map("supplier_id")
+  filterNumber          String?                @map("filter_number")
+  alternateNumbers      String?                @map("alternate_numbers")
+  filterType            String?                @map("filter_type")
+  material              String?
+  dimensions            String?
   cartItems             CartItem[]
   orderItems            OrderItem[]
   attachments           ProductAttachment[]
