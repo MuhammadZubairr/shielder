@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
  *   CREDIT_CARD  → POST /api/epg/initialize  → redirect to EPG hosted page
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -109,7 +109,7 @@ function SummaryRow({ label, value, bold }: { label: string; value: React.ReactN
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-export default function CheckoutPage() {
+function CheckoutPageInner() {
   const { t, isRTL, locale } = useLanguage();
   const { user, isAuthenticated, isLoading: authLoading } = useAuthStore();
   const { cart, loading: cartLoading, clearCart } = useCart();
@@ -502,5 +502,17 @@ export default function CheckoutPage() {
 
       <LandingFooter />
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="animate-spin text-[#F97316]" size={36} />
+      </div>
+    }>
+      <CheckoutPageInner />
+    </Suspense>
   );
 }

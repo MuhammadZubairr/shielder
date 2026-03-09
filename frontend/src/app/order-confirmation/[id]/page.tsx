@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
  *   - Links: view all orders, continue shopping
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams, useSearchParams } from 'next/navigation';
@@ -100,6 +100,18 @@ function methodIcon(method: string) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function OrderConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="animate-spin text-[#F97316]" size={40} />
+      </div>
+    }>
+      <OrderConfirmationPageInner />
+    </Suspense>
+  );
+}
+
+function OrderConfirmationPageInner() {
   const { t, isRTL, locale } = useLanguage();
   const { id }    = useParams<{ id: string }>();
   const qParams   = useSearchParams();
