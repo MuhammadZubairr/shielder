@@ -183,7 +183,6 @@ function LoginPageContent() {
               fill
               className="object-cover"
               sizes="50vw"
-              priority
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30"></div>
           </div>

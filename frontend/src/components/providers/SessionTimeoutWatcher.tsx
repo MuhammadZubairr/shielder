@@ -21,26 +21,12 @@ const ACTIVITY_EVENTS = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scr
 
 export default function SessionTimeoutWatcher() {
   const router = useRouter();
-  const { isAuthenticated, logout } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const timeoutMsRef = useRef<number>(DEFAULT_TIMEOUT_MS);
 
   useEffect(() => {
     if (!isAuthenticated) return;
-
-    // Fetch configured session timeout once per login
-    settingsService.getSettings()
-      .then((res: any) => {
-        const mins: number = res?.data?.data?.sessionTimeoutMinutes
-          ?? res?.data?.sessionTimeoutMinutes
-          ?? 60;
-        timeoutMsRef.current = Math.max(5, mins) * 60 * 1000;
-        resetTimer();
-      })
-      .catch(() => {
-        // Use default if settings API fails
-        resetTimer();
-      });
 
     function resetTimer() {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -49,6 +35,24 @@ export default function SessionTimeoutWatcher() {
         await logout();
         router.replace('/login');
       }, timeoutMsRef.current);
+    }
+
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+
+    if (isAdmin) {
+      // Fetch configured session timeout from settings (admin/superadmin only)
+      settingsService.getSettings()
+        .then((res: any) => {
+          const mins: number = res?.data?.data?.sessionTimeoutMinutes
+            ?? res?.data?.sessionTimeoutMinutes
+            ?? 60;
+          timeoutMsRef.current = Math.max(5, mins) * 60 * 1000;
+          resetTimer();
+        })
+        .catch(() => resetTimer());
+    } else {
+      // Customers use the default timeout — do not call /api/settings (requires admin)
+      resetTimer();
     }
 
     // Attach activity listeners to reset the countdown

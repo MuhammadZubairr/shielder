@@ -126,22 +126,13 @@ function RegisterPageContent() {
 
     redirectHandled.current = true;
     try {
-      const result = await register({ ...formData, preferredLanguage: locale });
-      // Debug: Check localStorage and Zustand state
-      const accessToken = sessionStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-      const refreshToken = sessionStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-      const userStr = sessionStorage.getItem(STORAGE_KEYS.USER);
-      console.log('Registration result:', result);
-      console.log('AccessToken:', accessToken);
-      console.log('RefreshToken:', refreshToken);
-      console.log('User:', userStr);
-      if (!accessToken || !refreshToken || !userStr) {
-        alert('Registration succeeded but authentication data is missing. Please check backend response and sessionStorage logic.');
-      }
+      await register({ ...formData, preferredLanguage: locale });
     } catch (error) {
       redirectHandled.current = false;
-      console.error('Registration error:', error);
-      alert('Registration failed: ' + (typeof error === 'object' && error !== null && 'message' in error ? (error as any).message : String(error)));
+      const msg = (typeof error === 'object' && error !== null && 'message' in error)
+        ? (error as any).message
+        : t('register.error');
+      import('react-hot-toast').then(({ default: toast }) => toast.error(msg));
     }
   };
 
@@ -172,7 +163,6 @@ function RegisterPageContent() {
               alt="Shielder Construction" 
               fill
               className="object-cover"
-              priority
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30"></div>
           </div>
