@@ -76,3 +76,6 @@ _archive/
 /images/
 hero
 write_landing.py
+
+POSTMAN_GUIDE.md
+Shielder-API-Collection.postman_collection.json

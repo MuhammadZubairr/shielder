@@ -73,14 +73,14 @@ export const env = {
 
   // CORS
   cors: {
-    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3001',
     allowedOrigins: process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-      : ['http://localhost:3000', 'https://shielder-frontend.vercel.app'],
+      : ['http://localhost:3001', 'https://shielder-frontend.vercel.app'],
   },
 
   // Frontend URL (for email links)
-  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
+  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3001',
 
   // Email Configuration
   EMAIL_PROVIDER: process.env.EMAIL_PROVIDER || 'smtp',

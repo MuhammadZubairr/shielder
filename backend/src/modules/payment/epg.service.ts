@@ -92,10 +92,9 @@ export class EPGService {
     if (!config.apiKey || config.apiKey.length < 10) {
       logger.warn('[EPG] API key not configured — running in simulated mode');
       const simSessionId = `sim_${order.id}`;
-      // In simulated mode the "payment page" is our own callback URL so the
-      // user lands directly on the confirmation page without leaving the site.
+      // In simulated mode redirect directly to the order confirmation page.
       const simulatedUrl =
-        `${params.successUrl}?session_id=${simSessionId}&order_id=${order.orderNumber}&result=paid`;
+        `${params.successUrl}/${order.id}?payment=success`;
 
       return {
         orderId:     order.id,

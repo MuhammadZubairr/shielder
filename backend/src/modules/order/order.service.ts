@@ -111,15 +111,15 @@ export class OrderService {
       return result;
     });
 
-    // 5. Trigger Notifications
-    await NotificationService.notify({
+    // 5. Trigger Notifications (fire-and-forget — never block the order response)
+    NotificationService.notify({
       type: NotificationType.ORDER_CREATED,
       title: 'New Order Created',
       message: `A new order ${order.orderNumber} has been placed. Total: SAR ${order.total}`,
       module: 'ORDER',
       roleTarget: UserRole.SUPER_ADMIN,
       relatedId: order.id
-    });
+    }).catch((err) => console.error('[Order] createOrder notification failed:', err));
 
     return order;
   }
@@ -364,28 +364,26 @@ export class OrderService {
       });
     });
 
-    // 4. Send Status Change Notification
+    // 4. Send Status Change Notification (fire-and-forget)
     if (newStatus && newStatus !== previousStatus) {
-      // Notify User
-      await NotificationService.notify({
-        type: NotificationType.ORDER_COMPLETED, // General type for status updates for now
+      NotificationService.notify({
+        type: NotificationType.ORDER_COMPLETED,
         title: `Order Status Updated`,
         message: `Your order ${order.orderNumber} is now ${newStatus}.`,
         module: 'ORDER',
         userId: order.userId,
         relatedId: order.id
-      });
+      }).catch((err) => console.error('[Order] updateStatus user notification failed:', err));
 
-      // Notify Admin if it's completed
       if (newStatus === OrderStatus.DELIVERED) {
-        await NotificationService.notify({
+        NotificationService.notify({
           type: NotificationType.ORDER_COMPLETED,
           title: 'Order Delivered',
           message: `Order ${order.orderNumber} has been successfully delivered and completed.`,
           module: 'ORDER',
           roleTarget: UserRole.SUPER_ADMIN,
           relatedId: order.id
-        });
+        }).catch((err) => console.error('[Order] updateStatus admin notification failed:', err));
       }
     }
 
