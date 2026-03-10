@@ -120,7 +120,7 @@ function CheckoutPageInner() {
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
-      sessionStorage.setItem('checkout_redirect', '/checkout');
+      sessionStorage.setItem('post_login_redirect', '/checkout');
       router.replace('/login');
     }
   }, [authLoading, isAuthenticated, router]);

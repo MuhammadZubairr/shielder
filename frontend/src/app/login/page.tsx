@@ -103,12 +103,20 @@ function LoginPageContent() {
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
       if (redirectHandled.current) return;
+      redirectHandled.current = true;
       if (user.role === 'SUPER_ADMIN') {
         router.push(ROUTES.SUPER_ADMIN_DASHBOARD);
       } else if (user.role === 'ADMIN') {
         router.push(ROUTES.ADMIN_DASHBOARD);
       } else {
-        router.push(ROUTES.CUSTOMER_DASHBOARD);
+        // Use stored redirect destination, fall back to /products
+        const dest =
+          sessionStorage.getItem('post_login_redirect') ||
+          sessionStorage.getItem('checkout_redirect') ||
+          '/products';
+        sessionStorage.removeItem('post_login_redirect');
+        sessionStorage.removeItem('checkout_redirect');
+        router.push(dest);
       }
     }
   }, [isLoading, isAuthenticated, user, router]);

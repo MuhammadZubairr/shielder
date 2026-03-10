@@ -92,6 +92,7 @@ export default function MyOrdersPage() {
   useEffect(() => {
     if (authLoading) return;
     if (!isAuthenticated) {
+      sessionStorage.setItem('post_login_redirect', '/my-orders');
       router.replace('/login');
     }
   }, [authLoading, isAuthenticated, router]);
